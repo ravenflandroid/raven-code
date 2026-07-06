@@ -1,0 +1,400 @@
+BUG_ID,ISSUE_ID,APP,BUG_TYPE,R,S,F,REASON
+1,1429,Simplenote,PROG_ERROR,R2,S2,F3,Widget launch missing back stack setup; back skips note list
+2,1413,Simplenote,PROG_ERROR,R3,S2,F2,Search filter state not restored on app resume in tag screen
+3,1296,Simplenote,PROG_ERROR,R2,S3,F3,Logout does not clear local note cache before next login
+4,1307,Simplenote,PROG_ERROR,R2,S2,F3,Phone number link action fails to launch dialer intent correctly
+5,1289,Simplenote,PROG_ERROR,R2,S1,F2,Missing protocol prefix causes browser intent to fail on bare URLs
+6,1294,Simplenote,PROG_ERROR,R2,S2,F2,Sort order preference not persisted; navigation resets to All Notes
+7,1293,Simplenote,PROG_ERROR,R2,S1,F2,Sort order setting reverts; preference not saved to persistent store
+8,907,Simplenote,PROG_ERROR,R3,S2,F2,Search sort preference overwrites note list sort on force-close
+9,725,Simplenote,PROG_ERROR,R3,S3,F3,PIN lock flow loses widget config intent after authentication
+10,1259,Simplenote,PROG_ERROR,R3,S2,F4,Dark theme not applied to markdown preview when launched via widget
+11,917,Simplenote,PROG_ERROR,R2,S2,F3,Share intent handling creates duplicates or ignores Firefox shares
+12,919,Simplenote,PROG_ERROR,R2,S2,F4,Markdown table causes incorrect text zoom in landscape WebView
+13,1190,Simplenote,PROG_ERROR,R2,S2,F2,Dash character excluded from search tokenizer; returns no results
+14,1221,Simplenote,PROG_ERROR,R2,S2,F2,Checkbox insertion calculates wrong offset on wrapped text lines
+15,1111,Simplenote,PROG_ERROR,R3,S3,F3,Renaming tag to duplicate leaves duplicate on note and wrong count
+16,992,Simplenote,PROG_ERROR,R3,S2,F3,Note changes not saved when app backgrounds before explicit save
+17,1113,Simplenote,PROG_ERROR,R3,S2,F4,Font size inflates on preview-to-edit switch with non-Latin locale
+18,1070,Simplenote,PROG_ERROR,R2,S2,F2,Markdown preview stale after rapid tab switch; missing sync trigger
+19,1046,Simplenote,PROG_ERROR,R2,S1,F2,Search history row padding corrupted after long-query entry
+20,1007,Simplenote,PROG_ERROR,R2,S2,F2,Session token not persisted; login screen reappears after force-close
+21,991,Simplenote,PROG_ERROR,R2,S2,F3,Widget new-note back navigation loops infinitely creating blank notes
+22,984,Simplenote,PROG_ERROR,R2,S2,F3,Widget taps wrong intent when logged out; opens editor not login
+23,980,Simplenote,PROG_ERROR,R2,S2,F2,Editing note removes checklist checkbox spans from content
+24,952,Simplenote,PROG_ERROR,R2,S2,F2,Checkbox span offsets search highlight position in editor view
+25,925,Simplenote,PROG_ERROR,R2,S2,F4,In-display fingerprint overlay overlaps PIN numpad layout
+26,911,Simplenote,PROG_ERROR,R1,S1,F4,Sort icon drawable clipped due to incorrect bounds in XML layout
+27,710,Simplenote,PROG_ERROR,R2,S1,F2,Login error dialog shown twice due to duplicate callback invocation
+28,702,Simplenote,PROG_ERROR,R3,S2,F3,Dark theme not applied to toolbar on first launch; applied second
+29,709,Simplenote,PROG_ERROR,R2,S1,F2,Uppercase tag note count query uses wrong case-sensitive comparison
+30,739,Simplenote,PROG_ERROR,R3,S1,F4,Restore icon inconsistent between edit and markdown preview screens
+31,728,Simplenote,PROG_ERROR,R2,S1,F4,Sign-out layout breaks after targetSdkVersion bump changes preference style
+32,598,Simplenote,PROG_ERROR,R1,S2,F4,Navigation drawer renders behind status bar on notch devices
+33,642,Simplenote,PROG_ERROR,R2,S1,F4,Share dialog icons inconsistent size due to missing icon normalization
+34,623,Simplenote,PROG_ERROR,R3,S1,F2,Checkbox drawable hidden on second line of wrapped checklist preview
+35,615,Simplenote,PROG_ERROR,R2,S1,F3,Null string rendered in markdown preview when Dark-at-Night enabled
+36,8583,AnkiDroid,PROG_ERROR,R1,S2,F2,Answer button animation missing; keyboard and gesture input not triggering animation
+37,8229,AnkiDroid,PROG_ERROR,R2,S2,F2,Cloze card duplicate word check only validates first occurrence
+38,7465,AnkiDroid,PROG_ERROR,R1,S1,F2,Sync dialog counter not updating; always displays zero bytes downloaded
+39,8235,AnkiDroid,PROG_ERROR,R2,S2,F3,Fullscreen drawer drag gesture conflicts with card swipe gestures
+40,7369,AnkiDroid,PROG_ERROR,R2,S2,F3,Answer buttons missing in Reviewer; WebView or layout rendering failure
+41,7232,AnkiDroid,PROG_ERROR,R2,S2,F4,Image crop fails on Android 11; intent/FileProvider mismatch with API 30
+42,7690,AnkiDroid,PROG_ERROR,R2,S2,F4,Samsung file manager apkg intent not handled; missing MIME type in Manifest
+43,7836,AnkiDroid,PROG_ERROR,R3,S1,F2,Whiteboard save inverted condition; foreground color logic reversed in code
+44,7801,AnkiDroid,PROG_ERROR,R2,S1,F2,Previewer navigates to wrong card after editing; state not refreshed
+45,7793,AnkiDroid,PROG_ERROR,R3,S2,F4,Gesture menu strings misaligned across languages; Crowdin offset in array
+46,7344,AnkiDroid,PROG_ERROR,R2,S2,F2,Side menu partial open leaves screen unresponsive; drawer state not reset
+47,7770,AnkiDroid,PROG_ERROR,R2,S1,F2,Pasted image always appended to field end; cursor position ignored
+48,7768,AnkiDroid,PROG_ERROR,R2,S2,F2,Image crop button tap does nothing; result not processed after crop action
+49,7758,AnkiDroid,PROG_ERROR,R3,S1,F4,Card info string not translated in context menu; wrong string key used
+50,7730,AnkiDroid,PROG_ERROR,R3,S2,F3,Suspended cards lose state on filtered deck rebuild; scheduler not preserving flag
+51,7680,AnkiDroid,PROG_ERROR,R2,S1,F2,Custom study rename dialog obscured by navigation; should be toast
+52,7695,AnkiDroid,PROG_ERROR,R2,S1,F4,Field rename dialog shows wrong label; reuses rename note type string
+53,7674,AnkiDroid,PROG_ERROR,R2,S1,F2,Card reposition missing undo entry and does not update due field
+54,6288,AnkiDroid,PROG_ERROR,R3,S2,F2,Card browser fails on deck names with asterisk and parentheses combined
+55,7438,AnkiDroid,PROG_ERROR,R1,S1,F2,Back button from changelog returns to Play Store; wrong back stack
+56,7377,AnkiDroid,PROG_ERROR,R2,S2,F2,First image deleted when second image added during note edit
+57,6857,AnkiDroid,PROG_ERROR,R2,S1,F2,Card browser loses scroll position after editing a card
+58,7366,AnkiDroid,PROG_ERROR,R1,S2,F3,Home screen widget broken; data not loaded or rendered correctly
+59,7286,AnkiDroid,PROG_ERROR,R2,S1,F2,Preview uses wrong sort order after changing display order in browser
+60,7138,AnkiDroid,PROG_ERROR,R2,S1,F2,App skips card when show-answer tapped immediately after answering
+61,7076,AnkiDroid,PROG_ERROR,R2,S1,F2,Sub-deck name not shown in reviewer; parent deck name displayed instead
+62,7070,AnkiDroid,PROG_ERROR,R2,S1,F2,Tag filter in card browser returns no results; filtering logic broken
+63,7027,AnkiDroid,PROG_ERROR,R3,S1,F2,Duplicate show-answer button appears in fullscreen previewer mode
+64,5802,AnkiDroid,PROG_ERROR,R1,S1,F4,Sort arrow icon direction inverted relative to actual sort order
+65,6853,AnkiDroid,PROG_ERROR,R3,S1,F2,Off-by-one in timebox rep count; card counted before answer registered
+66,6887,AnkiDroid,PROG_ERROR,R3,S1,F2,New card counter not updated when card added during active review
+67,6894,AnkiDroid,PROG_ERROR,R3,S1,F2,Due time rounds up incorrectly; displays extra hour past 1h29min
+68,5016,AnkiDroid,PROG_ERROR,R2,S2,F3,Card browser via system text menu traps user; no back navigation
+69,5143,AnkiDroid,PROG_ERROR,R1,S1,F4,App overrides device launch animation with slide-up; ignores system setting
+70,5973,AnkiDroid,PROG_ERROR,R2,S2,F2,Google Photos cloud image import fails; code assumes local file path
+71,6684,AnkiDroid,PROG_ERROR,R2,S2,F3,Cloze preview shows error; field values not passed from note editor
+72,6587,AnkiDroid,PROG_ERROR,R2,S1,F2,Undo in reviewer causes negative review count display
+73,6576,AnkiDroid,PROG_ERROR,R2,S1,F2,Reminder setting message truncated in deck options UI
+74,6513,AnkiDroid,PROG_ERROR,R2,S1,F2,Long hierarchical tag names truncated in filter-by-tag dialog
+75,5409,AnkiDroid,PROG_ERROR,R1,S1,F4,System nav bar stays white in dark mode; window flags not set
+76,6254,AnkiDroid,PROG_ERROR,R1,S1,F4,Language code has no display name; missing string resource mapping
+77,6228,AnkiDroid,PROG_ERROR,R2,S2,F3,Custom study session incorrectly modifies original card state on completion
+78,6200,AnkiDroid,PROG_ERROR,R2,S2,F2,Unbury operation fails or unburies wrong cards; regression from 2.9.7
+79,6167,AnkiDroid,PROG_ERROR,R3,S2,F4,Typed answer template breaks when non-English; code to template field resolution fails
+80,6119,AnkiDroid,PROG_ERROR,R2,S1,F2,Whiteboard eraser button stays grayed after redrawing; UI state not reset
+81,5512,AnkiDroid,PROG_ERROR,R3,S3,F4,Font size abnormally large after appcompat-1.1.0 upgrade; scaling logic broken
+82,5187,AnkiDroid,PROG_ERROR,R3,S2,F2,Progress bar never dismissed in card browser for certain deck types
+83,5695,AnkiDroid,PROG_ERROR,R1,S2,F4,Star/flag icons flash on every card; delayed JS rendering code to template issue
+84,5352,AnkiDroid,PROG_ERROR,R2,S1,F2,Field name validator strips parentheses not allowed by desktop Anki
+85,5544,AnkiDroid,PROG_ERROR,R3,S2,F2,Card browser font scaling formula incorrect; 110% produces extreme enlargement
+86,5688,AnkiDroid,PROG_ERROR,R2,S1,F2,Screen rotation during card preview resets position to first card
+87,5737,AnkiDroid,PROG_ERROR,R3,S2,F3,New card count indicator shows cards not actually available for study
+88,5415,AnkiDroid,PROG_ERROR,R3,S2,F4,Touch area vertically misaligned in fullscreen mode; code to layout offset error
+89,5713,AnkiDroid,PROG_ERROR,R3,S1,F2,Scheduler V2 ETA calculation uses wrong per-card timing values
+90,5091,AnkiDroid,PROG_ERROR,R3,S1,F2,Filtered deck rebuild targets selected deck instead of long-tapped deck
+91,5166,AnkiDroid,PROG_ERROR,R3,S2,F4,Overly strict regex in Utils.java drops img tags with attributes in conditionals
+92,5450,AnkiDroid,PROG_ERROR,R3,S3,F3,Note type creation after full sync creates malformed type; ignores user name
+93,5184,AnkiDroid,PROG_ERROR,R3,S2,F3,Editing card during custom study permanently reassigns card to custom deck
+94,5334,AnkiDroid,PROG_ERROR,R2,S1,F2,Dollar sign character stripped from typed-answer display result
+95,5262,AnkiDroid,PROG_ERROR,R3,S1,F2,scrollDecklistToDeck auto-jumps to current deck on scroll touch/hold
+96,5245,AnkiDroid,PROG_ERROR,R1,S2,F4,Fullscreen mode renders incorrectly after appcompat library update; code to UI regression
+97,5156,AnkiDroid,PROG_ERROR,R1,S1,F2,Notification bar replaced by blank white bar in note/card editor
+98,5216,AnkiDroid,PROG_ERROR,R2,S1,F2,Reposition action applies to review cards; missing card-type validation guard
+99,5167,AnkiDroid,PROG_ERROR,R2,S2,F2,Rescheduling card during review does not remove card from queue
+100,5105,AnkiDroid,PROG_ERROR,R1,S2,F4,Answer button text too small and top-aligned; layout XML misconfiguration
+101,4999,AnkiDroid,PROG_ERROR,R3,S2,F3,Card browser always opens to one specific deck ignoring user selection
+102,4951,AnkiDroid,PROG_ERROR,R3,S2,F3,Sync and menu icons missing on Deck Picker when permissions dialog shown first
+103,4935,AnkiDroid,PROG_ERROR,R2,S2,F3,Back navigation in settings skips settings screen on API >= 26
+104,8072,AnkiDroid,PROG_ERROR,R2,S2,F2,Image crop functionality fails on Android 9 with no error handling
+105,7992,AnkiDroid,PROG_ERROR,R2,S1,F2,Card browser UI does not update card color after batch suspend completes
+106,9005,AnkiDroid,PROG_ERROR,R3,S2,F3,Cloze note with many cards shows card-could-not-be-generated in editor
+107,8975,AnkiDroid,PROG_ERROR,R2,S2,F2,Search All Decks button returns empty results due to incorrect deck scope
+108,8466,AnkiDroid,PROG_ERROR,R2,S1,F2,Card color not updated immediately after flag selection in card browser
+109,8417,AnkiDroid,PROG_ERROR,R1,S1,F4,Preference text truncated due to layout/string resource misconfiguration
+110,8527,AnkiDroid,PROG_ERROR,R3,S2,F3,Gesture answer button actions silently fail after specific commit regression
+111,8547,AnkiDroid,PROG_ERROR,R2,S2,F2,Card browser selected count wrong when duplicate cards exist in deck
+112,8379,AnkiDroid,PROG_ERROR,R2,S1,F2,Bug report cannot be resubmitted immediately after cancellation
+113,8354,AnkiDroid,PROG_ERROR,R1,S1,F4,Login page icon disappears due to layout/visibility logic error
+114,7934,AnkiDroid,PROG_ERROR,R3,S2,F3,Decimal step intervals under threshold crash scheduler with collection error
+115,8008,AnkiDroid,PROG_ERROR,R1,S1,F2,Statistics graph renders extra spurious bar due to data calculation bug
+116,7896,AnkiDroid,PROG_ERROR,R2,S1,F2,Unicode combining diacritics render as squares in typed-answer comparison
+117,7023,AnkiDroid,PROG_ERROR,R3,S2,F2,Export crashes on FileNotFoundException when referenced media file is missing
+118,2595,Amaze,PROG_ERROR,R1,S1,F2,Missing trim() call in showNameDialog() filename input
+119,2526,Amaze,PROG_ERROR,R3,S2,F3,FTP status UI not refreshed on resume after notification stop
+120,2518,Amaze,PROG_ERROR,R2,S1,F2,No handler registered for Exit menu item in AppsListFragment
+121,2498,Amaze,PROG_ERROR,R2,S1,F2,MainFragment null causes sort button to silently no-op
+122,2477,Amaze,PROG_ERROR,R2,S1,F2,Up navigation in Settings ignores hierarchy; jumps to root
+123,2476,Amaze,PROG_ERROR,R2,S1,F4,Customize screen title missing from XML layout or resource
+124,2360,Amaze,PROG_ERROR,R1,S2,F2,Split APK icon loading fails; broken icon rendering in list
+125,2131,Amaze,PROG_ERROR,R2,S2,F3,MediaScanner not notified after move; old path stays in gallery
+126,2113,Amaze,PROG_ERROR,R2,S1,F2,URI encoding applied to spaces during rename; produces percent-encoded space
+127,2079,Amaze,PROG_ERROR,R2,S2,F3,Race condition between clearing tabs DB and creating new ones
+128,2010,Amaze,PROG_ERROR,R4,S1,F2,DB query failure on restart causes fallback to home directory
+129,1982,Amaze,PROG_ERROR,R2,S2,F2,Drawer selected item state not saved across orientation change
+130,1978,Amaze,PROG_ERROR,R2,S1,F2,Search result title not restored after screen rotation
+131,1951,Amaze,PROG_ERROR,R2,S3,F3,OTG storage detection broken on Android N+; missing API path
+132,1933,Amaze,PROG_ERROR,R2,S1,F2,FAB visibility not initialized correctly in FtpServerFragment
+133,1920,Amaze,PROG_ERROR,R2,S1,F2,No user prompt when FTP start button disabled without WiFi
+134,1919,Amaze,PROG_ERROR,R3,S2,F3,Permission grant + rotation + back leaves app in broken state
+135,1916,Amaze,PROG_ERROR,R1,S2,F3,Documents shortcut query returns empty; wrong MIME filter logic
+136,1885,Amaze,PROG_ERROR,R3,S2,F3,Black screen on rotation during permission dialog; lifecycle bug
+137,1872,Amaze,PROG_ERROR,R2,S1,F2,Search result click treats directories as files; wrong handler
+138,1866,Amaze,PROG_ERROR,R2,S2,F2,Permission denial causes infinite toast loop; no exit offered
+139,1834,Amaze,PROG_ERROR,R2,S2,F2,Compression unexpectedly sets password; wrong compression call
+140,1797,Amaze,PROG_ERROR,R2,S1,F2,Search results accumulate across queries; list not cleared first
+141,1712,Amaze,PROG_ERROR,R2,S1,F2,Unhiding file does not refresh view; no notifyDataSetChanged call
+142,1687,Amaze,PROG_ERROR,R2,S2,F4,APK install fails on Android 10; missing REQUEST_INSTALL_PACKAGES permission
+143,1628,Amaze,PROG_ERROR,R2,S1,F2,Uninstall action in App Manager has no handler; silent no-op
+144,1499,Amaze,PROG_ERROR,R2,S1,F2,Back button resolves to parent-dir notation instead of history
+145,1497,Amaze,PROG_ERROR,R2,S2,F3,Symlinks to dirs treated as files; ls output shown raw in root
+146,1475,Amaze,PROG_ERROR,R2,S1,F3,MediaScanner not triggered after rename; gallery cache stale
+147,1467,Amaze,PROG_ERROR,R3,S1,F2,Search ignores show-hidden-files setting; hidden files leak
+148,5292,K-9 Mail,PROG_ERROR,R2,S2,F3,Storage refactoring broke download-flag check in MessageLoaderHelper
+149,5206,K-9 Mail,PROG_ERROR,R2,S1,F2,Search results drawer never populated; missing account list binding
+150,5198,K-9 Mail,PROG_ERROR,R3,S1,F2,Drawer header reads first account instead of configured default
+151,5139,K-9 Mail,PROG_ERROR,R3,S2,F3,Unified inbox pull-to-refresh skips fetch; sync runs at wrong priority
+152,5088,K-9 Mail,PROG_ERROR,R2,S1,F2,Port field not reset when user switches account type mid-setup
+153,5044,K-9 Mail,PROG_ERROR,R2,S1,F3,SpecialLocalFoldersCreator persists account before setup completes
+154,5026,K-9 Mail,PROG_ERROR,R2,S2,F3,Delete operation clears UI but fails to persist removal to server
+155,5004,K-9 Mail,PROG_ERROR,R3,S2,F4,Long address wraps in UI; app splits wrapped text into two addresses
+156,4984,K-9 Mail,PROG_ERROR,R2,S1,F2,Preview text extraction error on IMAP causes messages not to display
+157,4951,K-9 Mail,PROG_ERROR,R2,S2,F4,HTML email renderer adds unintended padding not present in desktop clients
+158,4936,K-9 Mail,PROG_ERROR,R2,S1,F2,Widget account selection not saved through configuration change; no onSaveInstanceState
+159,4935,K-9 Mail,PROG_ERROR,R2,S2,F3,Image attachments render as grey boxes regardless of inline-image settings
+160,4872,K-9 Mail,PROG_ERROR,R2,S1,F2,Draft reopen recursively wraps URLs in angle brackets each time
+161,4804,K-9 Mail,PROG_ERROR,R3,S1,F2,Folder drawer list truncates last entries when list requires scrolling
+162,4742,K-9 Mail,PROG_ERROR,R1,S2,F3,Reply action opens empty compose window; original message not quoted
+163,4685,K-9 Mail,PROG_ERROR,R2,S1,F2,Saving and reopening draft strips all line breaks; text collapses to one line
+164,4678,K-9 Mail,PROG_ERROR,R1,S1,F2,POP3 deleted messages not moved to trash folder; deletion logic wrong
+165,4610,K-9 Mail,PROG_ERROR,R2,S2,F4,Message view ignores K-9 theme setting; follows Android system theme instead
+166,4517,K-9 Mail,PROG_ERROR,R2,S1,F2,Background sync triggers layout shift causing changelog dialog to jump
+167,4472,K-9 Mail,PROG_ERROR,R2,S1,F2,Contact pictures not loaded; permission granted but lookup returns generic avatar
+168,4453,K-9 Mail,PROG_ERROR,R3,S3,F3,Folder settings not restored after import; class names mismatched in parser
+169,4452,K-9 Mail,PROG_ERROR,R3,S2,F3,Ghost message list shown; fragment not replaced when navigating via notification
+170,4435,K-9 Mail,PROG_ERROR,R1,S1,F2,Empty unmodified compose session incorrectly saved as draft on close
+171,4407,K-9 Mail,PROG_ERROR,R3,S1,F4,App-language override ignored for some strings; falls back to device locale
+172,4393,K-9 Mail,PROG_ERROR,R2,S1,F2,Scroll position resets to top when switching apps and returning
+173,4379,K-9 Mail,PROG_ERROR,R3,S2,F3,Selection state kept but wrong folder shown after app backgrounded and resumed
+174,4374,K-9 Mail,PROG_ERROR,R2,S1,F2,PGP sign-only mode incorrectly replaces subject with Encrypted Message
+175,4360,K-9 Mail,PROG_ERROR,R1,S1,F2,Long email subjects truncated after two lines in message view
+176,4342,K-9 Mail,PROG_ERROR,R2,S2,F2,Reply compose field not independently scrollable; can't reach first line typed
+177,4333,K-9 Mail,PROG_ERROR,R2,S1,F2,Folder updates corrupt drawer display order after expand-and-refresh sequence
+178,4304,K-9 Mail,PROG_ERROR,R2,S1,F3,Download Complete Message shows connection error; POP3 SSL fetch fails
+179,3957,K-9 Mail,PROG_ERROR,R1,S2,F3,Swipe-to-select conflicts with drawer swipe gesture listener; neither works
+180,3866,K-9 Mail,PROG_ERROR,R3,S2,F3,Background sync fires even when setting is Never; PR regression introduced bug
+181,3832,K-9 Mail,PROG_ERROR,R1,S1,F4,Action mode bar inserted above toolbar instead of overlaying it; layout XML issue
+182,3811,K-9 Mail,PROG_ERROR,R2,S1,F3,Subject field not transmitted on send; third-party integration strips subject
+183,3685,K-9 Mail,PROG_ERROR,R3,S2,F3,Server search results outside sync window show no body; repeated fetch loop
+184,6298,NewPipe,PROG_ERROR,R2,S1,F2,Back press not handled in error report Activity
+185,4256,NewPipe,PROG_ERROR,R2,S3,F4,Custom notification incompatible with Android 11 media controls API
+186,6667,NewPipe,PROG_ERROR,R3,S2,F3,Share intent from YouTube not triggering download flow
+187,3647,NewPipe,PROG_ERROR,R2,S1,F2,Email Intent constructed without exception body in bug reporter
+188,3888,NewPipe,PROG_ERROR,R3,S3,F3,Playback position state not shared across player mode switches
+189,6419,NewPipe,PROG_ERROR,R3,S1,F2,Speed change UI not refreshed in background player notification
+190,4040,NewPipe,PROG_ERROR,R3,S2,F4,Vertical video miscentered due to nav bar layout miscalculation
+191,6664,NewPipe,PROG_ERROR,R2,S2,F4,Thumbnail layout size not adapted for tablet screen resources
+192,5959,NewPipe,PROG_ERROR,R3,S2,F2,Empty channel replaces header with no-videos message incorrectly
+193,5036,NewPipe,PROG_ERROR,R2,S1,F4,Export description string omits settings from exported content list
+194,3673,NewPipe,PROG_ERROR,R2,S2,F3,SAF file browser navigation broken on Android 10 intent handling
+195,3149,NewPipe,PROG_ERROR,R2,S2,F3,Track name and album art not passed to media session metadata
+196,2272,NewPipe,PROG_ERROR,R1,S2,F3,Trending tab label re-translated multiple times during app startup
+197,2848,NewPipe,PROG_ERROR,R3,S1,F3,Comment timestamp uses device locale instead of app language setting
+198,6323,NewPipe,ANDROID_ENV,N/A,N/A,N/A,YouTube changed comment likes format; extractor returns zero
+199,5805,NewPipe,PROG_ERROR,R3,S1,F4,Romanian plural string used for singular quantity one minute
+200,5613,NewPipe,PROG_ERROR,R2,S1,F2,Aspect ratio preference saved with off-by-one index shift
+201,3238,NewPipe,PROG_ERROR,R3,S1,F1,NumberFormatException parsing empty view count string; stack trace given
+202,6138,NewPipe,PROG_ERROR,R2,S1,F2,Download toast fires on dialog open before user confirms overwrite
+203,3973,NewPipe,PROG_ERROR,R2,S1,F4,Search result text color white on light theme; wrong color resource
+204,3851,NewPipe,PROG_ERROR,R3,S1,F2,URL intent parser ignores t= timestamp parameter from shared link
+205,5895,NewPipe,ANDROID_ENV,N/A,N/A,N/A,YouTube changed trending endpoint breaking extractor fetch
+206,5550,NewPipe,PROG_ERROR,R3,S2,F3,Channel video pagination stops after first page; next page not fetched
+207,2632,NewPipe,ANDROID_ENV,N/A,N/A,N/A,YouTube changed subscriber count format; extractor parses wrong value
+208,3145,NewPipe,PROG_ERROR,R1,S2,F4,Trending page layout regressed visually after update; XML layout issue
+209,4277,NewPipe,PROG_ERROR,R3,S2,F4,Seekbar hidden on Android 11; window flags incompatible with new insets API
+210,5363,NewPipe,ANDROID_ENV,N/A,N/A,N/A,YouTube does not serve 360p WebM streams; extractor-level gap
+211,4940,NewPipe,PROG_ERROR,R3,S2,F3,Duplicate queue item causes infinite buffering; wrong playback state handling
+212,6409,NewPipe,PROG_ERROR,R2,S1,F4,Channel description TextView missing wrap_content or maxLines in XML layout
+213,6256,NewPipe,PROG_ERROR,R3,S2,F3,SAF download path null when no folder set; share-initiated download fails
+214,2111,NewPipe,PROG_ERROR,R3,S2,F2,Large video download fails; likely size/offset overflow in downloader
+215,4245,NewPipe,PROG_ERROR,R3,S2,F4,Fullscreen icon missing with auto-rotate; notification bar wrong size in XML
+216,6468,NewPipe,PROG_ERROR,R3,S1,F4,Simplified Chinese locale file missing plural time duration strings
+217,2810,NewPipe,PROG_ERROR,R1,S1,F4,Sidebar layout ignores system status bar insets in XML
+218,4121,NewPipe,PROG_ERROR,R2,S2,F2,Seek bar touch handler misclassifies diagonal drag as vertical scroll
+219,3937,NewPipe,PROG_ERROR,R1,S1,F4,Playlist header XML padding insufficient causing misalignment
+220,5453,NewPipe,PROG_ERROR,R3,S2,F3,Link tap in description triggers scroll instead of opening URL
+221,2626,NewPipe,PROG_ERROR,R2,S2,F3,Code change broke livestream playback; regression from prior fix
+222,6371,NewPipe,PROG_ERROR,R2,S2,F3,Open action setting wrongly applied to channels and playlists
+223,2504,NewPipe,PROG_ERROR,R3,S1,F4,Documents permission guidance missing for Android 5.x devices
+224,3381,NewPipe,PROG_ERROR,R1,S1,F4,Custom font causes drawer title text to wrap incorrectly
+225,2924,NewPipe,PROG_ERROR,R1,S2,F3,reCAPTCHA challenge not handled; extractor fails for all videos
+226,2894,NewPipe,PROG_ERROR,R1,S1,F3,Negative time values displayed due to localization formatting error
+227,5912,NewPipe,PROG_ERROR,R2,S1,F4,Search bar renders HTML tags instead of displaying plain text
+228,2922,NewPipe,PROG_ERROR,R2,S2,F3,Popup mode permission not requested or guided on Android 10
+229,4113,NewPipe,PROG_ERROR,R2,S1,F2,License dialog not retained across device rotation in Activity
+230,4143,NewPipe,PROG_ERROR,R2,S2,F2,Double-drag gesture causes player jitter due to animation state conflict
+231,4294,NewPipe,PROG_ERROR,R3,S1,F4,Subtitle label text area shrunk by layout change in newer version
+232,6615,NewPipe,PROG_ERROR,R2,S1,F4,ContrastTintTheme tints thumbnail ImageButton black or white
+233,1588,NewPipe,PROG_ERROR,R3,S1,F4,Russian plural rules not applied correctly to large subscriber counts
+234,6335,NewPipe,PROG_ERROR,R1,S1,F4,Bandcamp intent filter missing pattern for URLs without trailing slash
+235,5475,NewPipe,PROG_ERROR,R3,S2,F3,Enqueue via context menu causes one-item title display lag in player
+236,6397,NewPipe,PROG_ERROR,R3,S3,F3,Export database navigation locks out folders after failed external save
+237,1919,NewPipe,PROG_ERROR,R2,S1,F2,Subscription import does not refresh UI; requires manual navigation
+238,2586,NewPipe,PROG_ERROR,R1,S1,F4,Background player channel name uses wrong color in notification
+239,3684,NewPipe,PROG_ERROR,R3,S2,F3,Autoplay toggle only shown for YouTube; missing in other services
+240,4712,NewPipe,PROG_ERROR,R3,S2,F2,Bottom player bar not restored when app reopened with active background player
+241,3714,NewPipe,PROG_ERROR,R2,S2,F3,reCAPTCHA response screen blank; app unresponsive after solving
+242,4047,NewPipe,PROG_ERROR,R3,S1,F4,Minimized player bar overlaps last subscription list item; missing padding
+243,2615,NewPipe,PROG_ERROR,R1,S2,F3,All videos show unavailable error; likely extractor or API key failure
+244,2644,NewPipe,PROG_ERROR,R1,S1,F4,Clear search button triggers two overlapping animations simultaneously
+245,3681,NewPipe,PROG_ERROR,R2,S1,F3,Video duration incorrectly parsed or displayed in channel view
+246,2007,NewPipe,PROG_ERROR,R1,S1,F4,Notification player ignores dark theme; hardcoded colors in layout
+247,5660,NewPipe,PROG_ERROR,R2,S2,F2,Download deletion snackbar queue delays actual file removal
+248,4890,NewPipe,PROG_ERROR,R2,S1,F4,Licenses dialog lists wrong license version for Giga Get entry
+249,5003,AntennaPod,PROG_ERROR,R2,S2,F3,Miniplayer state not cleared when parent podcast deleted
+250,3977,AntennaPod,PROG_ERROR,R3,S1,F4,Button text color not adapted for light theme in filter dialog
+251,4010,AntennaPod,PROG_ERROR,R2,S1,F2,Navigation to podcast feed screen fails from player menu
+252,4669,AntennaPod,PROG_ERROR,R2,S1,F2,iTunes header text not hidden when suggestions hidden by user
+253,4715,AntennaPod,PROG_ERROR,R2,S2,F3,Touch events pass through audio player to queue below
+254,3364,AntennaPod,PROG_ERROR,R1,S1,F2,Keyboard auto-shows on first app launch unexpectedly
+255,4028,AntennaPod,PROG_ERROR,R3,S2,F3,Miniplayer visibility not saved/restored through fragment lifecycle
+256,4202,AntennaPod,PROG_ERROR,R2,S1,F2,Loading indicator resets on each podcast completion during refresh
+257,3209,AntennaPod,PROG_ERROR,R2,S1,F2,Wrong episode removed due to incorrect index in favorites list
+258,5275,AntennaPod,PROG_ERROR,R2,S2,F3,Pull-to-refresh not wired to empty queue list view
+259,4488,AntennaPod,PROG_ERROR,R2,S1,F2,Search scope not filtered to single podcast when invoked from podcast page
+260,4853,AntennaPod,PROG_ERROR,R4,S2,F3,Hamburger menu icon disappears after app backgrounded for some time
+261,5091,AntennaPod,PROG_ERROR,R3,S1,F3,Play/pause icon loses fill intermittently after app swipe and reopen
+262,3092,AntennaPod,PROG_ERROR,R2,S1,F2,Queue time-left label not refreshed after episode download completes
+263,4550,AntennaPod,PROG_ERROR,R2,S1,F2,Empty view message missing on episodes page when all items cleared
+264,3275,AntennaPod,PROG_ERROR,R3,S2,F3,Feed deduplication logic fails; some episodes appear and download twice
+265,4126,AntennaPod,PROG_ERROR,R2,S1,F3,ViewPager2 migration breaks scroll position retention on tab switch
+266,4640,AntennaPod,PROG_ERROR,R2,S1,F4,Settings search result points to preference not visible on screen
+267,4656,AntennaPod,PROG_ERROR,R1,S1,F4,Clear download log button broken due to renamed resource ID
+268,4879,AntennaPod,PROG_ERROR,R3,S2,F3,Chapters missing from player UI after episode resume
+269,4327,AntennaPod,PROG_ERROR,R2,S1,F4,Episode title truncated in playback screen; layout constrains text
+270,3573,AntennaPod,PROG_ERROR,R3,S1,F2,Streaming confirmation dialog shown despite continuous playback disabled
+271,4776,AntennaPod,PROG_ERROR,R2,S1,F2,Played/unplayed color indicator not refreshed until screen re-entered
+272,3786,AntennaPod,PROG_ERROR,R3,S1,F2,Download button triggers streaming when prefer-streaming setting enabled
+273,2992,AntennaPod,PROG_ERROR,R2,S2,F3,Podcast cover and shownotes lost on device rotation due to state loss
+274,4548,AntennaPod,PROG_ERROR,R3,S1,F2,Filtered episode list not updated after episode deletion
+275,4473,AntennaPod,PROG_ERROR,R2,S1,F2,Progress bar highlighted when tapping empty space near player controls
+276,2953,AntennaPod,PROG_ERROR,R3,S2,F3,Failed download retried immediately ignoring configured update interval
+277,3986,AntennaPod,PROG_ERROR,R3,S1,F4,Statistics text overlaps chart on small screens with verbose locale
+278,5090,AntennaPod,PROG_ERROR,R2,S1,F3,Shownotes tab title font size changes repeatedly during playback
+279,4123,AntennaPod,PROG_ERROR,R2,S2,F3,ViewPager2 state misaligned on rotate; pages stuck between positions
+280,5132,AntennaPod,PROG_ERROR,R2,S1,F3,SwipeRefreshLayout spinner stuck when horizontal swipe on empty list
+281,4026,AntennaPod,PROG_ERROR,R2,S2,F3,Playing episode no longer added to queue; regression in 2.0.0-alpha1
+282,5218,AntennaPod,PROG_ERROR,R2,S1,F2,Long-press email in shownotes vibrates but does not copy or act
+283,5255,AntennaPod,PROG_ERROR,R2,S1,F2,No friendly error shown when refreshing feed with no internet connection
+284,4275,AntennaPod,PROG_ERROR,R3,S2,F3,Video feed played through audio player due to incorrect media-type detection
+285,5252,AntennaPod,PROG_ERROR,R2,S1,F2,Toolbar stays in multi-select mode after NavDrawer navigation
+286,4636,AntennaPod,PROG_ERROR,R2,S1,F2,Download statistics show negative traffic values; no sanity check
+287,4734,AntennaPod,PROG_ERROR,R1,S1,F4,Share label missing from podcast info overflow menu items
+288,4146,AntennaPod,PROG_ERROR,R1,S1,F2,Typing http in podcast search bar triggers error instead of search
+289,4524,AntennaPod,PROG_ERROR,R2,S2,F3,Mass-selection icon overwrites trash icon across Downloads tabs
+290,15026,WordPress,PROG_ERROR,R2,S1,F4,Weekday names formatted as numbers; wrong locale/format API usage in XML/code
+291,14787,WordPress,PROG_ERROR,R3,S2,F3,Story block not created when video published without adding extra views
+292,14430,WordPress,PROG_ERROR,R2,S2,F3,Black screen shown when opening existing Story; first slide not selected on load
+293,14234,WordPress,PROG_ERROR,R3,S2,F3,Categories fail to load in prepublishing sheet; data not fetched on story init
+294,14216,WordPress,PROG_ERROR,R2,S2,F3,Non-primary domain links show post-not-found; URL resolution logic wrong
+295,13853,WordPress,PROG_ERROR,R2,S1,F2,FAB does not slide up when snackbar appears; missing anchor/behavior in layout
+296,13671,WordPress,PROG_ERROR,R3,S2,F2,Stats graph uses non-integer scale and fractional bar values for low counts
+297,13428,WordPress,PROG_ERROR,R2,S2,F3,Upload notification stuck after post deleted before upload completion
+298,13299,WordPress,PROG_ERROR,R2,S2,F4,Keyboard overlays prepublishing bottom sheet; window soft input mode misconfigured
+299,13121,WordPress,PROG_ERROR,R2,S2,F3,Countries map blank white after version bump; rendering logic broken in update
+300,13067,WordPress,PROG_ERROR,R2,S1,F4,AppBar icons invisible in light mode; icon tint color not set for light theme
+301,13037,WordPress,PROG_ERROR,R3,S1,F2,Verse block text cuts off in Reader; no horizontal scroll or wrap handling
+302,12975,WordPress,PROG_ERROR,R1,S1,F4,Toolbar icons invisible but tappable; icon tint wrong in XML theme or code
+303,12915,WordPress,PROG_ERROR,R2,S1,F2,Permission prompt labels overlap in media picker; layout constraint error
+304,12858,WordPress,PROG_ERROR,R2,S2,F3,Unsupported media types selectable in post editor picker; filter not applied
+305,12767,WordPress,PROG_ERROR,R3,S2,F3,Instagram embeds show black error screen; incorrect intent or URL handling
+306,12578,WordPress,PROG_ERROR,R2,S2,F3,Quick Start prompt not triggered after new signup flow completes
+307,12556,WordPress,PROG_ERROR,R2,S1,F2,Activity result not propagated after selecting site icon from media library
+308,12544,WordPress,PROG_ERROR,R3,S2,F3,Reader ignores Media and Text block crop and image-side CSS settings
+309,12376,WordPress,PROG_ERROR,R2,S1,F4,Username changer toolbar icons invisible; white icons on white background
+310,12308,WordPress,PROG_ERROR,R3,S1,F2,Empty post title shows blank card; missing fallback to untitled string resource
+311,12224,WordPress,PROG_ERROR,R2,S2,F3,Tags added after device rotation not saved; state not restored on config change
+312,12040,WordPress,PROG_ERROR,R2,S1,F2,Transparent background when paging between notifications; missing background set
+313,11950,WordPress,PROG_ERROR,R1,S1,F2,Wrong empty-state illustration shown on Likes tab; incorrect drawable used
+314,11679,WordPress,PROG_ERROR,R3,S2,F3,Button block background color missing in Reader; CSS not applied in webview
+315,11307,WordPress,PROG_ERROR,R2,S1,F4,Wrong icon shown when password visible; incorrect drawable in toggle state XML
+316,11019,WordPress,PROG_ERROR,R2,S2,F3,Post-signup interstitial skipped after magic link login; logic gap in flow
+317,11018,WordPress,PROG_ERROR,R2,S1,F4,System nav buttons shadowed by bottom sheet; window flag or dim handling wrong
+318,11010,WordPress,PROG_ERROR,R2,S2,F3,Reader tab bar loses scroll position when switching away and returning
+319,10952,WordPress,PROG_ERROR,R2,S2,F3,Reader search screen shows posts list behind it after device rotation
+320,10951,WordPress,PROG_ERROR,R3,S2,F3,Per-post comments disabled; discussion param not passed in REST API call
+321,10836,WordPress,PROG_ERROR,R4,S2,F3,Stats widgets show no-network error despite connection; intermittent refresh failure
+322,10835,WordPress,PROG_ERROR,R2,S2,F3,Cannot change display name and password simultaneously; API call conflict
+323,10707,WordPress,PROG_ERROR,R2,S1,F2,Pages sorted case-sensitively; comparator does not use case-insensitive ordering
+324,10410,WordPress,PROG_ERROR,R2,S1,F3,HTML entity decoding missing after network response processing
+325,10354,WordPress,PROG_ERROR,R3,S1,F3,Wrong button label due to unset site capability on self-hosted
+326,10288,WordPress,PROG_ERROR,R3,S1,F2,Wrong button shown after upload failure; retry vs submit logic
+327,10203,WordPress,PROG_ERROR,R3,S3,F3,Local image path not replaced by remote URL before post upload
+328,10145,WordPress,PROG_ERROR,R2,S2,F3,Widget data not cleared on logout due to missing state reset
+329,9966,WordPress,PROG_ERROR,R3,S2,F2,Publish dialog shown incorrectly on Save action for local draft
+330,9935,WordPress,PROG_ERROR,R3,S2,F2,Page list not refreshed after background upload completes
+331,9899,WordPress,PROG_ERROR,R2,S1,F2,Password stored and displayed in plaintext in settings field
+332,9897,WordPress,PROG_ERROR,R2,S1,F4,Snackbar highlight span incompatible with API below 24
+333,9864,WordPress,PROG_ERROR,R3,S2,F4,Deep link in email not handled by app; opens browser instead
+334,9717,WordPress,PROG_ERROR,R2,S2,F2,Empty view shown briefly before data loads due to state race
+335,9658,WordPress,PROG_ERROR,R2,S1,F2,Async promo dialog shown for pending-review post; wrong status check
+336,9604,WordPress,PROG_ERROR,R2,S2,F3,Post published snackbar dismissed immediately due to ViewModel migration
+337,9603,WordPress,PROG_ERROR,R2,S1,F2,Overlay and progress not hidden immediately after restore action
+338,9599,WordPress,PROG_ERROR,R2,S2,F2,Empty notifications screen flashes on each tab visit due to state reset
+339,9595,WordPress,PROG_ERROR,R3,S2,F2,Local drafts hidden when no remote drafts exist; wrong filter logic
+340,9575,WordPress,PROG_ERROR,R3,S2,F3,Author filter returns empty list on self-hosted Jetpack site
+341,9573,WordPress,PROG_ERROR,R2,S1,F2,Backdating new post shows Immediately instead of selected past date
+342,9567,WordPress,PROG_ERROR,R2,S1,F2,No clear feedback shown when post update attempted while offline
+343,9088,WordPress,PROG_ERROR,R2,S2,F2,Selected date in Stats Overview mismatches data blocks after re-entry
+344,8994,WordPress,PROG_ERROR,R3,S2,F3,Stats blocks empty due to null fields in VisitsAndViewsResponse parsing
+345,8964,WordPress,PROG_ERROR,R3,S2,F4,Private site images broken in local preview; authentication not applied to WebView
+346,8821,WordPress,PROG_ERROR,R2,S1,F2,Site preview WebView content cleared on rotation; no state save
+347,8755,WordPress,PROG_ERROR,R2,S1,F2,Local image path shown in preview instead of uploaded URL
+348,8754,WordPress,PROG_ERROR,R2,S2,F3,Login fails after valid 2FA; access token not applied in initial flow
+349,8582,WordPress,PROG_ERROR,R3,S1,F2,Likes filter excludes comment likes; overly restrictive filter logic
+350,8570,WordPress,PROG_ERROR,R3,S3,F3,Draft auto-published when media shared to app; wrong trigger logic
+351,8521,WordPress,PROG_ERROR,R2,S2,F2,Offline page actions give no feedback; misleading snackbar shown
+352,8520,WordPress,PROG_ERROR,R2,S2,F2,Overflow menu icons missing on pages after returning from editor
+353,8370,WordPress,PROG_ERROR,R2,S1,F4,Bottom nav icons not tinted on API 21; code vs XML tint incompatibility
+354,8283,WordPress,PROG_ERROR,R2,S1,F2,Snackbar message truncated for existing email during Google signup
+355,8222,WordPress,PROG_ERROR,R2,S2,F2,Signing up dialog stuck indefinitely when Google auth fails
+356,8220,WordPress,PROG_ERROR,R2,S2,F4,Welcome notification deep link opens reader not support docs
+357,4583,Firefox,PROG_ERROR,R2,S2,F3,Language change does not refresh homescreen; requires app restart
+358,4617,Firefox,PROG_ERROR,R2,S1,F4,Trash icon layout anchored incorrectly; floats above keyboard
+359,3394,Firefox,PROG_ERROR,R2,S1,F4,Add-to-homescreen dialog style uses transparent background incorrectly
+360,3617,Firefox,PROG_ERROR,R2,S1,F2,Make-default-browser toggle UI state not updated after system action
+361,3081,Firefox,PROG_ERROR,R2,S2,F3,Duplicate menu item rendered; likely inflated twice in menu logic
+362,3939,Firefox,PROG_ERROR,R3,S2,F3,Fingerprint auth bypassed on second shortcut open; state not reset
+363,3713,Firefox,PROG_ERROR,R3,S3,F3,External link opens browser UI inside calling app; intent handling wrong
+364,3152,Firefox,PROG_ERROR,R2,S2,F3,URL bar text cleared on status bar tap; incorrect focus/event handling
+365,3790,Firefox,PROG_ERROR,R3,S2,F3,Homescreen shortcuts open blank tab after history clear; URL lost
+366,3829,Firefox,PROG_ERROR,R2,S2,F3,Wrong code path used for default browser on Android above 6
+367,4858,Firefox,PROG_ERROR,R2,S1,F2,Back navigation skips one screen; back stack managed incorrectly
+368,3563,Firefox,PROG_ERROR,R3,S2,F3,New session only closes bottom tab; other tabs persist despite fingerprint
+369,3633,Firefox,PROG_ERROR,R2,S1,F2,Toolbar URL not restored after download cancelled; state update missing
+370,3258,Firefox,PROG_ERROR,R1,S1,F2,Tips without deep links still styled as tappable; condition check wrong
+371,4880,Firefox,PROG_ERROR,R2,S1,F4,Long-tap context menu differs from expected; wrong menu resource used
+372,3291,Firefox,PROG_ERROR,R2,S2,F3,Removing search engines changes default; index-based selection logic bug
+373,3892,Firefox,PROG_ERROR,R2,S1,F2,Backspace skips character when URL autocomplete suggestion present
+374,4041,Firefox,PROG_ERROR,R1,S1,F4,Extra characters in app shortcut label; string resource or encoding error
+375,4068,Firefox,PROG_ERROR,R2,S1,F4,German menu text truncated; layout does not accommodate longer strings
+376,3128,Firefox,PROG_ERROR,R2,S2,F4,Download and image context menus have inconsistent shadow and font styles
+377,4097,Firefox,PROG_ERROR,R2,S1,F3,Homescreen tips not updated on language change until app restart
+378,3069,Firefox,PROG_ERROR,R2,S2,F3,Tracker-blocked toggle re-enable restores only social trackers; cache issue
+379,3146,Firefox,PROG_ERROR,R2,S1,F3,Block cookies setting label stays in old language; not refreshed on change
+380,3937,Firefox,PROG_ERROR,R2,S1,F2,Keyboard dismissed when page finishes loading during URL bar typing
+381,3085,Firefox,PROG_ERROR,R2,S1,F4,First suggestion box overlaps others on tablet; z-order/layout bug
+382,4740,Firefox,PROG_ERROR,R2,S2,F3,Third-party cookie blocking option has no effect; setting not applied
+383,3124,Firefox,PROG_ERROR,R3,S3,F3,Granular tracking protection settings ignored; all categories always blocked
+384,4341,Firefox,PROG_ERROR,R2,S1,F2,Default cookie-block option not pre-selected in dialog; missing check
+385,3254,Firefox,PROG_ERROR,R2,S1,F2,Remove search engine shows no checkboxes; selection UI not rendered
+386,4065,Firefox,ANDROID_ENV,N/A,N/A,N/A,JS variable named i reset by engine; GeckoView-specific interpreter behavior
+387,4168,Firefox,PROG_ERROR,R2,S1,F4,Block cookies setting shows Chinese chars; wrong string resource referenced
+388,4877,Firefox,PROG_ERROR,R2,S2,F4,Three-dot menu and lock icon invisible in custom tab; UI visibility bug
+389,3287,Firefox,PROG_ERROR,R2,S1,F2,Three-dot menu shifts position on rotation; layout not recalculated
+390,3675,Firefox,PROG_ERROR,R2,S1,F2,Blank screen shown after setting default browser; navigation logic missing
+391,4739,Firefox,PROG_ERROR,R2,S1,F2,Search engines cannot be removed; removal action has no effect
+392,3787,Firefox,PROG_ERROR,R1,S1,F4,App name missing from fingerprint toggle description; string placeholder unused
+393,3121,Firefox,PROG_ERROR,R2,S1,F2,Send usage data toggle reverts to disabled on returning to settings
+394,3547,Firefox,PROG_ERROR,R2,S1,F4,Keyboard shown simultaneously with first-run dialog on fresh install
+395,4876,Firefox,PROG_ERROR,R1,S2,F4,Settings menu background wrong color; theme or style regression
+396,3664,Firefox,PROG_ERROR,R2,S2,F3,Insecure connection doorhanger missing domain; duplicate icon shown
+397,3233,Firefox,PROG_ERROR,R1,S1,F4,Clicking URL bar flashes black before purple; animation or theme order wrong
+398,3304,Firefox,PROG_ERROR,R2,S1,F4,Homescreen tips toggle incorrectly indented in settings; layout XML error
+399,3297,Firefox,PROG_ERROR,R2,S2,F3,Back from info page drops to home losing form data; back stack mismanaged
