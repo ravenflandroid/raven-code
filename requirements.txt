@@ -1,0 +1,9 @@
+# RAVEN Reproduction Package — Python dependencies
+# Install the raven package first:
+#   pip install -e ../model/
+# Then this file covers the UI server's own deps (all already pulled by raven):
+openai>=1.30
+tenacity>=8.2
+pydantic>=2.0
+gitpython>=3.1
+pyyaml>=6.0
