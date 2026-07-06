@@ -1,0 +1,40 @@
+﻿# RAVEN config — AntennaPod
+# Generated for Pixel29 (API 29, x86) emulator on emulator-5554
+#
+# Usage:
+#   raven run --config configs/antennapod.yaml --issue-url <url> --skip-install
+#
+# Replace <azure-endpoint> and <azure-key> with your credentials.
+
+azure_openai:
+  endpoint:    "https://<azure-endpoint>.openai.azure.com/"
+  api_key:     "<azure-key>"
+  api_version: "2025-04-01-preview"
+  deployment:  "gpt-4o"
+
+github:
+  token: ""
+
+android:
+  adb_path:               "C:/Users/<you>/AppData/Local/Android/Sdk/platform-tools/adb.exe"
+  emulator_serial:        "emulator-5554"
+  package_name:           "de.danoeh.antennapod"
+  launch_activity:        "de.danoeh.antennapod/.activity.MainActivity"
+  apk_path:               "C:/Users/hridy/Documents/PhD_Research/2026/Raven/dataset/apks/antennapod/de.danoeh.antennapod-3.11.4.apk"
+  install_timeout_seconds: 180
+
+tools:
+  ffmpeg_path:  "ffmpeg"
+  joern_parse:  "joern-parse"
+  joern_export: "joern-export"
+
+runtime:
+  workspace_dir:              "../model/.raven_runs"
+  max_replay_attempts:        3
+  frame_sample_count:         12
+  static_top_k:               30
+  max_logcat_bytes:           2000000
+  max_ui_hierarchy_snapshots: 8
+  max_hdg_files:              120
+  hdg_expansion_bound:        2
+  compact_json:               true
