@@ -1,0 +1,188 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "Amaze",
+  "issue_id": 4581,
+  "issue_url": "https://github.com/TeamAmaze/AmazeFileManager/issues/4581",
+  "issue_title": "The FloatingActionButton remains hidden after returning to Home from drawer category views",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\TeamAmaze_AmazeFileManager",
+  "media_files": [
+    "567d5e3c-68c0-4e4e-a079-853a5dc8385a"
+  ],
+  "started_at": "2026-06-21T16:08:33.770-05:00",
+  "finished_at": "2026-06-21T16:12:08.929-05:00",
+  "duration_seconds": 215.16,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"FloatingActionButton|fab|hide\\\\(|show\\\\(|setVisibility|Home|Documents|Images|APKs|Trash|drawer|navigation\",\n      \"finding\": \"Search tool rg was unavailable; repeated the search with PowerShell. The relevant hits were in MainActivity.java, MainFragment.java, TabFragment.java, Drawer.java, MenuMetadata.java, and main_toolbar.xml.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"inspect_layout_xml\",\n      \"target\": \"app/src/main/res/layout/main_toolbar.xml\",\n      \"finding\": \"The main FAB is a SpeedDialView with id fabs_menu. MainActivity owns this view and exposes it through getFAB()/showFab()/hideFab().\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/activities/MainActivity.java\",\n      \"finding\": \"MainActivity initializes the FAB in onCreate, routes the toolbar Home menu item to MainFragment.home(), and controls FAB visibility in showFab()/hideFab().\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/activities/MainActivity.java:1160\",\n      \"finding\": \"onOptionsItemSelected dispatches R.id.home to mainFragment.home(); this is the exact entry point for tapping the Home button in the bug report.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/activities/MainActivity.java:1541\",\n      \"finding\": \"showFab() checks getCurrentMainFragment().getHideFab(); if true, it calls hideFab() instead of showing the SpeedDialView.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java\",\n      \"finding\": \"MainFragment stores a fragment-local boolean hideFab, initialized from BUNDLE_HIDE_FAB, exposed by getHideFab(), and mutated only by setHideFab(boolean).\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java:432\",\n      \"finding\": \"MainFragment.home() only calls loadlist(home, false, OpenMode.FILE, false); it does not reset hideFab to false before returning to a normal filesystem path.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java:628\",\n      \"finding\": \"loadlist() asynchronously loads the requested path, then calls setListElements(). It does not alter the hideFab flag.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java:795\",\n      \"finding\": \"setListElements() updates currentPath/openMode and calls reloadListElements(); it does not reset hideFab.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java:813\",\n      \"finding\": \"reloadListElements() ends by calling requireMainActivity().showFab(), so FAB restoration depends entirely on the current MainFragment.hideFab value.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/views/drawer/Drawer.java\",\n      \"finding\": \"Drawer.refreshDrawer() creates storage/bookmark/cloud items with new MenuMetadata(..., false), but drawer category views like Images, Documents, APKs, Quick, Recent, and Trash Bin use new MenuMetadata(..., true).\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/views/drawer/MenuMetadata.java\",\n      \"finding\": \"MenuMetadata carries hideFabInMainFragment, confirming drawer entries deliberately indicate whether the MainFragment should hide the FAB.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/views/drawer/PendingPath.kt\",\n      \"finding\": \"PendingPath stores the selected drawer path plus hideFabInMainFragment for deferred drawer-close navigation.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"trace_call\",\n      \"target\": \"Drawer.onNavigationItemSelected() -> Drawer.onDrawerClosed()\",\n      \"finding\": \"Selecting a drawer category stores PendingPath(meta.path, true). On drawer close, the current MainFragment loads that category and then setHideFab(true), so the later reloadListElements()->showFab() correctly hides the FAB.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/views/drawer/Drawer.java:780\",\n      \"finding\": \"When reusing an existing MainFragment, Drawer.onDrawerClosed() calls loadlist(pendingPath...) and then mainFragment.setHideFab(pendingPath.getHideFabInMainFragment()). This explains how category views set the flag true.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/fragments/TabFragment.java\",\n      \"finding\": \"TabFragment passes BUNDLE_HIDE_FAB only when constructing new MainFragment instances. It does not affect the existing fragment reused by the Home action.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/fragments/data/MainFragmentViewModel.kt\",\n      \"finding\": \"MainFragmentViewModel tracks currentPath, home, and openMode, but it does not own FAB visibility state; hideFab is solely in MainFragment.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"trace_call\",\n      \"target\": \"R.id.home -> MainFragment.home() -> loadlist(home) -> reloadListElements() -> MainActivity.showFab()\",\n      \"finding\": \"After a category set hideFab=true, Home loads a normal OpenMode.FILE path but leaves hideFab=true. showFab() sees the stale flag and calls hideFab(), matching the reported FAB remaining hidden on Home.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"trace_call\",\n      \"target\": \"MainFragment.onListItemClicked(directory)\",\n      \"finding\": \"Opening a normal directory from Home calls loadlist(path, false, currentOpenMode, false) and also does not clear hideFab, so the hidden state persists into the directory view.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java:1080\",\n      \"finding\": \"goBack() explicitly calls setHideFab(false) before normal back navigation, which explains why an additional Back makes the FAB return.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"MainActivity.showFab() condition\",\n      \"finding\": \"The condition is not inherently faulty because category views intentionally require hideFab=true. The problem is stale state not being cleared when Home loads a normal filesystem path.\"\n    },\n    {\n      \"step\": 22,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"Drawer category metadata\",\n      \"finding\": \"Category metadata using new MenuMetadata(..., true) is expected behavior; the bug report says the FAB should be hidden in those views.\"\n    },\n    {\n      \"step\": 23,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"MainActivity.onOptionsItemSelected R.id.home dispatch\",\n      \"finding\": \"The dispatch to mainFragment.home() is correct; the missing behavior belongs inside the Home transition itself.\"\n    },\n    {\n      \"step\": 24,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"MainFragment.home() should clear hideFab before loading Home\",\n      \"finding\": \"The most likely fault is the Home path load statement because it transitions from a hide-FAB category to OpenMode.FILE without resetting the MainFragment.hideFab flag.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java\",\n      \"class\": \"MainFragment\",\n      \"method\": \"home()\",\n      \"line\": 433,\n      \"statement\": \"loadlist((mainFragmentViewModel.getHome()), false, OpenMode.FILE, false);\",\n      \"suspicion_score\": 0.95,\n      \"reasoning\": \"This statement performs the Home transition from a drawer category back to a normal filesystem path, but it does not clear the fragment's stale hideFab flag. Since reloadListElements() later calls MainActivity.showFab(), and showFab() hides the FAB whenever getHideFab() is still true, the Home and subsequent normal directory views keep the FAB hidden. Back navigation differs because goBack() explicitly calls setHideFab(false), which matches the report that Back restores the FAB.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java\",\n    \"class\": \"MainFragment\",\n    \"method\": \"home()\",\n    \"line\": 433,\n    \"statement\": \"loadlist((mainFragmentViewModel.getHome()), false, OpenMode.FILE, false);\",\n    \"confidence\": 0.95,\n    \"causal_chain\": \"Drawer category items such as Documents, Images, APKs, and Trash Bin are created with hideFabInMainFragment=true. Selecting one sets MainFragment.hideFab=true, so reloadListElements()->MainActivity.showFab() correctly hides the FAB. Tapping the toolbar Home button dispatches to MainFragment.home(), whose only statement loads the home filesystem path without calling setHideFab(false). When the Home load completes, reloadListElements() calls MainActivity.showFab(), but showFab() sees getHideFab()==true and hides the FAB again. Opening a normal directory from Home also only calls loadlist(), so the stale flag persists. Pressing Back calls goBack(), which does reset setHideFab(false), so the FAB finally returns.\",\n    \"fix_hint\": \"Clear the stale category state in MainFragment.home(), for example by calling setHideFab(false) before loadlist(home, false, OpenMode.FILE, false).\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "FloatingActionButton|fab|hide\\(|show\\(|setVisibility|Home|Documents|Images|APKs|Trash|drawer|navigation",
+        "finding": "Search tool rg was unavailable; repeated the search with PowerShell. The relevant hits were in MainActivity.java, MainFragment.java, TabFragment.java, Drawer.java, MenuMetadata.java, and main_toolbar.xml."
+      },
+      {
+        "step": 2,
+        "action": "inspect_layout_xml",
+        "target": "app/src/main/res/layout/main_toolbar.xml",
+        "finding": "The main FAB is a SpeedDialView with id fabs_menu. MainActivity owns this view and exposes it through getFAB()/showFab()/hideFab()."
+      },
+      {
+        "step": 3,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/activities/MainActivity.java",
+        "finding": "MainActivity initializes the FAB in onCreate, routes the toolbar Home menu item to MainFragment.home(), and controls FAB visibility in showFab()/hideFab()."
+      },
+      {
+        "step": 4,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/activities/MainActivity.java:1160",
+        "finding": "onOptionsItemSelected dispatches R.id.home to mainFragment.home(); this is the exact entry point for tapping the Home button in the bug report."
+      },
+      {
+        "step": 5,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/activities/MainActivity.java:1541",
+        "finding": "showFab() checks getCurrentMainFragment().getHideFab(); if true, it calls hideFab() instead of showing the SpeedDialView."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java",
+        "finding": "MainFragment stores a fragment-local boolean hideFab, initialized from BUNDLE_HIDE_FAB, exposed by getHideFab(), and mutated only by setHideFab(boolean)."
+      },
+      {
+        "step": 7,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java:432",
+        "finding": "MainFragment.home() only calls loadlist(home, false, OpenMode.FILE, false); it does not reset hideFab to false before returning to a normal filesystem path."
+      },
+      {
+        "step": 8,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java:628",
+        "finding": "loadlist() asynchronously loads the requested path, then calls setListElements(). It does not alter the hideFab flag."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java:795",
+        "finding": "setListElements() updates currentPath/openMode and calls reloadListElements(); it does not reset hideFab."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java:813",
+        "finding": "reloadListElements() ends by calling requireMainActivity().showFab(), so FAB restoration depends entirely on the current MainFragment.hideFab value."
+      },
+      {
+        "step": 11,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/views/drawer/Drawer.java",
+        "finding": "Drawer.refreshDrawer() creates storage/bookmark/cloud items with new MenuMetadata(..., false), but drawer category views like Images, Documents, APKs, Quick, Recent, and Trash Bin use new MenuMetadata(..., true)."
+      },
+      {
+        "step": 12,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/views/drawer/MenuMetadata.java",
+        "finding": "MenuMetadata carries hideFabInMainFragment, confirming drawer entries deliberately indicate whether the MainFragment should hide the FAB."
+      },
+      {
+        "step": 13,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/views/drawer/PendingPath.kt",
+        "finding": "PendingPath stores the selected drawer path plus hideFabInMainFragment for deferred drawer-close navigation."
+      },
+      {
+        "step": 14,
+        "action": "trace_call",
+        "target": "Drawer.onNavigationItemSelected() -> Drawer.onDrawerClosed()",
+        "finding": "Selecting a drawer category stores PendingPath(meta.path, true). On drawer close, the current MainFragment loads that category and then setHideFab(true), so the later reloadListElements()->showFab() correctly hides the FAB."
+      },
+      {
+        "step": 15,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/views/drawer/Drawer.java:780",
+        "finding": "When reusing an existing MainFragment, Drawer.onDrawerClosed() calls loadlist(pendingPath...) and then mainFragment.setHideFab(pendingPath.getHideFabInMainFragment()). This explains how category views set the flag true."
+      },
+      {
+        "step": 16,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/fragments/TabFragment.java",
+        "finding": "TabFragment passes BUNDLE_HIDE_FAB only when constructing new MainFragment instances. It does not affect the existing fragment reused by the Home action."
+      },
+      {
+        "step": 17,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/fragments/data/MainFragmentViewModel.kt",
+        "finding": "MainFragmentViewModel tracks currentPath, home, and openMode, but it does not own FAB visibility state; hideFab is solely in MainFragment."
+      },
+      {
+        "step": 18,
+        "action": "trace_call",
+        "target": "R.id.home -> MainFragment.home() -> loadlist(home) -> reloadListElements() -> MainActivity.showFab()",
+        "finding": "After a category set hideFab=true, Home loads a normal OpenMode.FILE path but leaves hideFab=true. showFab() sees the stale flag and calls hideFab(), matching the reported FAB remaining hidden on Home."
+      },
+      {
+        "step": 19,
+        "action": "trace_call",
+        "target": "MainFragment.onListItemClicked(directory)",
+        "finding": "Opening a normal directory from Home calls loadlist(path, false, currentOpenMode, false) and also does not clear hideFab, so the hidden state persists into the directory view."
+      },
+      {
+        "step": 20,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java:1080",
+        "finding": "goBack() explicitly calls setHideFab(false) before normal back navigation, which explains why an additional Back makes the FAB return."
+      },
+      {
+        "step": 21,
+        "action": "eliminate_candidate",
+        "target": "MainActivity.showFab() condition",
+        "finding": "The condition is not inherently faulty because category views intentionally require hideFab=true. The problem is stale state not being cleared when Home loads a normal filesystem path."
+      },
+      {
+        "step": 22,
+        "action": "eliminate_candidate",
+        "target": "Drawer category metadata",
+        "finding": "Category metadata using new MenuMetadata(..., true) is expected behavior; the bug report says the FAB should be hidden in those views."
+      },
+      {
+        "step": 23,
+        "action": "eliminate_candidate",
+        "target": "MainActivity.onOptionsItemSelected R.id.home dispatch",
+        "finding": "The dispatch to mainFragment.home() is correct; the missing behavior belongs inside the Home transition itself."
+      },
+      {
+        "step": 24,
+        "action": "form_hypothesis",
+        "target": "MainFragment.home() should clear hideFab before loading Home",
+        "finding": "The most likely fault is the Home path load statement because it transitions from a hide-FAB category to OpenMode.FILE without resetting the MainFragment.hideFab flag."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java",
+        "class": "MainFragment",
+        "method": "home()",
+        "line": 433,
+        "statement": "loadlist((mainFragmentViewModel.getHome()), false, OpenMode.FILE, false);",
+        "suspicion_score": 0.95,
+        "reasoning": "This statement performs the Home transition from a drawer category back to a normal filesystem path, but it does not clear the fragment's stale hideFab flag. Since reloadListElements() later calls MainActivity.showFab(), and showFab() hides the FAB whenever getHideFab() is still true, the Home and subsequent normal directory views keep the FAB hidden. Back navigation differs because goBack() explicitly calls setHideFab(false), which matches the report that Back restores the FAB."
+      }
+    ],
+    "final_answer": {
+      "file": "app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java",
+      "class": "MainFragment",
+      "method": "home()",
+      "line": 433,
+      "statement": "loadlist((mainFragmentViewModel.getHome()), false, OpenMode.FILE, false);",
+      "confidence": 0.95,
+      "causal_chain": "Drawer category items such as Documents, Images, APKs, and Trash Bin are created with hideFabInMainFragment=true. Selecting one sets MainFragment.hideFab=true, so reloadListElements()->MainActivity.showFab() correctly hides the FAB. Tapping the toolbar Home button dispatches to MainFragment.home(), whose only statement loads the home filesystem path without calling setHideFab(false). When the Home load completes, reloadListElements() calls MainActivity.showFab(), but showFab() sees getHideFab()==true and hides the FAB again. Opening a normal directory from Home also only calls loadlist(), so the stale flag persists. Pressing Back calls goBack(), which does reset setHideFab(false), so the FAB finally returns.",
+      "fix_hint": "Clear the stale category state in MainFragment.home(), for example by calling setHideFab(false) before loadlist(home, false, OpenMode.FILE, false)."
+    }
+  },
+  "error": null
+}

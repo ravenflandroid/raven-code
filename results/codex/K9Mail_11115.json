@@ -1,0 +1,224 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "K9Mail",
+  "issue_id": 11115,
+  "issue_url": "https://github.com/thunderbird/thunderbird-android/issues/11115",
+  "issue_title": "email sort order is wrong after opening attachment (reception date sorting)",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\thunderbird_thunderbird_android",
+  "media_files": [],
+  "started_at": "2026-06-22T14:45:09.646-05:00",
+  "finished_at": "2026-06-22T14:51:17.815-05:00",
+  "duration_seconds": 368.19,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"read_file\",\n      \"target\": \"README.md\",\n      \"finding\": \"Confirmed repository context: Thunderbird for Android and K-9 Mail share the same codebase under a white-label architecture.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"read_file\",\n      \"target\": \"docs/CONTRIBUTING.md\",\n      \"finding\": \"Confirmed project contribution/testing expectations; this task is static analysis only, so no code changes or Gradle tasks were needed.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"read_file\",\n      \"target\": \"docs/architecture/adr/0006-white-label-architecture.md\",\n      \"finding\": \"Confirmed K-9 Mail and Thunderbird share app-common and legacy/core functionality; the bug is likely in shared legacy mail/message code, not app-k9mail branding.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"read_file\",\n      \"target\": \"docs/architecture/adr/0009-api-internal-split.md\",\n      \"finding\": \"Confirmed module boundaries; legacy mailstore and backend code are valid areas to inspect for this existing message storage behavior.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"grep_pattern\",\n      \"target\": \"internal_date|internalDate|date_received|received_date|arrival_date|sort_date|MessageList|SortType\",\n      \"finding\": \"Found message-list arrival sorting uses the database column `internal_date`, especially in MessageListLoader and RetrieveMessageListOperations.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"grep_pattern\",\n      \"target\": \"openAttachment|viewAttachment|downloadAttachment|loadAttachment|fetchPart\",\n      \"finding\": \"Found the attachment view path in AttachmentController and the attachment download path in MessagingController.loadAttachment().\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListLoader.kt\",\n      \"finding\": \"In buildSortOrder(), `SortType.SORT_ARRIVAL` maps to `MessageColumns.INTERNAL_DATE`; in-memory cross-account sorting also compares `MessageListItem.internalDate`.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/storage/src/main/java/com/fsck/k9/storage/messages/RetrieveMessageListOperations.kt\",\n      \"finding\": \"Message-list queries select `internal_date` and apply the caller-provided ORDER BY; threaded lists aggregate with `MAX(internal_date)`.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt\",\n      \"finding\": \"Attachment clicks call `createAttachmentController(attachment).viewAttachment()`. The download-full-message button calls `messageLoaderHelper.downloadCompleteMessage()`.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/AttachmentController.java\",\n      \"finding\": \"If attachment content is unavailable, `viewAttachment()` calls `downloadAttachment()`, which invokes `MessagingController.loadAttachment(account, message, attachment.part, ...)`.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/controller/MessagingController.java\",\n      \"finding\": \"`loadAttachment()` fetches a part with `backend.fetchPart(...)`, then calls `localFolder.addPartToMessage(message, part)` and notifies listeners.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/mailstore/LocalFolder.java\",\n      \"finding\": \"`addPartToMessage()` locates an existing message part and calls `updateOrInsertMessagePart()`; this path updates `message_parts`, not the `messages.internal_date` column.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"LocalFolder.addPartToMessage() as direct cause\",\n      \"finding\": \"Eliminated as the primary fault for reception-date changes because it never writes the parent message row or `internal_date`; it can only trigger a list refresh.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageLoaderHelper.java\",\n      \"finding\": \"`downloadCompleteMessage()` calls `startDownloadingMessageBody(true)`, which calls `MessagingController.loadMessageRemote(...)`.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/controller/MessagingController.java\",\n      \"finding\": \"`loadMessageRemoteSynchronous(..., loadPartialFromSearch=false)` calls `backend.downloadCompleteMessage(folderServerId, messageServerId)`.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"read_file\",\n      \"target\": \"backend/imap/src/main/java/com/fsck/k9/backend/imap/CommandDownloadMessage.kt\",\n      \"finding\": \"`downloadCompleteMessage()` creates a fresh `ImapMessage`, fetches only `FLAGS` and `BODY`, then saves it as `MessageDownloadState.FULL`.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"read_file\",\n      \"target\": \"mail/protocols/imap/src/main/java/com/fsck/k9/mail/store/imap/RealImapFolder.kt\",\n      \"finding\": \"`INTERNALDATE` is added to IMAP FETCH fields only when the fetch profile contains `ENVELOPE`; a BODY-only fetch adds `BODY.PEEK[]` but not `INTERNALDATE`.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"read_file\",\n      \"target\": \"mail/common/src/main/java/com/fsck/k9/mail/Message.java\",\n      \"finding\": \"Message.internalDate defaults to null until explicitly set through `setInternalDate()`.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"trace_call\",\n      \"target\": \"CommandDownloadMessage.downloadCompleteMessage() -> K9BackendFolder.saveMessage()\",\n      \"finding\": \"The full-message download saves a freshly fetched message object that may have no internal date because the fetch did not request `INTERNALDATE`.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/mailstore/K9BackendFolder.kt\",\n      \"finding\": \"`saveMessage()` converts the backend `Message` to `SaveMessageData` through `SaveMessageDataCreator.createSaveMessageData()` and calls `messageStore.saveRemoteMessage()`.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/mailstore/SaveMessageDataCreator.kt\",\n      \"finding\": \"`createSaveMessageData()` computes `now = System.currentTimeMillis()` and sets `internalDate = message.internalDate?.time ?: now`.\"\n    },\n    {\n      \"step\": 22,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/mailstore/src/main/java/app/k9mail/legacy/mailstore/SaveMessageData.kt\",\n      \"finding\": \"SaveMessageData carries the computed `internalDate` to storage as a non-null Long.\"\n    },\n    {\n      \"step\": 23,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/storage/src/main/java/com/fsck/k9/storage/messages/SaveMessageOperations.kt\",\n      \"finding\": \"`saveMessage()` writes `put(\\\"internal_date\\\", messageData.internalDate)` and uses `database.replace(...)` when replacing an existing message.\"\n    },\n    {\n      \"step\": 24,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Missing internal date on full-message download is converted to current wall-clock time\",\n      \"finding\": \"When the older message is downloaded fully before opening/viewing the attachment, the fresh backend message lacks `internalDate`; SaveMessageDataCreator substitutes current time, and SaveMessageOperations replaces the existing message row with that new `internal_date`.\"\n    },\n    {\n      \"step\": 25,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"Message-list sorting implementation\",\n      \"finding\": \"Sorting by `internal_date DESC` is consistent with the user's selected reception-date sort. The wrong order follows from corrupted `internal_date`, not a reversed comparator or wrong sort column.\"\n    },\n    {\n      \"step\": 26,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"CommandDownloadMessage.kt line 42 as sole fault\",\n      \"finding\": \"The missing `ENVELOPE`/`INTERNALDATE` fetch contributes to the bug, but the exact statement that turns absence into a new reception date is the fallback to `now` in SaveMessageDataCreator.\"\n    },\n    {\n      \"step\": 27,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Final fault statement\",\n      \"finding\": \"The most likely fault is `val internalDate = message.internalDate?.time ?: now` because it assigns the current time to an existing downloaded message when `internalDate` is missing, causing arrival-date sorting to move it to the top.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"legacy/core/src/main/java/com/fsck/k9/mailstore/SaveMessageDataCreator.kt\",\n      \"class\": \"SaveMessageDataCreator\",\n      \"method\": \"createSaveMessageData(Message message, MessageDownloadState downloadState, String? subject)\",\n      \"line\": 24,\n      \"statement\": \"val internalDate = message.internalDate?.time ?: now\",\n      \"suspicion_score\": 0.94,\n      \"reasoning\": \"This statement converts a missing backend internal date into the current time. During on-demand full-message download, the IMAP command fetches BODY without INTERNALDATE, so replacing the existing local row stores `now` as `messages.internal_date`. Since reception-date sorting uses `internal_date`, the older message jumps to the top.\"\n    },\n    {\n      \"rank\": 2,\n      \"file\": \"backend/imap/src/main/java/com/fsck/k9/backend/imap/CommandDownloadMessage.kt\",\n      \"class\": \"CommandDownloadMessage\",\n      \"method\": \"downloadCompleteMessage(String folderServerId, String messageServerId)\",\n      \"line\": 42,\n      \"statement\": \"fetchMessage(folder, message, fetchProfileOf(FLAGS, BODY))\",\n      \"suspicion_score\": 0.82,\n      \"reasoning\": \"This fetch omits ENVELOPE, and RealImapFolder only requests INTERNALDATE for ENVELOPE fetches. It creates the missing internalDate condition, but the visible wrong reception date is ultimately produced when SaveMessageDataCreator substitutes current time.\"\n    },\n    {\n      \"rank\": 3,\n      \"file\": \"legacy/storage/src/main/java/com/fsck/k9/storage/messages/SaveMessageOperations.kt\",\n      \"class\": \"SaveMessageOperations\",\n      \"method\": \"saveMessage(SQLiteDatabase database, Long folderId, String messageServerId, Long rootMessagePartId, SaveMessageData messageData, Long? replaceMessageId)\",\n      \"line\": 400,\n      \"statement\": \"put(\\\"internal_date\\\", messageData.internalDate)\",\n      \"suspicion_score\": 0.72,\n      \"reasoning\": \"This writes the bad computed value to the database and database.replace() later overwrites the existing row. However, the statement is a normal persistence assignment; the faulty decision is creating `messageData.internalDate` from current time when the message lacks an internal date.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"legacy/core/src/main/java/com/fsck/k9/mailstore/SaveMessageDataCreator.kt\",\n    \"class\": \"SaveMessageDataCreator\",\n    \"method\": \"createSaveMessageData(Message message, MessageDownloadState downloadState, String? subject)\",\n    \"line\": 24,\n    \"statement\": \"val internalDate = message.internalDate?.time ?: now\",\n    \"confidence\": 0.94,\n    \"causal_chain\": \"User opens an older message with an attachment and may need to download the full message. MessageViewFragment calls MessageLoaderHelper.downloadCompleteMessage(), which calls MessagingController.loadMessageRemote(). For IMAP, CommandDownloadMessage.downloadCompleteMessage() creates a fresh ImapMessage and fetches FLAGS+BODY, not ENVELOPE, so RealImapFolder does not request or set INTERNALDATE. K9BackendFolder.saveMessage() then calls SaveMessageDataCreator.createSaveMessageData(); because message.internalDate is null, line 24 substitutes System.currentTimeMillis(). SaveMessageOperations saves/replaces the existing message row with that value in messages.internal_date. MessageListLoader uses internal_date for SortType.SORT_ARRIVAL, so the older message now sorts as newly received and appears first after returning to the list.\",\n    \"fix_hint\": \"When saving a replacement remote message with no internalDate, preserve the existing stored internal_date or fetch INTERNALDATE during full-message download instead of defaulting to the current time.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "read_file",
+        "target": "README.md",
+        "finding": "Confirmed repository context: Thunderbird for Android and K-9 Mail share the same codebase under a white-label architecture."
+      },
+      {
+        "step": 2,
+        "action": "read_file",
+        "target": "docs/CONTRIBUTING.md",
+        "finding": "Confirmed project contribution/testing expectations; this task is static analysis only, so no code changes or Gradle tasks were needed."
+      },
+      {
+        "step": 3,
+        "action": "read_file",
+        "target": "docs/architecture/adr/0006-white-label-architecture.md",
+        "finding": "Confirmed K-9 Mail and Thunderbird share app-common and legacy/core functionality; the bug is likely in shared legacy mail/message code, not app-k9mail branding."
+      },
+      {
+        "step": 4,
+        "action": "read_file",
+        "target": "docs/architecture/adr/0009-api-internal-split.md",
+        "finding": "Confirmed module boundaries; legacy mailstore and backend code are valid areas to inspect for this existing message storage behavior."
+      },
+      {
+        "step": 5,
+        "action": "grep_pattern",
+        "target": "internal_date|internalDate|date_received|received_date|arrival_date|sort_date|MessageList|SortType",
+        "finding": "Found message-list arrival sorting uses the database column `internal_date`, especially in MessageListLoader and RetrieveMessageListOperations."
+      },
+      {
+        "step": 6,
+        "action": "grep_pattern",
+        "target": "openAttachment|viewAttachment|downloadAttachment|loadAttachment|fetchPart",
+        "finding": "Found the attachment view path in AttachmentController and the attachment download path in MessagingController.loadAttachment()."
+      },
+      {
+        "step": 7,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListLoader.kt",
+        "finding": "In buildSortOrder(), `SortType.SORT_ARRIVAL` maps to `MessageColumns.INTERNAL_DATE`; in-memory cross-account sorting also compares `MessageListItem.internalDate`."
+      },
+      {
+        "step": 8,
+        "action": "read_file",
+        "target": "legacy/storage/src/main/java/com/fsck/k9/storage/messages/RetrieveMessageListOperations.kt",
+        "finding": "Message-list queries select `internal_date` and apply the caller-provided ORDER BY; threaded lists aggregate with `MAX(internal_date)`."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt",
+        "finding": "Attachment clicks call `createAttachmentController(attachment).viewAttachment()`. The download-full-message button calls `messageLoaderHelper.downloadCompleteMessage()`."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/AttachmentController.java",
+        "finding": "If attachment content is unavailable, `viewAttachment()` calls `downloadAttachment()`, which invokes `MessagingController.loadAttachment(account, message, attachment.part, ...)`."
+      },
+      {
+        "step": 11,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/controller/MessagingController.java",
+        "finding": "`loadAttachment()` fetches a part with `backend.fetchPart(...)`, then calls `localFolder.addPartToMessage(message, part)` and notifies listeners."
+      },
+      {
+        "step": 12,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/mailstore/LocalFolder.java",
+        "finding": "`addPartToMessage()` locates an existing message part and calls `updateOrInsertMessagePart()`; this path updates `message_parts`, not the `messages.internal_date` column."
+      },
+      {
+        "step": 13,
+        "action": "eliminate_candidate",
+        "target": "LocalFolder.addPartToMessage() as direct cause",
+        "finding": "Eliminated as the primary fault for reception-date changes because it never writes the parent message row or `internal_date`; it can only trigger a list refresh."
+      },
+      {
+        "step": 14,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageLoaderHelper.java",
+        "finding": "`downloadCompleteMessage()` calls `startDownloadingMessageBody(true)`, which calls `MessagingController.loadMessageRemote(...)`."
+      },
+      {
+        "step": 15,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/controller/MessagingController.java",
+        "finding": "`loadMessageRemoteSynchronous(..., loadPartialFromSearch=false)` calls `backend.downloadCompleteMessage(folderServerId, messageServerId)`."
+      },
+      {
+        "step": 16,
+        "action": "read_file",
+        "target": "backend/imap/src/main/java/com/fsck/k9/backend/imap/CommandDownloadMessage.kt",
+        "finding": "`downloadCompleteMessage()` creates a fresh `ImapMessage`, fetches only `FLAGS` and `BODY`, then saves it as `MessageDownloadState.FULL`."
+      },
+      {
+        "step": 17,
+        "action": "read_file",
+        "target": "mail/protocols/imap/src/main/java/com/fsck/k9/mail/store/imap/RealImapFolder.kt",
+        "finding": "`INTERNALDATE` is added to IMAP FETCH fields only when the fetch profile contains `ENVELOPE`; a BODY-only fetch adds `BODY.PEEK[]` but not `INTERNALDATE`."
+      },
+      {
+        "step": 18,
+        "action": "read_file",
+        "target": "mail/common/src/main/java/com/fsck/k9/mail/Message.java",
+        "finding": "Message.internalDate defaults to null until explicitly set through `setInternalDate()`."
+      },
+      {
+        "step": 19,
+        "action": "trace_call",
+        "target": "CommandDownloadMessage.downloadCompleteMessage() -> K9BackendFolder.saveMessage()",
+        "finding": "The full-message download saves a freshly fetched message object that may have no internal date because the fetch did not request `INTERNALDATE`."
+      },
+      {
+        "step": 20,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/mailstore/K9BackendFolder.kt",
+        "finding": "`saveMessage()` converts the backend `Message` to `SaveMessageData` through `SaveMessageDataCreator.createSaveMessageData()` and calls `messageStore.saveRemoteMessage()`."
+      },
+      {
+        "step": 21,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/mailstore/SaveMessageDataCreator.kt",
+        "finding": "`createSaveMessageData()` computes `now = System.currentTimeMillis()` and sets `internalDate = message.internalDate?.time ?: now`."
+      },
+      {
+        "step": 22,
+        "action": "read_file",
+        "target": "legacy/mailstore/src/main/java/app/k9mail/legacy/mailstore/SaveMessageData.kt",
+        "finding": "SaveMessageData carries the computed `internalDate` to storage as a non-null Long."
+      },
+      {
+        "step": 23,
+        "action": "read_file",
+        "target": "legacy/storage/src/main/java/com/fsck/k9/storage/messages/SaveMessageOperations.kt",
+        "finding": "`saveMessage()` writes `put(\"internal_date\", messageData.internalDate)` and uses `database.replace(...)` when replacing an existing message."
+      },
+      {
+        "step": 24,
+        "action": "form_hypothesis",
+        "target": "Missing internal date on full-message download is converted to current wall-clock time",
+        "finding": "When the older message is downloaded fully before opening/viewing the attachment, the fresh backend message lacks `internalDate`; SaveMessageDataCreator substitutes current time, and SaveMessageOperations replaces the existing message row with that new `internal_date`."
+      },
+      {
+        "step": 25,
+        "action": "eliminate_candidate",
+        "target": "Message-list sorting implementation",
+        "finding": "Sorting by `internal_date DESC` is consistent with the user's selected reception-date sort. The wrong order follows from corrupted `internal_date`, not a reversed comparator or wrong sort column."
+      },
+      {
+        "step": 26,
+        "action": "eliminate_candidate",
+        "target": "CommandDownloadMessage.kt line 42 as sole fault",
+        "finding": "The missing `ENVELOPE`/`INTERNALDATE` fetch contributes to the bug, but the exact statement that turns absence into a new reception date is the fallback to `now` in SaveMessageDataCreator."
+      },
+      {
+        "step": 27,
+        "action": "form_hypothesis",
+        "target": "Final fault statement",
+        "finding": "The most likely fault is `val internalDate = message.internalDate?.time ?: now` because it assigns the current time to an existing downloaded message when `internalDate` is missing, causing arrival-date sorting to move it to the top."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "legacy/core/src/main/java/com/fsck/k9/mailstore/SaveMessageDataCreator.kt",
+        "class": "SaveMessageDataCreator",
+        "method": "createSaveMessageData(Message message, MessageDownloadState downloadState, String? subject)",
+        "line": 24,
+        "statement": "val internalDate = message.internalDate?.time ?: now",
+        "suspicion_score": 0.94,
+        "reasoning": "This statement converts a missing backend internal date into the current time. During on-demand full-message download, the IMAP command fetches BODY without INTERNALDATE, so replacing the existing local row stores `now` as `messages.internal_date`. Since reception-date sorting uses `internal_date`, the older message jumps to the top."
+      },
+      {
+        "rank": 2,
+        "file": "backend/imap/src/main/java/com/fsck/k9/backend/imap/CommandDownloadMessage.kt",
+        "class": "CommandDownloadMessage",
+        "method": "downloadCompleteMessage(String folderServerId, String messageServerId)",
+        "line": 42,
+        "statement": "fetchMessage(folder, message, fetchProfileOf(FLAGS, BODY))",
+        "suspicion_score": 0.82,
+        "reasoning": "This fetch omits ENVELOPE, and RealImapFolder only requests INTERNALDATE for ENVELOPE fetches. It creates the missing internalDate condition, but the visible wrong reception date is ultimately produced when SaveMessageDataCreator substitutes current time."
+      },
+      {
+        "rank": 3,
+        "file": "legacy/storage/src/main/java/com/fsck/k9/storage/messages/SaveMessageOperations.kt",
+        "class": "SaveMessageOperations",
+        "method": "saveMessage(SQLiteDatabase database, Long folderId, String messageServerId, Long rootMessagePartId, SaveMessageData messageData, Long? replaceMessageId)",
+        "line": 400,
+        "statement": "put(\"internal_date\", messageData.internalDate)",
+        "suspicion_score": 0.72,
+        "reasoning": "This writes the bad computed value to the database and database.replace() later overwrites the existing row. However, the statement is a normal persistence assignment; the faulty decision is creating `messageData.internalDate` from current time when the message lacks an internal date."
+      }
+    ],
+    "final_answer": {
+      "file": "legacy/core/src/main/java/com/fsck/k9/mailstore/SaveMessageDataCreator.kt",
+      "class": "SaveMessageDataCreator",
+      "method": "createSaveMessageData(Message message, MessageDownloadState downloadState, String? subject)",
+      "line": 24,
+      "statement": "val internalDate = message.internalDate?.time ?: now",
+      "confidence": 0.94,
+      "causal_chain": "User opens an older message with an attachment and may need to download the full message. MessageViewFragment calls MessageLoaderHelper.downloadCompleteMessage(), which calls MessagingController.loadMessageRemote(). For IMAP, CommandDownloadMessage.downloadCompleteMessage() creates a fresh ImapMessage and fetches FLAGS+BODY, not ENVELOPE, so RealImapFolder does not request or set INTERNALDATE. K9BackendFolder.saveMessage() then calls SaveMessageDataCreator.createSaveMessageData(); because message.internalDate is null, line 24 substitutes System.currentTimeMillis(). SaveMessageOperations saves/replaces the existing message row with that value in messages.internal_date. MessageListLoader uses internal_date for SortType.SORT_ARRIVAL, so the older message now sorts as newly received and appears first after returning to the list.",
+      "fix_hint": "When saving a replacement remote message with no internalDate, preserve the existing stored internal_date or fetch INTERNALDATE during full-message download instead of defaulting to the current time."
+    }
+  },
+  "error": null
+}

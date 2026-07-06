@@ -1,0 +1,147 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "NewPipe",
+  "issue_id": 13439,
+  "issue_url": "https://github.com/TeamNewPipe/NewPipe/issues/13439",
+  "issue_title": "History page title does not reflect current mode on first entry",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\TeamNewPipe_NewPipe",
+  "media_files": [
+    "0d1c0691-2c9f-483d-a4b9-c163acbead4c",
+    "6bf5cb59-ee97-4c9c-af3c-a0b95d6e2d1c"
+  ],
+  "started_at": "2026-06-22T15:30:28.152-05:00",
+  "finished_at": "2026-06-22T15:33:50.474-05:00",
+  "duration_seconds": 202.33,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"History|Last Played|Most Played|last played|most played|history\",\n      \"finding\": \"Initial recursive text search was attempted but `rg` was unavailable; switched to local PowerShell search as required by the closed-box constraint.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"grep_pattern\",\n      \"target\": \"most_played|last_played|title_activity_history|action_history\",\n      \"finding\": \"Found the relevant UI strings and their use in `app/src/main/java/org/schabi/newpipe/local/history/StatisticsPlaylistFragment.java`: default sort mode is LAST_PLAYED, initial generic History title is set in onResume(), and mode-specific titles are set during initViews() and toggleSortMode().\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"grep_pattern\",\n      \"target\": \"*History*.java,*History*.kt\",\n      \"finding\": \"The only concrete History UI component with the reported Last Played / Most Played behavior is `StatisticsPlaylistFragment.java`; other History files are database/settings helpers.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/local/history/StatisticsPlaylistFragment.java\",\n      \"finding\": \"The fragment declares `private StatisticSortMode sortMode = StatisticSortMode.LAST_PLAYED;`, so the initial mode is Last Played. `processResult()` sorts by latest access date for LAST_PLAYED. `initViews()` sets title to `title_last_played` only when not used as front page. `onResume()` unconditionally overwrites the title with `title_activity_history` when activity is non-null.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"inspect_layout_xml\",\n      \"target\": \"app/src/main/res/layout/statistic_playlist_control.xml\",\n      \"finding\": \"The initial sort button text is `@string/title_most_played`, matching the report that the button offers the alternate mode while the current mode is Last Played. This confirms the UI state itself is Last Played initially.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/settings/tabs/Tab.java\",\n      \"finding\": \"`HistoryTab.getFragment()` returns a new `StatisticsPlaylistFragment`, and `HistoryTab.getTabName()` returns `title_activity_history`. This explains the tab/drawer label but not the standalone History page title mismatch after entering the page.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/util/NavigationHelper.java\",\n      \"finding\": \"`openStatisticFragment(FragmentManager)` replaces `R.id.fragment_holder` with a new `StatisticsPlaylistFragment` and adds it to the back stack. It does not set the title itself.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/MainActivity.java\",\n      \"finding\": \"The drawer menu adds a History item with `R.string.action_history`; selecting it calls `NavigationHelper.openStatisticFragment(getSupportFragmentManager())`. No mode-specific title is passed through navigation.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/local/BaseLocalListFragment.java\",\n      \"finding\": \"`BaseLocalListFragment.onResume()` only refreshes list view mode flags and does not set the action bar title. It does not explain the History title overwrite.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/BaseFragment.java\",\n      \"finding\": \"`BaseFragment.setTitle(String)` writes to the activity support action bar only when `!useAsFrontPage`. Thus, title writes inside a standalone History page are effective, while front-page tab title writes from child fragments are intentionally ignored.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/fragments/MainFragment.java\",\n      \"finding\": \"When History is used as a main tab, `SelectedTabsPagerAdapter.getItem()` marks the fragment with `useAsFrontPage(true)` and `MainFragment.updateTitleForTab()` uses the tab name. The reported drawer flow opens the fragment standalone, so `useAsFrontPage` stays false and `StatisticsPlaylistFragment.onResume()` controls the title.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"trace_call\",\n      \"target\": \"MainActivity.tabSelected() -> NavigationHelper.openStatisticFragment() -> StatisticsPlaylistFragment lifecycle\",\n      \"finding\": \"Selecting History from the drawer constructs a standalone `StatisticsPlaylistFragment`. During view creation, `initViews()` can set `Last Played`; then during resume, `onResume()` sets `History`, leaving the toolbar inconsistent with the actual `sortMode = LAST_PLAYED`.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"trace_call\",\n      \"target\": \"StatisticsPlaylistFragment.toggleSortMode()\",\n      \"finding\": \"The toggle handler changes `sortMode` and explicitly calls `setTitle(getString(R.string.title_most_played))` or `setTitle(getString(R.string.title_last_played))`, exactly matching the report that after switching modes once the title becomes correct.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Wrong initial title assignment in StatisticsPlaylistFragment.onResume()\",\n      \"finding\": \"The likely fault is not data sorting or button state; it is the generic `History` title assignment in `onResume()` overwriting the mode-specific initial title.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"app/src/main/res/layout/statistic_playlist_control.xml line 33\",\n      \"finding\": \"The layout's initial button text `title_most_played` is correct because the current mode is Last Played and the button offers switching to Most Played.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/settings/tabs/Tab.java HistoryTab.getTabName()\",\n      \"finding\": \"The generic History tab name is appropriate for the main tab/navigation label and is not the direct standalone toolbar write during the reported page entry.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/local/history/StatisticsPlaylistFragment.java initViews() line 124\",\n      \"finding\": \"`setTitle(getString(R.string.title_last_played))` is the expected title for the initial LAST_PLAYED mode; it is later overwritten by onResume(), so it is not the fault.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"app/src/main/java/org/schabi/newpipe/local/history/StatisticsPlaylistFragment.java\",\n      \"class\": \"StatisticsPlaylistFragment\",\n      \"method\": \"onResume()\",\n      \"line\": 105,\n      \"statement\": \"setTitle(activity.getString(R.string.title_activity_history));\",\n      \"suspicion_score\": 0.96,\n      \"reasoning\": \"The fragment's initial `sortMode` is `LAST_PLAYED`, and the sort button initially displays `Most Played`, confirming the current display mode is Last Played. `initViews()` sets the correct title to `title_last_played`, but `onResume()` then overwrites the toolbar title with the generic `title_activity_history`. Later mode toggles call mode-specific `setTitle(...)`, which explains why the title becomes correct only after switching modes once.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"app/src/main/java/org/schabi/newpipe/local/history/StatisticsPlaylistFragment.java\",\n    \"class\": \"StatisticsPlaylistFragment\",\n    \"method\": \"onResume()\",\n    \"line\": 105,\n    \"statement\": \"setTitle(activity.getString(R.string.title_activity_history));\",\n    \"confidence\": 0.96,\n    \"causal_chain\": \"User selects History from the drawer; `MainActivity.tabSelected()` calls `NavigationHelper.openStatisticFragment()`, which creates a standalone `StatisticsPlaylistFragment`; the fragment starts with `sortMode = StatisticSortMode.LAST_PLAYED`; the header layout initially shows the alternate action `Most Played`, confirming Last Played is current; `initViews()` sets the toolbar to `Last Played`; then `onResume()` runs and overwrites the toolbar with the generic `History` string; when the user presses the sort button, `toggleSortMode()` sets both `sortMode` and the toolbar title to the selected mode, so subsequent titles are correct.\",\n    \"fix_hint\": \"Change the `onResume()` title assignment to use the current `sortMode` title, or remove/adjust it so it does not overwrite the mode-specific initial `Last Played` title for standalone History pages.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "History|Last Played|Most Played|last played|most played|history",
+        "finding": "Initial recursive text search was attempted but `rg` was unavailable; switched to local PowerShell search as required by the closed-box constraint."
+      },
+      {
+        "step": 2,
+        "action": "grep_pattern",
+        "target": "most_played|last_played|title_activity_history|action_history",
+        "finding": "Found the relevant UI strings and their use in `app/src/main/java/org/schabi/newpipe/local/history/StatisticsPlaylistFragment.java`: default sort mode is LAST_PLAYED, initial generic History title is set in onResume(), and mode-specific titles are set during initViews() and toggleSortMode()."
+      },
+      {
+        "step": 3,
+        "action": "grep_pattern",
+        "target": "*History*.java,*History*.kt",
+        "finding": "The only concrete History UI component with the reported Last Played / Most Played behavior is `StatisticsPlaylistFragment.java`; other History files are database/settings helpers."
+      },
+      {
+        "step": 4,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/local/history/StatisticsPlaylistFragment.java",
+        "finding": "The fragment declares `private StatisticSortMode sortMode = StatisticSortMode.LAST_PLAYED;`, so the initial mode is Last Played. `processResult()` sorts by latest access date for LAST_PLAYED. `initViews()` sets title to `title_last_played` only when not used as front page. `onResume()` unconditionally overwrites the title with `title_activity_history` when activity is non-null."
+      },
+      {
+        "step": 5,
+        "action": "inspect_layout_xml",
+        "target": "app/src/main/res/layout/statistic_playlist_control.xml",
+        "finding": "The initial sort button text is `@string/title_most_played`, matching the report that the button offers the alternate mode while the current mode is Last Played. This confirms the UI state itself is Last Played initially."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/settings/tabs/Tab.java",
+        "finding": "`HistoryTab.getFragment()` returns a new `StatisticsPlaylistFragment`, and `HistoryTab.getTabName()` returns `title_activity_history`. This explains the tab/drawer label but not the standalone History page title mismatch after entering the page."
+      },
+      {
+        "step": 7,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/util/NavigationHelper.java",
+        "finding": "`openStatisticFragment(FragmentManager)` replaces `R.id.fragment_holder` with a new `StatisticsPlaylistFragment` and adds it to the back stack. It does not set the title itself."
+      },
+      {
+        "step": 8,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/MainActivity.java",
+        "finding": "The drawer menu adds a History item with `R.string.action_history`; selecting it calls `NavigationHelper.openStatisticFragment(getSupportFragmentManager())`. No mode-specific title is passed through navigation."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/local/BaseLocalListFragment.java",
+        "finding": "`BaseLocalListFragment.onResume()` only refreshes list view mode flags and does not set the action bar title. It does not explain the History title overwrite."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/BaseFragment.java",
+        "finding": "`BaseFragment.setTitle(String)` writes to the activity support action bar only when `!useAsFrontPage`. Thus, title writes inside a standalone History page are effective, while front-page tab title writes from child fragments are intentionally ignored."
+      },
+      {
+        "step": 11,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/fragments/MainFragment.java",
+        "finding": "When History is used as a main tab, `SelectedTabsPagerAdapter.getItem()` marks the fragment with `useAsFrontPage(true)` and `MainFragment.updateTitleForTab()` uses the tab name. The reported drawer flow opens the fragment standalone, so `useAsFrontPage` stays false and `StatisticsPlaylistFragment.onResume()` controls the title."
+      },
+      {
+        "step": 12,
+        "action": "trace_call",
+        "target": "MainActivity.tabSelected() -> NavigationHelper.openStatisticFragment() -> StatisticsPlaylistFragment lifecycle",
+        "finding": "Selecting History from the drawer constructs a standalone `StatisticsPlaylistFragment`. During view creation, `initViews()` can set `Last Played`; then during resume, `onResume()` sets `History`, leaving the toolbar inconsistent with the actual `sortMode = LAST_PLAYED`."
+      },
+      {
+        "step": 13,
+        "action": "trace_call",
+        "target": "StatisticsPlaylistFragment.toggleSortMode()",
+        "finding": "The toggle handler changes `sortMode` and explicitly calls `setTitle(getString(R.string.title_most_played))` or `setTitle(getString(R.string.title_last_played))`, exactly matching the report that after switching modes once the title becomes correct."
+      },
+      {
+        "step": 14,
+        "action": "form_hypothesis",
+        "target": "Wrong initial title assignment in StatisticsPlaylistFragment.onResume()",
+        "finding": "The likely fault is not data sorting or button state; it is the generic `History` title assignment in `onResume()` overwriting the mode-specific initial title."
+      },
+      {
+        "step": 15,
+        "action": "eliminate_candidate",
+        "target": "app/src/main/res/layout/statistic_playlist_control.xml line 33",
+        "finding": "The layout's initial button text `title_most_played` is correct because the current mode is Last Played and the button offers switching to Most Played."
+      },
+      {
+        "step": 16,
+        "action": "eliminate_candidate",
+        "target": "app/src/main/java/org/schabi/newpipe/settings/tabs/Tab.java HistoryTab.getTabName()",
+        "finding": "The generic History tab name is appropriate for the main tab/navigation label and is not the direct standalone toolbar write during the reported page entry."
+      },
+      {
+        "step": 17,
+        "action": "eliminate_candidate",
+        "target": "app/src/main/java/org/schabi/newpipe/local/history/StatisticsPlaylistFragment.java initViews() line 124",
+        "finding": "`setTitle(getString(R.string.title_last_played))` is the expected title for the initial LAST_PLAYED mode; it is later overwritten by onResume(), so it is not the fault."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "app/src/main/java/org/schabi/newpipe/local/history/StatisticsPlaylistFragment.java",
+        "class": "StatisticsPlaylistFragment",
+        "method": "onResume()",
+        "line": 105,
+        "statement": "setTitle(activity.getString(R.string.title_activity_history));",
+        "suspicion_score": 0.96,
+        "reasoning": "The fragment's initial `sortMode` is `LAST_PLAYED`, and the sort button initially displays `Most Played`, confirming the current display mode is Last Played. `initViews()` sets the correct title to `title_last_played`, but `onResume()` then overwrites the toolbar title with the generic `title_activity_history`. Later mode toggles call mode-specific `setTitle(...)`, which explains why the title becomes correct only after switching modes once."
+      }
+    ],
+    "final_answer": {
+      "file": "app/src/main/java/org/schabi/newpipe/local/history/StatisticsPlaylistFragment.java",
+      "class": "StatisticsPlaylistFragment",
+      "method": "onResume()",
+      "line": 105,
+      "statement": "setTitle(activity.getString(R.string.title_activity_history));",
+      "confidence": 0.96,
+      "causal_chain": "User selects History from the drawer; `MainActivity.tabSelected()` calls `NavigationHelper.openStatisticFragment()`, which creates a standalone `StatisticsPlaylistFragment`; the fragment starts with `sortMode = StatisticSortMode.LAST_PLAYED`; the header layout initially shows the alternate action `Most Played`, confirming Last Played is current; `initViews()` sets the toolbar to `Last Played`; then `onResume()` runs and overwrites the toolbar with the generic `History` string; when the user presses the sort button, `toggleSortMode()` sets both `sortMode` and the toolbar title to the selected mode, so subsequent titles are correct.",
+      "fix_hint": "Change the `onResume()` title assignment to use the current `sortMode` title, or remove/adjust it so it does not overwrite the mode-specific initial `Last Played` title for standalone History pages."
+    }
+  },
+  "error": null
+}

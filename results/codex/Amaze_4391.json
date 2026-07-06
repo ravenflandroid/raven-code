@@ -1,0 +1,194 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "Amaze",
+  "issue_id": 4391,
+  "issue_url": "https://github.com/TeamAmaze/AmazeFileManager/issues/4391",
+  "issue_title": "File not deleted from \"Documents\" directory, ends up duplicated in Trash",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\TeamAmaze_AmazeFileManager",
+  "media_files": [
+    "7353d167-58c8-49ed-bdee-f5e22f837121"
+  ],
+  "started_at": "2026-06-21T16:42:53.309-05:00",
+  "finished_at": "2026-06-21T16:49:00.490-05:00",
+  "duration_seconds": 367.17,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"Documents|Trash|trash|delete|Deleting|Done\",\n      \"finding\": \"The broad repo search was noisy due to localized strings, but it identified the relevant delete/trash classes: DeleteTask, HybridFile, AppConfig, LoadFilesListTask, Drawer, and dialog/action-mode call sites.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/DeleteTask.java\",\n      \"finding\": \"DeleteTask shows the user-facing delete flow: doInBackground calls doDeleteFile(), then scans media files, and onPostExecute shows the Done toast when the result is true.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/DeleteOperation.kt\",\n      \"finding\": \"Permanent local deletion delegates to rmdir()/file.delete()/SAF fallbacks, but this is not the default path when delete-permanently is unchecked.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"grep_pattern\",\n      \"target\": \"trash|Trash|DeleteTask|DeleteOperation|moveToTrash|deleteFiles|deleteFile\",\n      \"finding\": \"The normal non-permanent delete path reaches HybridFile.moveToBin(). Trash bin list loading is handled separately by LoadFilesListTask.listTrashBinFiles().\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/HybridFile.java\",\n      \"finding\": \"HybridFile.moveToBin() builds a TrashBinFile, invokes AppConfig.getTrashBinInstance().moveToBin(), performs File.renameTo() in the callback, and then returns true unconditionally.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/HybridFileParcelable.java\",\n      \"finding\": \"HybridFileParcelable preserves the OpenMode and serializes path/name metadata used by DeleteTask; no alternate delete handling exists here for Documents quick-access files.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"grep_pattern\",\n      \"target\": \"documents|DOCUMENT|MediaStore.Files|DOC\",\n      \"finding\": \"The hamburger Documents item is not a SAF tree; it is quick-access media category path \\\"3\\\" loaded from MediaStore.Files by LoadFilesListTask.listDocs().\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/LoadFilesListTask.java\",\n      \"finding\": \"getCachedMediaList() maps custom path 3 to listDocs(); listDocs() queries MediaStore.Files.DATA and wraps matching extensions as local filesystem entries.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/views/drawer/Drawer.java\",\n      \"finding\": \"The Documents drawer row is added as MenuMetadata(\\\"3\\\", true), confirming that the bug report's Documents entry uses the MediaStore quick-access list.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/utils/MainActivityActionMode.kt\",\n      \"finding\": \"The contextual delete action calls GeneralDialogCreation.deleteFilesDialog() with the selected LayoutElementParcelable items.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/dialogs/GeneralDialogCreation.java\",\n      \"finding\": \"deleteFilesDialog() shows the Deleting toast and calls mainActivity.mainActivityHelper.deleteFiles(itemsToDelete, deletePermanentlyCheckbox state).\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/adapters/data/LayoutElementParcelable.java\",\n      \"finding\": \"generateBaseFile() reconstructs a HybridFileParcelable from the UI row path and mode; Documents rows therefore become OpenMode.FILE local paths before deletion.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/RootHelper.java\",\n      \"finding\": \"RootHelper.generateBaseFile() creates OpenMode.FILE HybridFileParcelable objects for MediaStore paths without checking whether the file still exists.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/application/AppConfig.java\",\n      \"finding\": \"The trash bin base path is Environment.getExternalStorageDirectory() + \\\"/.AmazeData\\\", and getTrashBinInstance() wires app cleanup callbacks around the external TrashBin dependency.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/AndroidManifest.xml\",\n      \"finding\": \"The app declares MANAGE_EXTERNAL_STORAGE along with legacy external storage permissions, so the intended local-file path is still the FILE mode trash-bin move rather than SAF.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/activities/MainActivityViewModel.kt\",\n      \"finding\": \"A separate lightweight media move-to-bin path also uses File.renameTo(), but the reported Deleting/Done toast comes from DeleteTask, not this view-model helper.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/utils/MainActivityHelper.java\",\n      \"finding\": \"deleteFiles() permits local writable items and starts new DeleteTask(mainActivity, doDeletePermanently), confirming the control flow into DeleteTask.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/activities/MainActivity.java\",\n      \"finding\": \"Searched for alternate moveToBinLightWeight/deleteFiles invocation from MainActivity; no competing path explained the reported delete dialog toast sequence.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/MediaStoreHack.java\",\n      \"finding\": \"MediaStoreHack has explicit content-resolver deletion helpers, but the non-permanent trash path does not use them.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/files/MediaConnectionUtils.kt\",\n      \"finding\": \"DeleteTask only asks MediaScannerConnection to scan paths after deletion; the actual success/failure signal still comes from HybridFile.moveToBin().\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"trace_call\",\n      \"target\": \"Drawer Documents -> LoadFilesListTask.listDocs() -> LayoutElementParcelable.generateBaseFile() -> GeneralDialogCreation.deleteFilesDialog() -> MainActivityHelper.deleteFiles() -> DeleteTask.doDeleteFile() -> HybridFile.moveToBin()\",\n      \"finding\": \"A Documents quick-access item is converted into a local OpenMode.FILE HybridFileParcelable, and unless delete-permanently is checked DeleteTask routes it to moveToBin().\"\n    },\n    {\n      \"step\": 22,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"HybridFile.moveToBin() unconditionally reports success\",\n      \"finding\": \"If TrashBin.moveToBin() or its File.renameTo() callback fails to remove the source file, HybridFile.moveToBin() still returns true. DeleteTask therefore continues, shows Done, and treats the item as deleted.\"\n    },\n    {\n      \"step\": 23,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"LoadFilesListTask.listDocs() extension filtering\",\n      \"finding\": \"The extension filter explains why this appears under Documents, but it does not itself create trash entries or mark failed moves as successful.\"\n    },\n    {\n      \"step\": 24,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"DeleteTask.onPostExecute() Done toast\",\n      \"finding\": \"The toast is a downstream symptom: onPostExecute() shows Done only because doDeleteFile() receives true from HybridFile.moveToBin().\"\n    },\n    {\n      \"step\": 25,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"DeleteOperation.deleteFile()\",\n      \"finding\": \"DeleteOperation is used for permanent deletion, but the reported default delete-to-trash behavior follows moveToBin() instead.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"app/src/main/java/com/amaze/filemanager/filesystem/HybridFile.java\",\n      \"class\": \"HybridFile\",\n      \"method\": \"moveToBin(Context context)\",\n      \"line\": 1591,\n      \"statement\": \"return true;\",\n      \"suspicion_score\": 0.95,\n      \"reasoning\": \"This statement makes every move-to-trash operation report success even if the TrashBin.moveToBin callback failed to move/remove the original file. DeleteTask therefore shows Done and refreshes as if deletion succeeded; because the original Documents item can remain visible and selectable, repeating delete calls the same trash registration again and creates duplicate trash entries.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"app/src/main/java/com/amaze/filemanager/filesystem/HybridFile.java\",\n    \"class\": \"HybridFile\",\n    \"method\": \"moveToBin(Context context)\",\n    \"line\": 1591,\n    \"statement\": \"return true;\",\n    \"confidence\": 0.95,\n    \"causal_chain\": \"The Documents drawer item opens MediaStore quick-access path 3. LoadFilesListTask.listDocs() wraps matching document paths as OpenMode.FILE items. The delete dialog converts the selected row back into a HybridFileParcelable and MainActivityHelper starts DeleteTask. Because delete-permanently is unchecked and the mode is not SMB/SFTP, DeleteTask.doDeleteFile() calls HybridFile.moveToBin(). moveToBin() invokes the trash library and tries to move the source to the trash destination with File.renameTo(), but regardless of whether that move actually removed the source it executes return true. DeleteTask receives success, scans media, and onPostExecute shows Done. The source Documents entry can remain visible/selectable, and each repeated delete again calls moveToBin(), adding another trash-bin record.\",\n    \"fix_hint\": \"Return the actual move/remove result from moveToBin(), and only report success after the source file no longer exists or a proper MediaStore/SAF delete fallback has removed it.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "Documents|Trash|trash|delete|Deleting|Done",
+        "finding": "The broad repo search was noisy due to localized strings, but it identified the relevant delete/trash classes: DeleteTask, HybridFile, AppConfig, LoadFilesListTask, Drawer, and dialog/action-mode call sites."
+      },
+      {
+        "step": 2,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/DeleteTask.java",
+        "finding": "DeleteTask shows the user-facing delete flow: doInBackground calls doDeleteFile(), then scans media files, and onPostExecute shows the Done toast when the result is true."
+      },
+      {
+        "step": 3,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/DeleteOperation.kt",
+        "finding": "Permanent local deletion delegates to rmdir()/file.delete()/SAF fallbacks, but this is not the default path when delete-permanently is unchecked."
+      },
+      {
+        "step": 4,
+        "action": "grep_pattern",
+        "target": "trash|Trash|DeleteTask|DeleteOperation|moveToTrash|deleteFiles|deleteFile",
+        "finding": "The normal non-permanent delete path reaches HybridFile.moveToBin(). Trash bin list loading is handled separately by LoadFilesListTask.listTrashBinFiles()."
+      },
+      {
+        "step": 5,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/HybridFile.java",
+        "finding": "HybridFile.moveToBin() builds a TrashBinFile, invokes AppConfig.getTrashBinInstance().moveToBin(), performs File.renameTo() in the callback, and then returns true unconditionally."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/HybridFileParcelable.java",
+        "finding": "HybridFileParcelable preserves the OpenMode and serializes path/name metadata used by DeleteTask; no alternate delete handling exists here for Documents quick-access files."
+      },
+      {
+        "step": 7,
+        "action": "grep_pattern",
+        "target": "documents|DOCUMENT|MediaStore.Files|DOC",
+        "finding": "The hamburger Documents item is not a SAF tree; it is quick-access media category path \"3\" loaded from MediaStore.Files by LoadFilesListTask.listDocs()."
+      },
+      {
+        "step": 8,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/LoadFilesListTask.java",
+        "finding": "getCachedMediaList() maps custom path 3 to listDocs(); listDocs() queries MediaStore.Files.DATA and wraps matching extensions as local filesystem entries."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/views/drawer/Drawer.java",
+        "finding": "The Documents drawer row is added as MenuMetadata(\"3\", true), confirming that the bug report's Documents entry uses the MediaStore quick-access list."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/utils/MainActivityActionMode.kt",
+        "finding": "The contextual delete action calls GeneralDialogCreation.deleteFilesDialog() with the selected LayoutElementParcelable items."
+      },
+      {
+        "step": 11,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/dialogs/GeneralDialogCreation.java",
+        "finding": "deleteFilesDialog() shows the Deleting toast and calls mainActivity.mainActivityHelper.deleteFiles(itemsToDelete, deletePermanentlyCheckbox state)."
+      },
+      {
+        "step": 12,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/adapters/data/LayoutElementParcelable.java",
+        "finding": "generateBaseFile() reconstructs a HybridFileParcelable from the UI row path and mode; Documents rows therefore become OpenMode.FILE local paths before deletion."
+      },
+      {
+        "step": 13,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/RootHelper.java",
+        "finding": "RootHelper.generateBaseFile() creates OpenMode.FILE HybridFileParcelable objects for MediaStore paths without checking whether the file still exists."
+      },
+      {
+        "step": 14,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/application/AppConfig.java",
+        "finding": "The trash bin base path is Environment.getExternalStorageDirectory() + \"/.AmazeData\", and getTrashBinInstance() wires app cleanup callbacks around the external TrashBin dependency."
+      },
+      {
+        "step": 15,
+        "action": "read_file",
+        "target": "app/src/main/AndroidManifest.xml",
+        "finding": "The app declares MANAGE_EXTERNAL_STORAGE along with legacy external storage permissions, so the intended local-file path is still the FILE mode trash-bin move rather than SAF."
+      },
+      {
+        "step": 16,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/activities/MainActivityViewModel.kt",
+        "finding": "A separate lightweight media move-to-bin path also uses File.renameTo(), but the reported Deleting/Done toast comes from DeleteTask, not this view-model helper."
+      },
+      {
+        "step": 17,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/utils/MainActivityHelper.java",
+        "finding": "deleteFiles() permits local writable items and starts new DeleteTask(mainActivity, doDeletePermanently), confirming the control flow into DeleteTask."
+      },
+      {
+        "step": 18,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/activities/MainActivity.java",
+        "finding": "Searched for alternate moveToBinLightWeight/deleteFiles invocation from MainActivity; no competing path explained the reported delete dialog toast sequence."
+      },
+      {
+        "step": 19,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/MediaStoreHack.java",
+        "finding": "MediaStoreHack has explicit content-resolver deletion helpers, but the non-permanent trash path does not use them."
+      },
+      {
+        "step": 20,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/files/MediaConnectionUtils.kt",
+        "finding": "DeleteTask only asks MediaScannerConnection to scan paths after deletion; the actual success/failure signal still comes from HybridFile.moveToBin()."
+      },
+      {
+        "step": 21,
+        "action": "trace_call",
+        "target": "Drawer Documents -> LoadFilesListTask.listDocs() -> LayoutElementParcelable.generateBaseFile() -> GeneralDialogCreation.deleteFilesDialog() -> MainActivityHelper.deleteFiles() -> DeleteTask.doDeleteFile() -> HybridFile.moveToBin()",
+        "finding": "A Documents quick-access item is converted into a local OpenMode.FILE HybridFileParcelable, and unless delete-permanently is checked DeleteTask routes it to moveToBin()."
+      },
+      {
+        "step": 22,
+        "action": "form_hypothesis",
+        "target": "HybridFile.moveToBin() unconditionally reports success",
+        "finding": "If TrashBin.moveToBin() or its File.renameTo() callback fails to remove the source file, HybridFile.moveToBin() still returns true. DeleteTask therefore continues, shows Done, and treats the item as deleted."
+      },
+      {
+        "step": 23,
+        "action": "eliminate_candidate",
+        "target": "LoadFilesListTask.listDocs() extension filtering",
+        "finding": "The extension filter explains why this appears under Documents, but it does not itself create trash entries or mark failed moves as successful."
+      },
+      {
+        "step": 24,
+        "action": "eliminate_candidate",
+        "target": "DeleteTask.onPostExecute() Done toast",
+        "finding": "The toast is a downstream symptom: onPostExecute() shows Done only because doDeleteFile() receives true from HybridFile.moveToBin()."
+      },
+      {
+        "step": 25,
+        "action": "eliminate_candidate",
+        "target": "DeleteOperation.deleteFile()",
+        "finding": "DeleteOperation is used for permanent deletion, but the reported default delete-to-trash behavior follows moveToBin() instead."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "app/src/main/java/com/amaze/filemanager/filesystem/HybridFile.java",
+        "class": "HybridFile",
+        "method": "moveToBin(Context context)",
+        "line": 1591,
+        "statement": "return true;",
+        "suspicion_score": 0.95,
+        "reasoning": "This statement makes every move-to-trash operation report success even if the TrashBin.moveToBin callback failed to move/remove the original file. DeleteTask therefore shows Done and refreshes as if deletion succeeded; because the original Documents item can remain visible and selectable, repeating delete calls the same trash registration again and creates duplicate trash entries."
+      }
+    ],
+    "final_answer": {
+      "file": "app/src/main/java/com/amaze/filemanager/filesystem/HybridFile.java",
+      "class": "HybridFile",
+      "method": "moveToBin(Context context)",
+      "line": 1591,
+      "statement": "return true;",
+      "confidence": 0.95,
+      "causal_chain": "The Documents drawer item opens MediaStore quick-access path 3. LoadFilesListTask.listDocs() wraps matching document paths as OpenMode.FILE items. The delete dialog converts the selected row back into a HybridFileParcelable and MainActivityHelper starts DeleteTask. Because delete-permanently is unchecked and the mode is not SMB/SFTP, DeleteTask.doDeleteFile() calls HybridFile.moveToBin(). moveToBin() invokes the trash library and tries to move the source to the trash destination with File.renameTo(), but regardless of whether that move actually removed the source it executes return true. DeleteTask receives success, scans media, and onPostExecute shows Done. The source Documents entry can remain visible/selectable, and each repeated delete again calls moveToBin(), adding another trash-bin record.",
+      "fix_hint": "Return the actual move/remove result from moveToBin(), and only report success after the source file no longer exists or a proper MediaStore/SAF delete fallback has removed it."
+    }
+  },
+  "error": null
+}

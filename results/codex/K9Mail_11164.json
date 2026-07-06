@@ -1,0 +1,263 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "K9Mail",
+  "issue_id": 11164,
+  "issue_url": "https://github.com/thunderbird/thunderbird-android/issues/11164",
+  "issue_title": "ugly display (wrong line wrapping?) of plain text edited e-mails with MozTb (Linux) using enumeration/list format",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\thunderbird_thunderbird_android",
+  "media_files": [
+    "5d546d79-f6dc-4c60-9982-71d9ff0ec21e",
+    "ca3d3815-0fe2-457a-a09a-4ee4bab5cb48"
+  ],
+  "started_at": "2026-06-21T17:07:33.560-05:00",
+  "finished_at": "2026-06-21T17:15:22.268-05:00",
+  "duration_seconds": 468.7,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"read_file\",\n      \"target\": \"README.md\",\n      \"finding\": \"Confirmed this is the Thunderbird for Android/K-9 shared codebase and that K-9 and Thunderbird use the same core implementation.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"read_file\",\n      \"target\": \"docs/CONTRIBUTING.md\",\n      \"finding\": \"Confirmed contribution guidance and relevant architecture/testing pointers; no code changes were needed for this localization task.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"read_file\",\n      \"target\": \"docs/architecture/README.md\",\n      \"finding\": \"Confirmed legacy modules still exist and are part of the application architecture, so the message display path may be in legacy code.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"read_file\",\n      \"target\": \"docs/architecture/adr/0009-api-internal-split.md\",\n      \"finding\": \"Confirmed API/internal boundaries; relevant because message reader CSS lives in feature modules while display/extraction still uses legacy modules.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"grep_pattern\",\n      \"target\": \"plain text|plainText|text/plain|Flowed|format=flowed|wrap|monospace|enumeration\",\n      \"finding\": \"Initial broad search was too large; narrowed to message rendering, MIME extraction, flowed text, wrapping, and WebView paths.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"grep_pattern\",\n      \"target\": \"MessageView|WebView|HtmlConverter|TextBody|text/plain|format=flowed|Flowed|wrap|pre-wrap|white-space\",\n      \"finding\": \"Located the likely pipeline: MessageViewInfoExtractor extracts text, HtmlConverter/EmailTextToHtml converts text/plain to HTML, MessageContainerView displays it in MessageWebView, and CSS controls pre wrapping.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/mailstore/MessageViewInfoExtractor.java\",\n      \"finding\": \"Plain text viewable parts are converted with HtmlConverter.textToHtml(t) in buildHtml(); extracted plain text is also converted to textPlainFormatted for plain-format rendering.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/message/html/HtmlConverter.kt\",\n      \"finding\": \"textToHtml delegates directly to EmailTextToHtml.convert(text), so plain-text-to-message-display behavior is centralized there.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/message/html/EmailTextToHtml.kt\",\n      \"finding\": \"Converted plain text is wrapped in a pre element and each extracted email section is encoded with retainOriginalWhitespace=true, meaning spaces introduced or preserved by MIME decoding will survive into rendering.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/message/html/TextToHtml.kt\",\n      \"finding\": \"When retainOriginalWhitespace is true, appendHtmlEncodedWithOriginalWhitespace writes every character through unchanged except HTML escaping and newline-to-br conversion.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/message/html/DisplayHtml.kt\",\n      \"finding\": \"DisplayHtml wraps already-generated message content in an HTML document body with message-reader CSS classes.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageContainerView.kt\",\n      \"finding\": \"displayMessageViewContainer() chooses messageViewInfo.text for default HTML display and displayHtml.wrapMessageContent(messageViewInfo.textPlainFormatted) for forced plain display, then sends that HTML to the WebView.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/view/MessageWebView.kt\",\n      \"finding\": \"MessageWebView loads the supplied HTML using loadDataWithBaseURL; it does not itself transform plain text or list formatting.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt\",\n      \"finding\": \"MessageViewFragment is the entry fragment for viewing a message; showMessage() forwards MessageViewInfo to MessageTopView, and the plain/HTML toggle only changes which already-prepared HTML string is displayed.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"read_file\",\n      \"target\": \"feature/mail/message/reader/api/src/commonMain/kotlin/net/thunderbird/feature/mail/message/reader/api/css/CssClassNameProvider.kt\",\n      \"finding\": \"The plainTextMessagePreClassName identifies the pre tag used for plain-text message rendering.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"read_file\",\n      \"target\": \"feature/mail/message/reader/impl/src/commonMain/kotlin/net/thunderbird/feature/mail/message/reader/impl/css/DefaultPlainTextMessagePreElementCssStyleProvider.kt\",\n      \"finding\": \"Plain text pre blocks use white-space: pre-wrap and word-wrap: break-word; this preserves spaces and wraps in WebView, but does not perform list-aware hanging indentation.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"read_file\",\n      \"target\": \"feature/mail/message/reader/impl/src/commonMain/kotlin/net/thunderbird/feature/mail/message/reader/impl/css/DefaultGlobalCssStyleProvider.kt\",\n      \"finding\": \"Global message CSS also applies overflow-wrap: break-word and pre white-space: pre-wrap, confirming rendering preserves whitespace from the text conversion path.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"grep_pattern\",\n      \"target\": \"format=flowed|delsp|flowed|Flowed\",\n      \"finding\": \"Found format=flowed parsing in MessageExtractor, FlowedMessageUtils, FormatFlowedHelper, and tests covering simple flowed text but not enumerated/list continuation indentation.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"read_file\",\n      \"target\": \"mail/common/src/main/java/com/fsck/k9/mail/internet/MessageExtractor.java\",\n      \"finding\": \"getTextFromTextPart() reads text/plain content, detects format=flowed via FormatFlowedHelper, and calls FlowedMessageUtils.deflow(text, result.isDelSp()) before HTML conversion.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"read_file\",\n      \"target\": \"mail/common/src/main/java/com/fsck/k9/mail/internet/FormatFlowedHelper.kt\",\n      \"finding\": \"checkFormatFlowed() returns true only for text/plain with format=flowed and passes delsp=yes state to the decoder.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"read_file\",\n      \"target\": \"mail/common/src/main/java/com/fsck/k9/mail/internet/FlowedMessageUtils.kt\",\n      \"finding\": \"deflow() suppresses CRLF for flowed lines and appends the next physical line directly. It removes one leading space as stuffing, but preserves any remaining indentation from continuation lines.\"\n    },\n    {\n      \"step\": 22,\n      \"action\": \"read_file\",\n      \"target\": \"mail/common/src/test/java/com/fsck/k9/mail/internet/FlowedMessageUtilsTest.kt\",\n      \"finding\": \"Tests validate simple flowed joining, delsp behavior, quotes, signature handling, and space stuffing, but no test covers Thunderbird-style numbered/list continuation indentation.\"\n    },\n    {\n      \"step\": 23,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/test/java/com/fsck/k9/mailstore/MessageViewInfoExtractorTest.java\",\n      \"finding\": \"Existing format=flowed message-view test expects flowed physical lines to be joined and then rendered through HtmlConverter into a pre block.\"\n    },\n    {\n      \"step\": 24,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/test/java/com/fsck/k9/message/html/HtmlConverterTest.kt\",\n      \"finding\": \"Tests confirm HtmlConverter preserves leading spaces in plain text and quoted text, so any indentation left by deflowing will be intentionally kept in the WebView HTML.\"\n    },\n    {\n      \"step\": 25,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/message/html/EmailSectionExtractor.kt\",\n      \"finding\": \"EmailSectionExtractor only handles quote-depth sections; it does not detect numbered/bulleted list structure or remove list continuation indentation.\"\n    },\n    {\n      \"step\": 26,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"CSS white-space/word-wrap causes wrong wrapping\",\n      \"finding\": \"CSS contributes to the visual symptom by preserving whitespace in pre-wrap, but it is downstream; it renders the text it receives and does not introduce the list continuation spaces.\"\n    },\n    {\n      \"step\": 27,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"MessageWebView.configure()\",\n      \"finding\": \"WebView settings configure zoom, viewport, images, and textZoom; none alter list/flowed plain-text semantics before display.\"\n    },\n    {\n      \"step\": 28,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"MessageContainerView.displayMessageViewContainer()\",\n      \"finding\": \"This method selects the prepared HTML/plain HTML and loads it; it does not parse or alter format=flowed text or list indentation.\"\n    },\n    {\n      \"step\": 29,\n      \"action\": \"trace_call\",\n      \"target\": \"MessageViewFragment.showMessage() -> MessageTopView/MessageContainerView -> MessageWebView\",\n      \"finding\": \"The UI path displays MessageViewInfo content already prepared by the mail extraction/conversion layer, so the fault is more likely before WebView load.\"\n    },\n    {\n      \"step\": 30,\n      \"action\": \"trace_call\",\n      \"target\": \"MessageExtractor.getTextFromTextPart() -> FlowedMessageUtils.deflow() -> MessageViewInfoExtractor.buildHtml() -> HtmlConverter.textToHtml()\",\n      \"finding\": \"For text/plain; format=flowed messages from Thunderbird Desktop, deflow() creates the text that is later preserved and wrapped in the message viewer.\"\n    },\n    {\n      \"step\": 31,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"FlowedMessageUtils.deflow() appends flowed list continuation indentation into the middle of a logical line\",\n      \"finding\": \"A Thunderbird Desktop numbered-list flowed body can have a flowed list item line followed by an indented continuation line. deflow() removes only one stuffing space and then append(text, lineStartIndex, lineEndIndex) preserves the remaining indentation while suppressing the CRLF, producing ugly mid-line spacing/wrapping.\"\n    },\n    {\n      \"step\": 32,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"HtmlConverter.textToHtml()/EmailTextToHtml\",\n      \"finding\": \"These classes preserve whitespace by design and are tested to do so; they expose the bad deflowed text but are not the first statement that turns Thunderbird list continuation lines into malformed display text.\"\n    },\n    {\n      \"step\": 33,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Single most likely triggering statement\",\n      \"finding\": \"The append statement in FlowedMessageUtils.deflow() is the point where a flowed continuation line, including leftover list indentation, is concatenated into the previous logical line that later renders with wrong wrapping.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"mail/common/src/main/java/com/fsck/k9/mail/internet/FlowedMessageUtils.kt\",\n      \"class\": \"FlowedMessageUtils\",\n      \"method\": \"deflow(String text, boolean delSp)\",\n      \"line\": 71,\n      \"statement\": \"append(text, lineStartIndex, lineEndIndex)\",\n      \"suspicion_score\": 0.84,\n      \"reasoning\": \"This statement appends each decoded format=flowed physical line into the output. When the previous line was flowed, no CRLF is inserted; if the current Thunderbird Desktop list continuation line starts with indentation, only one stuffing space has been removed, so the remaining indentation is appended into the middle of the logical list item. HtmlConverter and the pre-wrap CSS then preserve those spaces and WebView wraps the resulting text badly.\"\n    },\n    {\n      \"rank\": 2,\n      \"file\": \"feature/mail/message/reader/impl/src/commonMain/kotlin/net/thunderbird/feature/mail/message/reader/impl/css/DefaultPlainTextMessagePreElementCssStyleProvider.kt\",\n      \"class\": \"DefaultPlainTextMessagePreElementCssStyleProvider\",\n      \"method\": \"style\",\n      \"line\": 17,\n      \"statement\": \"|    white-space: pre-wrap;\",\n      \"suspicion_score\": 0.48,\n      \"reasoning\": \"This rule preserves whitespace in the plain-text pre element, making leftover indentation visible. However, it is downstream from flowed decoding and is generally required for plain text display, so it is less likely to be the root trigger.\"\n    },\n    {\n      \"rank\": 3,\n      \"file\": \"legacy/core/src/main/java/com/fsck/k9/message/html/EmailTextToHtml.kt\",\n      \"class\": \"EmailTextToHtml\",\n      \"method\": \"appendHtmlPrefix()\",\n      \"line\": 34,\n      \"statement\": \"html.append(\\\"<pre class=\\\\\\\"${cssClassNameProvider.plainTextMessagePreClassName}\\\\\\\">\\\")\",\n      \"suspicion_score\": 0.36,\n      \"reasoning\": \"Using pre for all converted plain text prevents semantic list rendering or hanging-indent layout, but it does not itself create the malformed joined text; the bad text is already produced by deflow().\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"mail/common/src/main/java/com/fsck/k9/mail/internet/FlowedMessageUtils.kt\",\n    \"class\": \"FlowedMessageUtils\",\n    \"method\": \"deflow(String text, boolean delSp)\",\n    \"line\": 71,\n    \"statement\": \"append(text, lineStartIndex, lineEndIndex)\",\n    \"confidence\": 0.84,\n    \"causal_chain\": \"MessageViewFragment loads a message and ultimately displays MessageViewInfo in MessageContainerView/MessageWebView. For a Thunderbird Desktop plain-text list message marked text/plain; format=flowed, MessageExtractor.getTextFromTextPart() calls FlowedMessageUtils.deflow(). deflow() detects flowed lines by trailing space and suppresses the physical CRLF. On the following indented list continuation line it removes only one stuffing space, then this append statement concatenates the remaining indentation and text directly onto the previous logical line. MessageViewInfoExtractor converts that result with HtmlConverter.textToHtml(); EmailTextToHtml/TextToHtml preserve original whitespace inside a pre element, and the message reader CSS uses pre-wrap, so WebView displays the retained continuation indentation as ugly/wrong wrapping for enumerated list text.\",\n    \"fix_hint\": \"Teach deflow() or the plain-text conversion path to handle flowed numbered/bulleted list continuation indentation, normalizing continuation whitespace or rendering list-like flowed paragraphs with hanging indentation before appending them into the display text.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "read_file",
+        "target": "README.md",
+        "finding": "Confirmed this is the Thunderbird for Android/K-9 shared codebase and that K-9 and Thunderbird use the same core implementation."
+      },
+      {
+        "step": 2,
+        "action": "read_file",
+        "target": "docs/CONTRIBUTING.md",
+        "finding": "Confirmed contribution guidance and relevant architecture/testing pointers; no code changes were needed for this localization task."
+      },
+      {
+        "step": 3,
+        "action": "read_file",
+        "target": "docs/architecture/README.md",
+        "finding": "Confirmed legacy modules still exist and are part of the application architecture, so the message display path may be in legacy code."
+      },
+      {
+        "step": 4,
+        "action": "read_file",
+        "target": "docs/architecture/adr/0009-api-internal-split.md",
+        "finding": "Confirmed API/internal boundaries; relevant because message reader CSS lives in feature modules while display/extraction still uses legacy modules."
+      },
+      {
+        "step": 5,
+        "action": "grep_pattern",
+        "target": "plain text|plainText|text/plain|Flowed|format=flowed|wrap|monospace|enumeration",
+        "finding": "Initial broad search was too large; narrowed to message rendering, MIME extraction, flowed text, wrapping, and WebView paths."
+      },
+      {
+        "step": 6,
+        "action": "grep_pattern",
+        "target": "MessageView|WebView|HtmlConverter|TextBody|text/plain|format=flowed|Flowed|wrap|pre-wrap|white-space",
+        "finding": "Located the likely pipeline: MessageViewInfoExtractor extracts text, HtmlConverter/EmailTextToHtml converts text/plain to HTML, MessageContainerView displays it in MessageWebView, and CSS controls pre wrapping."
+      },
+      {
+        "step": 7,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/mailstore/MessageViewInfoExtractor.java",
+        "finding": "Plain text viewable parts are converted with HtmlConverter.textToHtml(t) in buildHtml(); extracted plain text is also converted to textPlainFormatted for plain-format rendering."
+      },
+      {
+        "step": 8,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/message/html/HtmlConverter.kt",
+        "finding": "textToHtml delegates directly to EmailTextToHtml.convert(text), so plain-text-to-message-display behavior is centralized there."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/message/html/EmailTextToHtml.kt",
+        "finding": "Converted plain text is wrapped in a pre element and each extracted email section is encoded with retainOriginalWhitespace=true, meaning spaces introduced or preserved by MIME decoding will survive into rendering."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/message/html/TextToHtml.kt",
+        "finding": "When retainOriginalWhitespace is true, appendHtmlEncodedWithOriginalWhitespace writes every character through unchanged except HTML escaping and newline-to-br conversion."
+      },
+      {
+        "step": 11,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/message/html/DisplayHtml.kt",
+        "finding": "DisplayHtml wraps already-generated message content in an HTML document body with message-reader CSS classes."
+      },
+      {
+        "step": 12,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageContainerView.kt",
+        "finding": "displayMessageViewContainer() chooses messageViewInfo.text for default HTML display and displayHtml.wrapMessageContent(messageViewInfo.textPlainFormatted) for forced plain display, then sends that HTML to the WebView."
+      },
+      {
+        "step": 13,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/view/MessageWebView.kt",
+        "finding": "MessageWebView loads the supplied HTML using loadDataWithBaseURL; it does not itself transform plain text or list formatting."
+      },
+      {
+        "step": 14,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt",
+        "finding": "MessageViewFragment is the entry fragment for viewing a message; showMessage() forwards MessageViewInfo to MessageTopView, and the plain/HTML toggle only changes which already-prepared HTML string is displayed."
+      },
+      {
+        "step": 15,
+        "action": "read_file",
+        "target": "feature/mail/message/reader/api/src/commonMain/kotlin/net/thunderbird/feature/mail/message/reader/api/css/CssClassNameProvider.kt",
+        "finding": "The plainTextMessagePreClassName identifies the pre tag used for plain-text message rendering."
+      },
+      {
+        "step": 16,
+        "action": "read_file",
+        "target": "feature/mail/message/reader/impl/src/commonMain/kotlin/net/thunderbird/feature/mail/message/reader/impl/css/DefaultPlainTextMessagePreElementCssStyleProvider.kt",
+        "finding": "Plain text pre blocks use white-space: pre-wrap and word-wrap: break-word; this preserves spaces and wraps in WebView, but does not perform list-aware hanging indentation."
+      },
+      {
+        "step": 17,
+        "action": "read_file",
+        "target": "feature/mail/message/reader/impl/src/commonMain/kotlin/net/thunderbird/feature/mail/message/reader/impl/css/DefaultGlobalCssStyleProvider.kt",
+        "finding": "Global message CSS also applies overflow-wrap: break-word and pre white-space: pre-wrap, confirming rendering preserves whitespace from the text conversion path."
+      },
+      {
+        "step": 18,
+        "action": "grep_pattern",
+        "target": "format=flowed|delsp|flowed|Flowed",
+        "finding": "Found format=flowed parsing in MessageExtractor, FlowedMessageUtils, FormatFlowedHelper, and tests covering simple flowed text but not enumerated/list continuation indentation."
+      },
+      {
+        "step": 19,
+        "action": "read_file",
+        "target": "mail/common/src/main/java/com/fsck/k9/mail/internet/MessageExtractor.java",
+        "finding": "getTextFromTextPart() reads text/plain content, detects format=flowed via FormatFlowedHelper, and calls FlowedMessageUtils.deflow(text, result.isDelSp()) before HTML conversion."
+      },
+      {
+        "step": 20,
+        "action": "read_file",
+        "target": "mail/common/src/main/java/com/fsck/k9/mail/internet/FormatFlowedHelper.kt",
+        "finding": "checkFormatFlowed() returns true only for text/plain with format=flowed and passes delsp=yes state to the decoder."
+      },
+      {
+        "step": 21,
+        "action": "read_file",
+        "target": "mail/common/src/main/java/com/fsck/k9/mail/internet/FlowedMessageUtils.kt",
+        "finding": "deflow() suppresses CRLF for flowed lines and appends the next physical line directly. It removes one leading space as stuffing, but preserves any remaining indentation from continuation lines."
+      },
+      {
+        "step": 22,
+        "action": "read_file",
+        "target": "mail/common/src/test/java/com/fsck/k9/mail/internet/FlowedMessageUtilsTest.kt",
+        "finding": "Tests validate simple flowed joining, delsp behavior, quotes, signature handling, and space stuffing, but no test covers Thunderbird-style numbered/list continuation indentation."
+      },
+      {
+        "step": 23,
+        "action": "read_file",
+        "target": "legacy/core/src/test/java/com/fsck/k9/mailstore/MessageViewInfoExtractorTest.java",
+        "finding": "Existing format=flowed message-view test expects flowed physical lines to be joined and then rendered through HtmlConverter into a pre block."
+      },
+      {
+        "step": 24,
+        "action": "read_file",
+        "target": "legacy/core/src/test/java/com/fsck/k9/message/html/HtmlConverterTest.kt",
+        "finding": "Tests confirm HtmlConverter preserves leading spaces in plain text and quoted text, so any indentation left by deflowing will be intentionally kept in the WebView HTML."
+      },
+      {
+        "step": 25,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/message/html/EmailSectionExtractor.kt",
+        "finding": "EmailSectionExtractor only handles quote-depth sections; it does not detect numbered/bulleted list structure or remove list continuation indentation."
+      },
+      {
+        "step": 26,
+        "action": "form_hypothesis",
+        "target": "CSS white-space/word-wrap causes wrong wrapping",
+        "finding": "CSS contributes to the visual symptom by preserving whitespace in pre-wrap, but it is downstream; it renders the text it receives and does not introduce the list continuation spaces."
+      },
+      {
+        "step": 27,
+        "action": "eliminate_candidate",
+        "target": "MessageWebView.configure()",
+        "finding": "WebView settings configure zoom, viewport, images, and textZoom; none alter list/flowed plain-text semantics before display."
+      },
+      {
+        "step": 28,
+        "action": "eliminate_candidate",
+        "target": "MessageContainerView.displayMessageViewContainer()",
+        "finding": "This method selects the prepared HTML/plain HTML and loads it; it does not parse or alter format=flowed text or list indentation."
+      },
+      {
+        "step": 29,
+        "action": "trace_call",
+        "target": "MessageViewFragment.showMessage() -> MessageTopView/MessageContainerView -> MessageWebView",
+        "finding": "The UI path displays MessageViewInfo content already prepared by the mail extraction/conversion layer, so the fault is more likely before WebView load."
+      },
+      {
+        "step": 30,
+        "action": "trace_call",
+        "target": "MessageExtractor.getTextFromTextPart() -> FlowedMessageUtils.deflow() -> MessageViewInfoExtractor.buildHtml() -> HtmlConverter.textToHtml()",
+        "finding": "For text/plain; format=flowed messages from Thunderbird Desktop, deflow() creates the text that is later preserved and wrapped in the message viewer."
+      },
+      {
+        "step": 31,
+        "action": "form_hypothesis",
+        "target": "FlowedMessageUtils.deflow() appends flowed list continuation indentation into the middle of a logical line",
+        "finding": "A Thunderbird Desktop numbered-list flowed body can have a flowed list item line followed by an indented continuation line. deflow() removes only one stuffing space and then append(text, lineStartIndex, lineEndIndex) preserves the remaining indentation while suppressing the CRLF, producing ugly mid-line spacing/wrapping."
+      },
+      {
+        "step": 32,
+        "action": "eliminate_candidate",
+        "target": "HtmlConverter.textToHtml()/EmailTextToHtml",
+        "finding": "These classes preserve whitespace by design and are tested to do so; they expose the bad deflowed text but are not the first statement that turns Thunderbird list continuation lines into malformed display text."
+      },
+      {
+        "step": 33,
+        "action": "form_hypothesis",
+        "target": "Single most likely triggering statement",
+        "finding": "The append statement in FlowedMessageUtils.deflow() is the point where a flowed continuation line, including leftover list indentation, is concatenated into the previous logical line that later renders with wrong wrapping."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "mail/common/src/main/java/com/fsck/k9/mail/internet/FlowedMessageUtils.kt",
+        "class": "FlowedMessageUtils",
+        "method": "deflow(String text, boolean delSp)",
+        "line": 71,
+        "statement": "append(text, lineStartIndex, lineEndIndex)",
+        "suspicion_score": 0.84,
+        "reasoning": "This statement appends each decoded format=flowed physical line into the output. When the previous line was flowed, no CRLF is inserted; if the current Thunderbird Desktop list continuation line starts with indentation, only one stuffing space has been removed, so the remaining indentation is appended into the middle of the logical list item. HtmlConverter and the pre-wrap CSS then preserve those spaces and WebView wraps the resulting text badly."
+      },
+      {
+        "rank": 2,
+        "file": "feature/mail/message/reader/impl/src/commonMain/kotlin/net/thunderbird/feature/mail/message/reader/impl/css/DefaultPlainTextMessagePreElementCssStyleProvider.kt",
+        "class": "DefaultPlainTextMessagePreElementCssStyleProvider",
+        "method": "style",
+        "line": 17,
+        "statement": "|    white-space: pre-wrap;",
+        "suspicion_score": 0.48,
+        "reasoning": "This rule preserves whitespace in the plain-text pre element, making leftover indentation visible. However, it is downstream from flowed decoding and is generally required for plain text display, so it is less likely to be the root trigger."
+      },
+      {
+        "rank": 3,
+        "file": "legacy/core/src/main/java/com/fsck/k9/message/html/EmailTextToHtml.kt",
+        "class": "EmailTextToHtml",
+        "method": "appendHtmlPrefix()",
+        "line": 34,
+        "statement": "html.append(\"<pre class=\\\"${cssClassNameProvider.plainTextMessagePreClassName}\\\">\")",
+        "suspicion_score": 0.36,
+        "reasoning": "Using pre for all converted plain text prevents semantic list rendering or hanging-indent layout, but it does not itself create the malformed joined text; the bad text is already produced by deflow()."
+      }
+    ],
+    "final_answer": {
+      "file": "mail/common/src/main/java/com/fsck/k9/mail/internet/FlowedMessageUtils.kt",
+      "class": "FlowedMessageUtils",
+      "method": "deflow(String text, boolean delSp)",
+      "line": 71,
+      "statement": "append(text, lineStartIndex, lineEndIndex)",
+      "confidence": 0.84,
+      "causal_chain": "MessageViewFragment loads a message and ultimately displays MessageViewInfo in MessageContainerView/MessageWebView. For a Thunderbird Desktop plain-text list message marked text/plain; format=flowed, MessageExtractor.getTextFromTextPart() calls FlowedMessageUtils.deflow(). deflow() detects flowed lines by trailing space and suppresses the physical CRLF. On the following indented list continuation line it removes only one stuffing space, then this append statement concatenates the remaining indentation and text directly onto the previous logical line. MessageViewInfoExtractor converts that result with HtmlConverter.textToHtml(); EmailTextToHtml/TextToHtml preserve original whitespace inside a pre element, and the message reader CSS uses pre-wrap, so WebView displays the retained continuation indentation as ugly/wrong wrapping for enumerated list text.",
+      "fix_hint": "Teach deflow() or the plain-text conversion path to handle flowed numbered/bulleted list continuation indentation, normalizing continuation whitespace or rendering list-like flowed paragraphs with hanging indentation before appending them into the display text."
+    }
+  },
+  "error": null
+}

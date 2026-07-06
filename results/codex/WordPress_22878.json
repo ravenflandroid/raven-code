@@ -1,0 +1,180 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "WordPress",
+  "issue_id": 22878,
+  "issue_url": "https://github.com/wordpress-mobile/WordPress-Android/issues/22878",
+  "issue_title": "Editor exit hangs indefinitely when GutenbergView never finishes loading",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\wordpress_mobile_WordPress_Android",
+  "media_files": [],
+  "started_at": "2026-06-21T15:33:43.536-05:00",
+  "finished_at": "2026-06-21T15:37:38.391-05:00",
+  "duration_seconds": 234.86,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"class GutenbergKitEditorFragment|fun getTitleAndContent|getTitleAndContent\\\\(|savePostAndOptionallyFinish|updateAndSavePostAsyncOnEditorExit|updateAndSavePostAsync|updateFromEditor|setEditorDidBecomeAvailable|CountDownLatch\",\n      \"finding\": \"Located the GutenbergKit-specific editor fragment at WordPress/src/main/java/org/wordpress/android/ui/posts/editor/GutenbergKitEditorFragment.kt and the save-on-exit flow in WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitActivity.kt. The fragment imports CountDownLatch and defines getTitleAndContent around lines 416-473.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"grep_pattern\",\n      \"target\": \"Gutenberg|EditorFragment|EditorActivity|StorePostViewModel|PostEditor\",\n      \"finding\": \"Found both legacy editor classes under libs/editor and GutenbergKit-specific classes under WordPress/src/main/java/org/wordpress/android/ui/posts and /editor. The bug report names GutenbergView/GBKit, so GutenbergKitActivity and GutenbergKitEditorFragment are the primary entry points.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/editor/GutenbergKitEditorFragment.kt:270-279\",\n      \"finding\": \"The fragment tracks readiness with editorReady=false before registering gutenbergView.setEditorDidBecomeAvailable, then sets editorReady=true in that callback and notifies the host that content is ready.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/editor/GutenbergKitEditorFragment.kt:416-443\",\n      \"finding\": \"getTitleAndContent obtains the GutenbergView, allocates result[0], creates CountDownLatch(1), calls gutenbergView.getTitleAndContent, and only counts the latch down from TitleAndContentCallback.onResult.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/editor/GutenbergKitEditorFragment.kt:445-472\",\n      \"finding\": \"The checked-out source currently bounds the wait with latch.await(GET_TITLE_AND_CONTENT_TIMEOUT_SECONDS, TimeUnit.SECONDS), logs timeout/interruption, and throws EditorFragmentNotAddedException when finalResult is null. This is the same synchronization site that would hang indefinitely if it used unbounded latch.await().\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/editor/GutenbergKitEditorFragment.kt:543\",\n      \"finding\": \"The fragment exposes fun isEditorReady(): Boolean = editorReady, which lets the activity avoid reading title/content when the Gutenberg bridge never became available.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/editor/GutenbergKitEditorFragment.kt:568-580\",\n      \"finding\": \"The companion object defines GET_TITLE_AND_CONTENT_TIMEOUT_SECONDS = 5L, confirming the current tree contains a timeout guard at the latch wait site.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitActivity.kt:495-504\",\n      \"finding\": \"The activity installs an OnBackPressedCallback whose handleOnBackPressed delegates to handleBackPressed unless a modal dialog is open.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitActivity.kt:1500-1517\",\n      \"finding\": \"handleBackPressed calls savePostAndOptionallyFinish(doFinish = true, forceSave = false) when there is no nested navigation to consume the back press.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitActivity.kt:2122-2166\",\n      \"finding\": \"savePostAndOptionallyFinish builds a completion lambda that calls storePostViewModel.finish(it) when doFinish is true, then calls updateAndSavePostAsyncOnEditorExit(lambdaToListener(lambda), doFinish). If the update never completes, this finish lambda never runs.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitActivity.kt:1868-1875\",\n      \"finding\": \"updateAndSavePostAsyncOnEditorExit sets isSavingPostOnEditorExit=true, shows the saving progress dialog, and calls updateAndSavePostAsync. This matches the symptom that the saving dialog remains visible.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitActivity.kt:1845-1858\",\n      \"finding\": \"updateAndSavePostAsync delegates to storePostViewModel.updatePostObjectWithUIAsync and only resets isSavingPostOnEditorExit plus invokes the listener in the update completion callback.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitActivity.kt:1879-1899\",\n      \"finding\": \"updateFromEditor currently checks !it.isEditorReady() and returns Failed before calling getTitleAndContent. If ready, it calls it.getTitleAndContent(oldContent, isFinishing), casts the returned title/content, and wraps them as PostFields.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/editor/StorePostViewModel.kt:130-171\",\n      \"finding\": \"StorePostViewModel.updatePostObjectWithUIAsync runs updatePostObjectWithUI inside postRepository.updateAsync. updatePostObjectWithUI invokes getUpdatedTitleAndContent(postModel.content); if that callback blocks, updateAsync cannot reach its completion callback.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/editor/StorePostViewModel.kt:253-256\",\n      \"finding\": \"UpdateFromEditor has PostFields and Failed states. Returning Failed is non-blocking and causes updatePostObjectWithUI to return false; therefore the hang is not caused by Failed handling.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/EditPostActivity.kt:1946-1999 and 2307-2351\",\n      \"finding\": \"EditPostActivity has a similar legacy save-on-exit flow, but its editorFragment is EditorFragmentAbstract, not GutenbergKitEditorFragment. This is a parallel path, not the GBKit-specific CountDownLatch location described in the report.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"read_file\",\n      \"target\": \"libs/editor/src/main/java/org/wordpress/android/editor/gutenberg/GutenbergEditorFragment.java:1204-1214\",\n      \"finding\": \"The legacy GutenbergEditorFragment delegates to GutenbergContainerFragment.getTitleAndContent with an interruption callback. It is not the async GutenbergView callback/latch code path named in the bug report.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"read_file\",\n      \"target\": \"libs/editor/src/main/java/org/wordpress/android/editor/gutenberg/GutenbergContainerFragment.java:240-242\",\n      \"finding\": \"The legacy container delegates to mWPAndroidGlueCode.getTitleAndContent and does not contain the problematic latch. This eliminates the legacy libs/editor implementation as the primary fault site.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"grep_pattern\",\n      \"target\": \"fun isEditorReady|isEditorReady\\\\(\",\n      \"finding\": \"Only GutenbergKitEditorFragment defines isEditorReady and GutenbergKitActivity.updateFromEditor consumes it. This confirms the host-side readiness guard belongs to the same fault area as the latch wait.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Unbounded CountDownLatch await in GutenbergKitEditorFragment.getTitleAndContent\",\n      \"finding\": \"If GutenbergView never loads, its JS bridge never calls TitleAndContentCallback.onResult. Because onResult is the only path to latch.countDown(), an unbounded await at this statement blocks forever and prevents the exit-save completion lambda from finishing the activity.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"GutenbergKitActivity.savePostAndOptionallyFinish\",\n      \"finding\": \"This method explains why the saving dialog appears and why finish depends on the update listener, but it does not itself block. It waits on the asynchronous update callback, so it is downstream of the blocking getTitleAndContent call.\"\n    },\n    {\n      \"step\": 22,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"StorePostViewModel.updatePostObjectWithUIAsync\",\n      \"finding\": \"The ViewModel simply invokes the supplied getUpdatedTitleAndContent callback and handles PostFields/Failed. It has no indefinite wait of its own, so it is not the triggering statement.\"\n    },\n    {\n      \"step\": 23,\n      \"action\": \"trace_call\",\n      \"target\": \"Back press -> savePostAndOptionallyFinish -> updateAndSavePostAsyncOnEditorExit -> updateAndSavePostAsync -> updateFromEditor -> GutenbergKitEditorFragment.getTitleAndContent\",\n      \"finding\": \"The full control flow reaches the CountDownLatch wait after showing the saving progress dialog. If the wait never completes, the listener that calls storePostViewModel.finish never executes.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/editor/GutenbergKitEditorFragment.kt\",\n      \"class\": \"GutenbergKitEditorFragment\",\n      \"method\": \"getTitleAndContent(CharSequence originalContent, Boolean completeComposition)\",\n      \"line\": 446,\n      \"statement\": \"val completed = latch.await(\",\n      \"suspicion_score\": 0.95,\n      \"reasoning\": \"This is the bridge synchronization point after gutenbergView.getTitleAndContent. TitleAndContentCallback.onResult is the only code path that calls latch.countDown(); when GutenbergView never finishes loading, the JS bridge never replies, so the vulnerable form of this statement, latch.await() with no timeout, blocks indefinitely. That blocks updateFromEditor inside the save-on-exit update, preventing the completion listener from hiding the saving state and calling finish.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/editor/GutenbergKitEditorFragment.kt\",\n    \"class\": \"GutenbergKitEditorFragment\",\n    \"method\": \"getTitleAndContent(CharSequence originalContent, Boolean completeComposition)\",\n    \"line\": 446,\n    \"statement\": \"val completed = latch.await(\",\n    \"confidence\": 0.95,\n    \"causal_chain\": \"Back press in GutenbergKitActivity reaches handleBackPressed, which calls savePostAndOptionallyFinish(doFinish = true). That method shows the saving progress dialog through updateAndSavePostAsyncOnEditorExit and starts updateAndSavePostAsync. StorePostViewModel.updatePostObjectWithUIAsync invokes GutenbergKitActivity.updateFromEditor, which calls GutenbergKitEditorFragment.getTitleAndContent. That method calls gutenbergView.getTitleAndContent and waits on a CountDownLatch that is only released from TitleAndContentCallback.onResult. If GutenbergView never finishes loading, the JS bridge never invokes onResult, so an unbounded latch.await at this location never returns. The update completion callback never fires, storePostViewModel.finish is never called, and the activity remains stuck with the saving dialog open.\",\n    \"fix_hint\": \"Track Gutenberg editor readiness before reading title/content and bound this latch wait with a timeout so a missing JS bridge callback returns a non-blocking failure/fallback instead of hanging forever.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "class GutenbergKitEditorFragment|fun getTitleAndContent|getTitleAndContent\\(|savePostAndOptionallyFinish|updateAndSavePostAsyncOnEditorExit|updateAndSavePostAsync|updateFromEditor|setEditorDidBecomeAvailable|CountDownLatch",
+        "finding": "Located the GutenbergKit-specific editor fragment at WordPress/src/main/java/org/wordpress/android/ui/posts/editor/GutenbergKitEditorFragment.kt and the save-on-exit flow in WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitActivity.kt. The fragment imports CountDownLatch and defines getTitleAndContent around lines 416-473."
+      },
+      {
+        "step": 2,
+        "action": "grep_pattern",
+        "target": "Gutenberg|EditorFragment|EditorActivity|StorePostViewModel|PostEditor",
+        "finding": "Found both legacy editor classes under libs/editor and GutenbergKit-specific classes under WordPress/src/main/java/org/wordpress/android/ui/posts and /editor. The bug report names GutenbergView/GBKit, so GutenbergKitActivity and GutenbergKitEditorFragment are the primary entry points."
+      },
+      {
+        "step": 3,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/editor/GutenbergKitEditorFragment.kt:270-279",
+        "finding": "The fragment tracks readiness with editorReady=false before registering gutenbergView.setEditorDidBecomeAvailable, then sets editorReady=true in that callback and notifies the host that content is ready."
+      },
+      {
+        "step": 4,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/editor/GutenbergKitEditorFragment.kt:416-443",
+        "finding": "getTitleAndContent obtains the GutenbergView, allocates result[0], creates CountDownLatch(1), calls gutenbergView.getTitleAndContent, and only counts the latch down from TitleAndContentCallback.onResult."
+      },
+      {
+        "step": 5,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/editor/GutenbergKitEditorFragment.kt:445-472",
+        "finding": "The checked-out source currently bounds the wait with latch.await(GET_TITLE_AND_CONTENT_TIMEOUT_SECONDS, TimeUnit.SECONDS), logs timeout/interruption, and throws EditorFragmentNotAddedException when finalResult is null. This is the same synchronization site that would hang indefinitely if it used unbounded latch.await()."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/editor/GutenbergKitEditorFragment.kt:543",
+        "finding": "The fragment exposes fun isEditorReady(): Boolean = editorReady, which lets the activity avoid reading title/content when the Gutenberg bridge never became available."
+      },
+      {
+        "step": 7,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/editor/GutenbergKitEditorFragment.kt:568-580",
+        "finding": "The companion object defines GET_TITLE_AND_CONTENT_TIMEOUT_SECONDS = 5L, confirming the current tree contains a timeout guard at the latch wait site."
+      },
+      {
+        "step": 8,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitActivity.kt:495-504",
+        "finding": "The activity installs an OnBackPressedCallback whose handleOnBackPressed delegates to handleBackPressed unless a modal dialog is open."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitActivity.kt:1500-1517",
+        "finding": "handleBackPressed calls savePostAndOptionallyFinish(doFinish = true, forceSave = false) when there is no nested navigation to consume the back press."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitActivity.kt:2122-2166",
+        "finding": "savePostAndOptionallyFinish builds a completion lambda that calls storePostViewModel.finish(it) when doFinish is true, then calls updateAndSavePostAsyncOnEditorExit(lambdaToListener(lambda), doFinish). If the update never completes, this finish lambda never runs."
+      },
+      {
+        "step": 11,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitActivity.kt:1868-1875",
+        "finding": "updateAndSavePostAsyncOnEditorExit sets isSavingPostOnEditorExit=true, shows the saving progress dialog, and calls updateAndSavePostAsync. This matches the symptom that the saving dialog remains visible."
+      },
+      {
+        "step": 12,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitActivity.kt:1845-1858",
+        "finding": "updateAndSavePostAsync delegates to storePostViewModel.updatePostObjectWithUIAsync and only resets isSavingPostOnEditorExit plus invokes the listener in the update completion callback."
+      },
+      {
+        "step": 13,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitActivity.kt:1879-1899",
+        "finding": "updateFromEditor currently checks !it.isEditorReady() and returns Failed before calling getTitleAndContent. If ready, it calls it.getTitleAndContent(oldContent, isFinishing), casts the returned title/content, and wraps them as PostFields."
+      },
+      {
+        "step": 14,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/editor/StorePostViewModel.kt:130-171",
+        "finding": "StorePostViewModel.updatePostObjectWithUIAsync runs updatePostObjectWithUI inside postRepository.updateAsync. updatePostObjectWithUI invokes getUpdatedTitleAndContent(postModel.content); if that callback blocks, updateAsync cannot reach its completion callback."
+      },
+      {
+        "step": 15,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/editor/StorePostViewModel.kt:253-256",
+        "finding": "UpdateFromEditor has PostFields and Failed states. Returning Failed is non-blocking and causes updatePostObjectWithUI to return false; therefore the hang is not caused by Failed handling."
+      },
+      {
+        "step": 16,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/EditPostActivity.kt:1946-1999 and 2307-2351",
+        "finding": "EditPostActivity has a similar legacy save-on-exit flow, but its editorFragment is EditorFragmentAbstract, not GutenbergKitEditorFragment. This is a parallel path, not the GBKit-specific CountDownLatch location described in the report."
+      },
+      {
+        "step": 17,
+        "action": "read_file",
+        "target": "libs/editor/src/main/java/org/wordpress/android/editor/gutenberg/GutenbergEditorFragment.java:1204-1214",
+        "finding": "The legacy GutenbergEditorFragment delegates to GutenbergContainerFragment.getTitleAndContent with an interruption callback. It is not the async GutenbergView callback/latch code path named in the bug report."
+      },
+      {
+        "step": 18,
+        "action": "read_file",
+        "target": "libs/editor/src/main/java/org/wordpress/android/editor/gutenberg/GutenbergContainerFragment.java:240-242",
+        "finding": "The legacy container delegates to mWPAndroidGlueCode.getTitleAndContent and does not contain the problematic latch. This eliminates the legacy libs/editor implementation as the primary fault site."
+      },
+      {
+        "step": 19,
+        "action": "grep_pattern",
+        "target": "fun isEditorReady|isEditorReady\\(",
+        "finding": "Only GutenbergKitEditorFragment defines isEditorReady and GutenbergKitActivity.updateFromEditor consumes it. This confirms the host-side readiness guard belongs to the same fault area as the latch wait."
+      },
+      {
+        "step": 20,
+        "action": "form_hypothesis",
+        "target": "Unbounded CountDownLatch await in GutenbergKitEditorFragment.getTitleAndContent",
+        "finding": "If GutenbergView never loads, its JS bridge never calls TitleAndContentCallback.onResult. Because onResult is the only path to latch.countDown(), an unbounded await at this statement blocks forever and prevents the exit-save completion lambda from finishing the activity."
+      },
+      {
+        "step": 21,
+        "action": "eliminate_candidate",
+        "target": "GutenbergKitActivity.savePostAndOptionallyFinish",
+        "finding": "This method explains why the saving dialog appears and why finish depends on the update listener, but it does not itself block. It waits on the asynchronous update callback, so it is downstream of the blocking getTitleAndContent call."
+      },
+      {
+        "step": 22,
+        "action": "eliminate_candidate",
+        "target": "StorePostViewModel.updatePostObjectWithUIAsync",
+        "finding": "The ViewModel simply invokes the supplied getUpdatedTitleAndContent callback and handles PostFields/Failed. It has no indefinite wait of its own, so it is not the triggering statement."
+      },
+      {
+        "step": 23,
+        "action": "trace_call",
+        "target": "Back press -> savePostAndOptionallyFinish -> updateAndSavePostAsyncOnEditorExit -> updateAndSavePostAsync -> updateFromEditor -> GutenbergKitEditorFragment.getTitleAndContent",
+        "finding": "The full control flow reaches the CountDownLatch wait after showing the saving progress dialog. If the wait never completes, the listener that calls storePostViewModel.finish never executes."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "WordPress/src/main/java/org/wordpress/android/ui/posts/editor/GutenbergKitEditorFragment.kt",
+        "class": "GutenbergKitEditorFragment",
+        "method": "getTitleAndContent(CharSequence originalContent, Boolean completeComposition)",
+        "line": 446,
+        "statement": "val completed = latch.await(",
+        "suspicion_score": 0.95,
+        "reasoning": "This is the bridge synchronization point after gutenbergView.getTitleAndContent. TitleAndContentCallback.onResult is the only code path that calls latch.countDown(); when GutenbergView never finishes loading, the JS bridge never replies, so the vulnerable form of this statement, latch.await() with no timeout, blocks indefinitely. That blocks updateFromEditor inside the save-on-exit update, preventing the completion listener from hiding the saving state and calling finish."
+      }
+    ],
+    "final_answer": {
+      "file": "WordPress/src/main/java/org/wordpress/android/ui/posts/editor/GutenbergKitEditorFragment.kt",
+      "class": "GutenbergKitEditorFragment",
+      "method": "getTitleAndContent(CharSequence originalContent, Boolean completeComposition)",
+      "line": 446,
+      "statement": "val completed = latch.await(",
+      "confidence": 0.95,
+      "causal_chain": "Back press in GutenbergKitActivity reaches handleBackPressed, which calls savePostAndOptionallyFinish(doFinish = true). That method shows the saving progress dialog through updateAndSavePostAsyncOnEditorExit and starts updateAndSavePostAsync. StorePostViewModel.updatePostObjectWithUIAsync invokes GutenbergKitActivity.updateFromEditor, which calls GutenbergKitEditorFragment.getTitleAndContent. That method calls gutenbergView.getTitleAndContent and waits on a CountDownLatch that is only released from TitleAndContentCallback.onResult. If GutenbergView never finishes loading, the JS bridge never invokes onResult, so an unbounded latch.await at this location never returns. The update completion callback never fires, storePostViewModel.finish is never called, and the activity remains stuck with the saving dialog open.",
+      "fix_hint": "Track Gutenberg editor readiness before reading title/content and bound this latch wait with a timeout so a missing JS bridge callback returns a non-blocking failure/fallback instead of hanging forever."
+    }
+  },
+  "error": null
+}

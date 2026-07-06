@@ -1,0 +1,170 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "AnkiDroid",
+  "issue_id": 17967,
+  "issue_url": "https://github.com/ankidroid/Anki-Android/issues/17967",
+  "issue_title": "[BUG] Close Keyboard on IME DONE",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\ankidroid_Anki_Android",
+  "media_files": [
+    "ef7bc609-7428-4ce2-9bc0-d9c514a5e235"
+  ],
+  "started_at": "2026-06-21T14:54:25.253-05:00",
+  "finished_at": "2026-06-21T14:58:11.653-05:00",
+  "duration_seconds": 226.41,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"SearchPreference|preferencesearch|IME_ACTION_DONE|setOnEditorActionListener|hideSoftInput|Settings\",\n      \"finding\": \"The settings search UI is tied to com.bytehamster.lib.preferencesearch. Matches in production code are concentrated in HeaderFragment.kt, Preferences.kt, preference_headers.xml, build.gradle, and libs.versions.toml; no AnkiDroid settings code registers an editor-action listener for the settings search EditText.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"grep_pattern\",\n      \"target\": \"bytehamster|preferencesearch|search.preference|SearchConfiguration|PreferenceSearch\",\n      \"finding\": \"The repo references SearchPreference as an external dependency and uses SearchConfiguration/SearchPreference APIs. No local implementation class for SearchPreference, SearchConfiguration, or the search EditText exists in the checked-out source.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/res/xml/preference_headers.xml\",\n      \"finding\": \"The settings header preference screen declares <com.bytehamster.lib.preferencesearch.SearchPreference android:key=\\\"@string/search_preference_key\\\" .../> at line 26, making the third-party widget the visible settings search box.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/preferences/HeaderFragment.kt\",\n      \"finding\": \"HeaderFragment.initSubscreen obtains the SearchPreference by key and passes its searchConfiguration into configureSearchBar at lines 79-82. configureSearchBar only configures indexing/history/breadcrumbs/container at lines 105-247; it does not attach IME DONE handling or hide the keyboard.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/preferences/Preferences.kt\",\n      \"finding\": \"PreferencesActivity hosts PreferencesFragment because SearchConfiguration requires a SearchPreferenceResultListener. PreferencesFragment handles search result clicks but not keyboard/editor actions. It confirms the settings entry point is PreferencesActivity -> PreferencesFragment -> HeaderFragment.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/preferences/SettingsFragment.kt\",\n      \"finding\": \"SettingsFragment inflates the preference screen and calls addPreferencesFromResource(preferenceResource), which instantiates the SearchPreference from preference_headers.xml. The base class also has no keyboard hide or editor-action handling for preferences.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/res/layout/fragment_settings.xml\",\n      \"finding\": \"The settings preference list is hosted under @android:id/list_container, the same ID passed to SearchConfiguration.setFragmentContainerViewId. This ties the library search UI to the settings fragment container.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/res/layout/fragment_preferences.xml\",\n      \"finding\": \"Compact settings uses a single settings_container, where PreferencesFragment loads HeaderFragment by default. This matches the report's Settings -> Search flow.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/res/layout-sw600dp/fragment_preferences.xml\",\n      \"finding\": \"Large-screen settings embeds HeaderFragment directly in lateral_nav_container and still uses the same SearchPreference widget, so the keyboard behavior is independent of compact/tablet layout.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/androidTest/java/com/ichi2/anki/preferences/PreferencesNavigationTest.kt\",\n      \"finding\": \"Tests click com.bytehamster.lib.preferencesearch.R.id.search and type into it, confirming the runtime search field belongs to the SearchPreference library. The tests cover back behavior and search results, not IME DONE keyboard dismissal.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/test/java/com/ichi2/anki/preferences/PrefsSearchBarTest.kt\",\n      \"finding\": \"The search-bar test constructs SearchConfiguration and calls HeaderFragment.configureSearchBar, then checks indexed XML resources. It does not test or configure keyboard dismissal.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"grep_pattern\",\n      \"target\": \"setOnEditorActionListener|IME_ACTION_DONE|EditorInfo|hideKeyboard|hideSoftInput|clearFocus|preferencesearch.R.id.search\",\n      \"finding\": \"No production settings code handles IME_ACTION_DONE for com.bytehamster.lib.preferencesearch.R.id.search. Other screens such as CardBrowserFragment and dialogs explicitly handle editor actions or hide keyboards, showing this behavior must be supplied by the settings search widget or its integration.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragment.kt\",\n      \"finding\": \"CardBrowserFragment sets an editor-action listener on its search EditText at lines 411-418. This is a neighboring non-settings search path and does not control the reported Settings search field.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/utils/AndroidUtils.kt\",\n      \"finding\": \"AnkiDroid has Activity/Fragment/View hideKeyboard helpers at lines 126-140, but HeaderFragment/SearchPreference integration never calls them on settings search IME DONE.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/NavigationDrawerActivity.kt\",\n      \"finding\": \"NavigationDrawerActivity.openSettings launches PreferencesActivity via PreferencesActivity.getIntent(this), confirming the user's Settings entry point reaches the preference header screen containing SearchPreference.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/build.gradle\",\n      \"finding\": \"AnkiDroid depends on libs.search.preference at line 506; this is the external widget used for settings search.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"read_file\",\n      \"target\": \"gradle/libs.versions.toml\",\n      \"finding\": \"The SearchPreference dependency is com.github.ByteHamster:SearchPreference version 2.7.3. The dependency source is not present inside the checkout, so the most precise in-repo trigger is the statement that wires this widget into HeaderFragment.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"SearchPreference widget lacks IME_ACTION_DONE keyboard dismissal\",\n      \"finding\": \"Pressing IME DONE while the settings search EditText has focus is handled by the library search widget. Because AnkiDroid only configures indexing and does not attach an editor listener or hide the keyboard, the keyboard remains open when the library does not close it.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"PreferencesFragment.onSearchResultClicked\",\n      \"finding\": \"This callback runs only after a search result is clicked, not when IME DONE is pressed in the search field. It cannot cause the keyboard to stay open immediately after IME DONE.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"SettingsFragment.onCreateView/onViewCreated\",\n      \"finding\": \"The base settings fragment only inflates the preference list and toolbar. It does not own the SearchPreference EditText and has no editor-action branch that could mishandle IME DONE.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"trace_call\",\n      \"target\": \"Settings drawer -> PreferencesActivity -> PreferencesFragment -> HeaderFragment -> SearchPreference\",\n      \"finding\": \"The concrete control flow from the report reaches HeaderFragment.initSubscreen, where the third-party SearchPreference is retrieved and configured. That statement is the in-repo source location that triggers the buggy external search widget behavior.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"AnkiDroid/src/main/java/com/ichi2/anki/preferences/HeaderFragment.kt\",\n      \"class\": \"HeaderFragment\",\n      \"method\": \"initSubscreen()\",\n      \"line\": 81,\n      \"statement\": \"requirePreference<SearchPreference>(R.string.search_preference_key).searchConfiguration,\",\n      \"suspicion_score\": 0.82,\n      \"reasoning\": \"This statement retrieves the SearchPreference library widget from the settings header screen and hands its SearchConfiguration to AnkiDroid's configuration code. The report's failing UI field is com.bytehamster.lib.preferencesearch.R.id.search, and no checked-out AnkiDroid code attaches IME_ACTION_DONE handling or calls hideKeyboard for that field. Therefore pressing IME DONE is left to the SearchPreference widget, whose current integration does not close the keyboard.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"AnkiDroid/src/main/java/com/ichi2/anki/preferences/HeaderFragment.kt\",\n    \"class\": \"HeaderFragment\",\n    \"method\": \"initSubscreen()\",\n    \"line\": 81,\n    \"statement\": \"requirePreference<SearchPreference>(R.string.search_preference_key).searchConfiguration,\",\n    \"confidence\": 0.82,\n    \"causal_chain\": \"User opens Settings from NavigationDrawerActivity.openSettings; PreferencesActivity loads PreferencesFragment; PreferencesFragment loads HeaderFragment; SettingsFragment.addPreferencesFromResource inflates preference_headers.xml, which declares com.bytehamster.lib.preferencesearch.SearchPreference; HeaderFragment.initSubscreen retrieves that SearchPreference at line 81 and configures it without adding IME DONE keyboard dismissal; the user types in the library-owned search EditText and presses IME DONE; because neither AnkiDroid nor the checked-in integration calls clearFocus or hideSoftInputFromWindow for that action, the keyboard remains visible.\",\n    \"fix_hint\": \"Update or patch the SearchPreference integration so the search EditText handles EditorInfo.IME_ACTION_DONE by clearing focus and hiding the soft input, or upgrade the dependency to a version that does this.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "SearchPreference|preferencesearch|IME_ACTION_DONE|setOnEditorActionListener|hideSoftInput|Settings",
+        "finding": "The settings search UI is tied to com.bytehamster.lib.preferencesearch. Matches in production code are concentrated in HeaderFragment.kt, Preferences.kt, preference_headers.xml, build.gradle, and libs.versions.toml; no AnkiDroid settings code registers an editor-action listener for the settings search EditText."
+      },
+      {
+        "step": 2,
+        "action": "grep_pattern",
+        "target": "bytehamster|preferencesearch|search.preference|SearchConfiguration|PreferenceSearch",
+        "finding": "The repo references SearchPreference as an external dependency and uses SearchConfiguration/SearchPreference APIs. No local implementation class for SearchPreference, SearchConfiguration, or the search EditText exists in the checked-out source."
+      },
+      {
+        "step": 3,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/res/xml/preference_headers.xml",
+        "finding": "The settings header preference screen declares <com.bytehamster.lib.preferencesearch.SearchPreference android:key=\"@string/search_preference_key\" .../> at line 26, making the third-party widget the visible settings search box."
+      },
+      {
+        "step": 4,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/preferences/HeaderFragment.kt",
+        "finding": "HeaderFragment.initSubscreen obtains the SearchPreference by key and passes its searchConfiguration into configureSearchBar at lines 79-82. configureSearchBar only configures indexing/history/breadcrumbs/container at lines 105-247; it does not attach IME DONE handling or hide the keyboard."
+      },
+      {
+        "step": 5,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/preferences/Preferences.kt",
+        "finding": "PreferencesActivity hosts PreferencesFragment because SearchConfiguration requires a SearchPreferenceResultListener. PreferencesFragment handles search result clicks but not keyboard/editor actions. It confirms the settings entry point is PreferencesActivity -> PreferencesFragment -> HeaderFragment."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/preferences/SettingsFragment.kt",
+        "finding": "SettingsFragment inflates the preference screen and calls addPreferencesFromResource(preferenceResource), which instantiates the SearchPreference from preference_headers.xml. The base class also has no keyboard hide or editor-action handling for preferences."
+      },
+      {
+        "step": 7,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/res/layout/fragment_settings.xml",
+        "finding": "The settings preference list is hosted under @android:id/list_container, the same ID passed to SearchConfiguration.setFragmentContainerViewId. This ties the library search UI to the settings fragment container."
+      },
+      {
+        "step": 8,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/res/layout/fragment_preferences.xml",
+        "finding": "Compact settings uses a single settings_container, where PreferencesFragment loads HeaderFragment by default. This matches the report's Settings -> Search flow."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/res/layout-sw600dp/fragment_preferences.xml",
+        "finding": "Large-screen settings embeds HeaderFragment directly in lateral_nav_container and still uses the same SearchPreference widget, so the keyboard behavior is independent of compact/tablet layout."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "AnkiDroid/src/androidTest/java/com/ichi2/anki/preferences/PreferencesNavigationTest.kt",
+        "finding": "Tests click com.bytehamster.lib.preferencesearch.R.id.search and type into it, confirming the runtime search field belongs to the SearchPreference library. The tests cover back behavior and search results, not IME DONE keyboard dismissal."
+      },
+      {
+        "step": 11,
+        "action": "read_file",
+        "target": "AnkiDroid/src/test/java/com/ichi2/anki/preferences/PrefsSearchBarTest.kt",
+        "finding": "The search-bar test constructs SearchConfiguration and calls HeaderFragment.configureSearchBar, then checks indexed XML resources. It does not test or configure keyboard dismissal."
+      },
+      {
+        "step": 12,
+        "action": "grep_pattern",
+        "target": "setOnEditorActionListener|IME_ACTION_DONE|EditorInfo|hideKeyboard|hideSoftInput|clearFocus|preferencesearch.R.id.search",
+        "finding": "No production settings code handles IME_ACTION_DONE for com.bytehamster.lib.preferencesearch.R.id.search. Other screens such as CardBrowserFragment and dialogs explicitly handle editor actions or hide keyboards, showing this behavior must be supplied by the settings search widget or its integration."
+      },
+      {
+        "step": 13,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragment.kt",
+        "finding": "CardBrowserFragment sets an editor-action listener on its search EditText at lines 411-418. This is a neighboring non-settings search path and does not control the reported Settings search field."
+      },
+      {
+        "step": 14,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/utils/AndroidUtils.kt",
+        "finding": "AnkiDroid has Activity/Fragment/View hideKeyboard helpers at lines 126-140, but HeaderFragment/SearchPreference integration never calls them on settings search IME DONE."
+      },
+      {
+        "step": 15,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/NavigationDrawerActivity.kt",
+        "finding": "NavigationDrawerActivity.openSettings launches PreferencesActivity via PreferencesActivity.getIntent(this), confirming the user's Settings entry point reaches the preference header screen containing SearchPreference."
+      },
+      {
+        "step": 16,
+        "action": "read_file",
+        "target": "AnkiDroid/build.gradle",
+        "finding": "AnkiDroid depends on libs.search.preference at line 506; this is the external widget used for settings search."
+      },
+      {
+        "step": 17,
+        "action": "read_file",
+        "target": "gradle/libs.versions.toml",
+        "finding": "The SearchPreference dependency is com.github.ByteHamster:SearchPreference version 2.7.3. The dependency source is not present inside the checkout, so the most precise in-repo trigger is the statement that wires this widget into HeaderFragment."
+      },
+      {
+        "step": 18,
+        "action": "form_hypothesis",
+        "target": "SearchPreference widget lacks IME_ACTION_DONE keyboard dismissal",
+        "finding": "Pressing IME DONE while the settings search EditText has focus is handled by the library search widget. Because AnkiDroid only configures indexing and does not attach an editor listener or hide the keyboard, the keyboard remains open when the library does not close it."
+      },
+      {
+        "step": 19,
+        "action": "eliminate_candidate",
+        "target": "PreferencesFragment.onSearchResultClicked",
+        "finding": "This callback runs only after a search result is clicked, not when IME DONE is pressed in the search field. It cannot cause the keyboard to stay open immediately after IME DONE."
+      },
+      {
+        "step": 20,
+        "action": "eliminate_candidate",
+        "target": "SettingsFragment.onCreateView/onViewCreated",
+        "finding": "The base settings fragment only inflates the preference list and toolbar. It does not own the SearchPreference EditText and has no editor-action branch that could mishandle IME DONE."
+      },
+      {
+        "step": 21,
+        "action": "trace_call",
+        "target": "Settings drawer -> PreferencesActivity -> PreferencesFragment -> HeaderFragment -> SearchPreference",
+        "finding": "The concrete control flow from the report reaches HeaderFragment.initSubscreen, where the third-party SearchPreference is retrieved and configured. That statement is the in-repo source location that triggers the buggy external search widget behavior."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "AnkiDroid/src/main/java/com/ichi2/anki/preferences/HeaderFragment.kt",
+        "class": "HeaderFragment",
+        "method": "initSubscreen()",
+        "line": 81,
+        "statement": "requirePreference<SearchPreference>(R.string.search_preference_key).searchConfiguration,",
+        "suspicion_score": 0.82,
+        "reasoning": "This statement retrieves the SearchPreference library widget from the settings header screen and hands its SearchConfiguration to AnkiDroid's configuration code. The report's failing UI field is com.bytehamster.lib.preferencesearch.R.id.search, and no checked-out AnkiDroid code attaches IME_ACTION_DONE handling or calls hideKeyboard for that field. Therefore pressing IME DONE is left to the SearchPreference widget, whose current integration does not close the keyboard."
+      }
+    ],
+    "final_answer": {
+      "file": "AnkiDroid/src/main/java/com/ichi2/anki/preferences/HeaderFragment.kt",
+      "class": "HeaderFragment",
+      "method": "initSubscreen()",
+      "line": 81,
+      "statement": "requirePreference<SearchPreference>(R.string.search_preference_key).searchConfiguration,",
+      "confidence": 0.82,
+      "causal_chain": "User opens Settings from NavigationDrawerActivity.openSettings; PreferencesActivity loads PreferencesFragment; PreferencesFragment loads HeaderFragment; SettingsFragment.addPreferencesFromResource inflates preference_headers.xml, which declares com.bytehamster.lib.preferencesearch.SearchPreference; HeaderFragment.initSubscreen retrieves that SearchPreference at line 81 and configures it without adding IME DONE keyboard dismissal; the user types in the library-owned search EditText and presses IME DONE; because neither AnkiDroid nor the checked-in integration calls clearFocus or hideSoftInputFromWindow for that action, the keyboard remains visible.",
+      "fix_hint": "Update or patch the SearchPreference integration so the search EditText handles EditorInfo.IME_ACTION_DONE by clearing focus and hiding the soft input, or upgrade the dependency to a version that does this."
+    }
+  },
+  "error": null
+}

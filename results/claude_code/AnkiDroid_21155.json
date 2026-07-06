@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "AnkiDroid",
+  "issue_id": 21155,
+  "issue_url": "https://github.com/ankidroid/Anki-Android/issues/21155",
+  "issue_title": "Rotation/unfold during review hides the answer (resets card to question side)",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\ankidroid_Anki_Android",
+  "media_files": [],
+  "started_at": "2026-06-21T14:58:11.978-05:00",
+  "finished_at": "2026-06-21T15:01:14.270-05:00",
+  "duration_seconds": 182.28,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

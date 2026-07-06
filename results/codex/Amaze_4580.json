@@ -1,0 +1,176 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "Amaze",
+  "issue_id": 4580,
+  "issue_url": "https://github.com/TeamAmaze/AmazeFileManager/issues/4580",
+  "issue_title": "Documents drawer view shows stale entries after file operations until swipe-to-refresh or restart",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\TeamAmaze_AmazeFileManager",
+  "media_files": [
+    "81987b88-5ab2-4ea6-9cac-96aba76a71a7"
+  ],
+  "started_at": "2026-06-21T16:15:12.215-05:00",
+  "finished_at": "2026-06-21T16:18:40.256-05:00",
+  "duration_seconds": 208.05,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"Documents|documents|DOCUMENT|Drawer|drawer\",\n      \"finding\": \"Initial broad repo search was noisy due generated analysis files, so the search was narrowed to app/src/main source and resource files.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"grep_pattern\",\n      \"target\": \"app/src/main: Documents|documents|drawer|Drawer|media|MediaStore|DOCUMENT\",\n      \"finding\": \"Found the relevant drawer implementation in app/src/main/java/com/amaze/filemanager/ui/views/drawer/Drawer.java and the list loader in app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/LoadFilesListTask.java.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/views/drawer/Drawer.java\",\n      \"finding\": \"The quick-access Documents drawer item is added with new MenuMetadata(\\\"3\\\", true), so selecting Documents loads path \\\"3\\\" as a custom quick-access category.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"trace_call\",\n      \"target\": \"Drawer.onDrawerClosed()\",\n      \"finding\": \"When a drawer path is pending, Drawer calls mainFragment.loadlist(pendingPath.getPath(), false, OpenMode.UNKNOWN, false), so Documents is loaded with path \\\"3\\\" and forceReload=false.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java\",\n      \"finding\": \"MainFragment.loadlist creates LoadFilesListTask with the provided path, open mode, and forceReload flag. Swipe refresh calls updateList(true), while drawer navigation and reload broadcasts generally call with false.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"trace_call\",\n      \"target\": \"MainFragment.loadlist(\\\"3\\\", false, OpenMode.UNKNOWN, false)\",\n      \"finding\": \"Because OpenMode.UNKNOWN/CUSTOM paths are normalized by HybridFile.generateMode and path \\\"3\\\" is a custom quick-access category, LoadFilesListTask reaches the CUSTOM branch.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/LoadFilesListTask.java\",\n      \"finding\": \"For OpenMode.CUSTOM, doInBackground calls getCachedMediaList(mainActivityViewModel).\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"trace_call\",\n      \"target\": \"LoadFilesListTask.getCachedMediaList(MainActivityViewModel)\",\n      \"finding\": \"Path \\\"3\\\" becomes mediaType 3, whose switch branch calls listDocs() only when the cache is null or forceReload is true.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/LoadFilesListTask.java:listDocs()\",\n      \"finding\": \"listDocs() queries MediaStore.Files for external storage paths and builds the Documents drawer list from document-like file extensions, so this is the data source that should be re-queried after create/delete/rename.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/activities/MainActivityViewModel.kt\",\n      \"finding\": \"MainActivityViewModel stores mediaCacheHash as List(5) { null } and exposes getFromMediaFilesCache(mediaType), but no method exists to invalidate or evict one media category.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"grep_pattern\",\n      \"target\": \"mediaCacheHash|evict.*Media|getMediaCacheHash|getFromMediaFilesCache\",\n      \"finding\": \"Only LoadFilesListTask writes mediaCacheHash and MainActivityViewModel reads it. No file operation path clears this cache.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Documents drawer list is stale because mediaType 3 is cached and reused after filesystem changes.\",\n      \"finding\": \"This explains why navigating away and back does not help: drawer navigation calls loadlist with forceReload=false, so the cached Documents list is reused.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/DeleteTask.java\",\n      \"finding\": \"DeleteTask deletes the file, calls MediaConnectionUtils.scanFile for non-remote files, and sends MainActivity.KEY_INTENT_LOAD_LIST with the deleted file parent path.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"trace_call\",\n      \"target\": \"DeleteTask.onPostExecute() -> MainFragment.receiver2\",\n      \"finding\": \"MainFragment.receiver2 receives the reload broadcast, evicts only listCache for getCurrentPath(), then calls updateList(false). It does not clear mediaCacheHash.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"Delete operation itself\",\n      \"finding\": \"DeleteTask reports success after actual storage deletion and broadcasts a reload. Since the file disappears after swipe refresh, deletion is not the primary fault.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"MediaStore query in listDocs()\",\n      \"finding\": \"Swipe-to-refresh reuses listDocs() and updates the view correctly, so the query and filtering can produce fresh data when forced.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/asynchronous/handlers/FileHandler.kt\",\n      \"finding\": \"FileHandler updates the current directory adapter for file observer events and evicts listCache for the current path, but it also does not invalidate mediaCacheHash.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/utils/MainActivityHelper.java\",\n      \"finding\": \"Create-file success calls ma.updateList(false), and rename success broadcasts KEY_INTENT_LOAD_LIST for the parent; neither path invalidates mediaCacheHash.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/Operations.java\",\n      \"finding\": \"Rename scans both old and new files through MediaConnectionUtils.scanFile after completion, confirming storage/media updates are attempted outside the UI cache.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/MakeFileOperation.kt\",\n      \"finding\": \"Local file creation creates the file on disk; the stale drawer behavior is downstream in the Documents quick-access cache, not in file creation.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"SAF OpenMode.DOCUMENT_FILE listDocumentFiles cache\",\n      \"finding\": \"The bug report's Documents drawer view maps to quick-access path \\\"3\\\" and listDocs(), not the OpenMode.DOCUMENT_FILE branch. The listDocumentFiles cache is not the observed entry point.\"\n    },\n    {\n      \"step\": 22,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Fault statement is the cached-list return in LoadFilesListTask.getCachedMediaList.\",\n      \"finding\": \"Once mediaType 3 has been cached, line 296 returns the old LayoutElementParcelable list whenever forceReload is false, causing deleted, created, and renamed document entries to remain stale until swipe refresh or app restart.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/LoadFilesListTask.java\",\n      \"class\": \"LoadFilesListTask\",\n      \"method\": \"getCachedMediaList(MainActivityViewModel mainActivityViewModel)\",\n      \"line\": 296,\n      \"statement\": \"list = mainActivityViewModel.getFromMediaFilesCache(mediaType);\",\n      \"suspicion_score\": 0.93,\n      \"reasoning\": \"The Documents drawer item uses custom media path \\\"3\\\". For mediaType 3, this statement returns the cached Documents list whenever forceReload is false. Delete/create/rename paths refresh current folder caches or send reload broadcasts but never invalidate mediaCacheHash, so this line reuses stale LayoutElementParcelable entries. Swipe-to-refresh passes forceReload=true and bypasses this statement, which matches the observed recovery.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/LoadFilesListTask.java\",\n    \"class\": \"LoadFilesListTask\",\n    \"method\": \"getCachedMediaList(MainActivityViewModel mainActivityViewModel)\",\n    \"line\": 296,\n    \"statement\": \"list = mainActivityViewModel.getFromMediaFilesCache(mediaType);\",\n    \"confidence\": 0.93,\n    \"causal_chain\": \"Drawer.refreshDrawer maps Documents to custom path \\\"3\\\". Drawer.onDrawerClosed loads that path with forceReload=false. LoadFilesListTask treats path \\\"3\\\" as mediaType 3 and initially fills mediaCacheHash with listDocs(). Later delete/create/rename operations update storage and may broadcast or refresh the active folder, but no code invalidates mediaCacheHash. When the Documents drawer is revisited or receives updateList(false), getCachedMediaList falls into the else branch and executes this statement, returning the stale cached Documents list instead of querying MediaStore again. Swipe-to-refresh calls updateList(true), bypasses this cached return, re-runs listDocs(), and the UI becomes correct.\",\n    \"fix_hint\": \"Invalidate mediaCacheHash for document/media categories after file operations, or avoid caching mediaType 3 by forcing listDocs() to re-query for the Documents drawer.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "Documents|documents|DOCUMENT|Drawer|drawer",
+        "finding": "Initial broad repo search was noisy due generated analysis files, so the search was narrowed to app/src/main source and resource files."
+      },
+      {
+        "step": 2,
+        "action": "grep_pattern",
+        "target": "app/src/main: Documents|documents|drawer|Drawer|media|MediaStore|DOCUMENT",
+        "finding": "Found the relevant drawer implementation in app/src/main/java/com/amaze/filemanager/ui/views/drawer/Drawer.java and the list loader in app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/LoadFilesListTask.java."
+      },
+      {
+        "step": 3,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/views/drawer/Drawer.java",
+        "finding": "The quick-access Documents drawer item is added with new MenuMetadata(\"3\", true), so selecting Documents loads path \"3\" as a custom quick-access category."
+      },
+      {
+        "step": 4,
+        "action": "trace_call",
+        "target": "Drawer.onDrawerClosed()",
+        "finding": "When a drawer path is pending, Drawer calls mainFragment.loadlist(pendingPath.getPath(), false, OpenMode.UNKNOWN, false), so Documents is loaded with path \"3\" and forceReload=false."
+      },
+      {
+        "step": 5,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java",
+        "finding": "MainFragment.loadlist creates LoadFilesListTask with the provided path, open mode, and forceReload flag. Swipe refresh calls updateList(true), while drawer navigation and reload broadcasts generally call with false."
+      },
+      {
+        "step": 6,
+        "action": "trace_call",
+        "target": "MainFragment.loadlist(\"3\", false, OpenMode.UNKNOWN, false)",
+        "finding": "Because OpenMode.UNKNOWN/CUSTOM paths are normalized by HybridFile.generateMode and path \"3\" is a custom quick-access category, LoadFilesListTask reaches the CUSTOM branch."
+      },
+      {
+        "step": 7,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/LoadFilesListTask.java",
+        "finding": "For OpenMode.CUSTOM, doInBackground calls getCachedMediaList(mainActivityViewModel)."
+      },
+      {
+        "step": 8,
+        "action": "trace_call",
+        "target": "LoadFilesListTask.getCachedMediaList(MainActivityViewModel)",
+        "finding": "Path \"3\" becomes mediaType 3, whose switch branch calls listDocs() only when the cache is null or forceReload is true."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/LoadFilesListTask.java:listDocs()",
+        "finding": "listDocs() queries MediaStore.Files for external storage paths and builds the Documents drawer list from document-like file extensions, so this is the data source that should be re-queried after create/delete/rename."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/activities/MainActivityViewModel.kt",
+        "finding": "MainActivityViewModel stores mediaCacheHash as List(5) { null } and exposes getFromMediaFilesCache(mediaType), but no method exists to invalidate or evict one media category."
+      },
+      {
+        "step": 11,
+        "action": "grep_pattern",
+        "target": "mediaCacheHash|evict.*Media|getMediaCacheHash|getFromMediaFilesCache",
+        "finding": "Only LoadFilesListTask writes mediaCacheHash and MainActivityViewModel reads it. No file operation path clears this cache."
+      },
+      {
+        "step": 12,
+        "action": "form_hypothesis",
+        "target": "Documents drawer list is stale because mediaType 3 is cached and reused after filesystem changes.",
+        "finding": "This explains why navigating away and back does not help: drawer navigation calls loadlist with forceReload=false, so the cached Documents list is reused."
+      },
+      {
+        "step": 13,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/DeleteTask.java",
+        "finding": "DeleteTask deletes the file, calls MediaConnectionUtils.scanFile for non-remote files, and sends MainActivity.KEY_INTENT_LOAD_LIST with the deleted file parent path."
+      },
+      {
+        "step": 14,
+        "action": "trace_call",
+        "target": "DeleteTask.onPostExecute() -> MainFragment.receiver2",
+        "finding": "MainFragment.receiver2 receives the reload broadcast, evicts only listCache for getCurrentPath(), then calls updateList(false). It does not clear mediaCacheHash."
+      },
+      {
+        "step": 15,
+        "action": "eliminate_candidate",
+        "target": "Delete operation itself",
+        "finding": "DeleteTask reports success after actual storage deletion and broadcasts a reload. Since the file disappears after swipe refresh, deletion is not the primary fault."
+      },
+      {
+        "step": 16,
+        "action": "eliminate_candidate",
+        "target": "MediaStore query in listDocs()",
+        "finding": "Swipe-to-refresh reuses listDocs() and updates the view correctly, so the query and filtering can produce fresh data when forced."
+      },
+      {
+        "step": 17,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/asynchronous/handlers/FileHandler.kt",
+        "finding": "FileHandler updates the current directory adapter for file observer events and evicts listCache for the current path, but it also does not invalidate mediaCacheHash."
+      },
+      {
+        "step": 18,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/utils/MainActivityHelper.java",
+        "finding": "Create-file success calls ma.updateList(false), and rename success broadcasts KEY_INTENT_LOAD_LIST for the parent; neither path invalidates mediaCacheHash."
+      },
+      {
+        "step": 19,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/Operations.java",
+        "finding": "Rename scans both old and new files through MediaConnectionUtils.scanFile after completion, confirming storage/media updates are attempted outside the UI cache."
+      },
+      {
+        "step": 20,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/MakeFileOperation.kt",
+        "finding": "Local file creation creates the file on disk; the stale drawer behavior is downstream in the Documents quick-access cache, not in file creation."
+      },
+      {
+        "step": 21,
+        "action": "eliminate_candidate",
+        "target": "SAF OpenMode.DOCUMENT_FILE listDocumentFiles cache",
+        "finding": "The bug report's Documents drawer view maps to quick-access path \"3\" and listDocs(), not the OpenMode.DOCUMENT_FILE branch. The listDocumentFiles cache is not the observed entry point."
+      },
+      {
+        "step": 22,
+        "action": "form_hypothesis",
+        "target": "Fault statement is the cached-list return in LoadFilesListTask.getCachedMediaList.",
+        "finding": "Once mediaType 3 has been cached, line 296 returns the old LayoutElementParcelable list whenever forceReload is false, causing deleted, created, and renamed document entries to remain stale until swipe refresh or app restart."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/LoadFilesListTask.java",
+        "class": "LoadFilesListTask",
+        "method": "getCachedMediaList(MainActivityViewModel mainActivityViewModel)",
+        "line": 296,
+        "statement": "list = mainActivityViewModel.getFromMediaFilesCache(mediaType);",
+        "suspicion_score": 0.93,
+        "reasoning": "The Documents drawer item uses custom media path \"3\". For mediaType 3, this statement returns the cached Documents list whenever forceReload is false. Delete/create/rename paths refresh current folder caches or send reload broadcasts but never invalidate mediaCacheHash, so this line reuses stale LayoutElementParcelable entries. Swipe-to-refresh passes forceReload=true and bypasses this statement, which matches the observed recovery."
+      }
+    ],
+    "final_answer": {
+      "file": "app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/LoadFilesListTask.java",
+      "class": "LoadFilesListTask",
+      "method": "getCachedMediaList(MainActivityViewModel mainActivityViewModel)",
+      "line": 296,
+      "statement": "list = mainActivityViewModel.getFromMediaFilesCache(mediaType);",
+      "confidence": 0.93,
+      "causal_chain": "Drawer.refreshDrawer maps Documents to custom path \"3\". Drawer.onDrawerClosed loads that path with forceReload=false. LoadFilesListTask treats path \"3\" as mediaType 3 and initially fills mediaCacheHash with listDocs(). Later delete/create/rename operations update storage and may broadcast or refresh the active folder, but no code invalidates mediaCacheHash. When the Documents drawer is revisited or receives updateList(false), getCachedMediaList falls into the else branch and executes this statement, returning the stale cached Documents list instead of querying MediaStore again. Swipe-to-refresh calls updateList(true), bypasses this cached return, re-runs listDocs(), and the UI becomes correct.",
+      "fix_hint": "Invalidate mediaCacheHash for document/media categories after file operations, or avoid caching mediaType 3 by forcing listDocs() to re-query for the Documents drawer."
+    }
+  },
+  "error": null
+}

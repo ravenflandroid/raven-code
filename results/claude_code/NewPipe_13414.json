@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "NewPipe",
+  "issue_id": 13414,
+  "issue_url": "https://github.com/TeamNewPipe/NewPipe/issues/13414",
+  "issue_title": "[Refactor] Timestamp links in comments open external browser instead of seeking video",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\TeamNewPipe_NewPipe",
+  "media_files": [
+    "ceb62fe9-bcfb-4e48-902e-8688c938646b"
+  ],
+  "started_at": "2026-06-22T15:41:37.196-05:00",
+  "finished_at": "2026-06-22T15:44:38.892-05:00",
+  "duration_seconds": 181.7,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "AnkiDroid",
+  "issue_id": 19426,
+  "issue_url": "https://github.com/ankidroid/Anki-Android/issues/19426",
+  "issue_title": "(2.23.0alpha6) Changing the deck in the \"Deck\" field of the Image Occlusion editor doesn't make the new note to be added to the selected deck",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\ankidroid_Anki_Android",
+  "media_files": [
+    "1a7e941f-c893-4783-944b-427d59041a03",
+    "2af7c800-2d09-4864-8e7f-010a896b7d0e"
+  ],
+  "started_at": "2026-06-21T14:29:24.701-05:00",
+  "finished_at": "2026-06-21T14:32:20.247-05:00",
+  "duration_seconds": 175.55,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

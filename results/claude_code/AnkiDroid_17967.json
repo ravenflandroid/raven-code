@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "AnkiDroid",
+  "issue_id": 17967,
+  "issue_url": "https://github.com/ankidroid/Anki-Android/issues/17967",
+  "issue_title": "[BUG] Close Keyboard on IME DONE",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\ankidroid_Anki_Android",
+  "media_files": [
+    "ef7bc609-7428-4ce2-9bc0-d9c514a5e235"
+  ],
+  "started_at": "2026-06-21T14:51:21.716-05:00",
+  "finished_at": "2026-06-21T14:54:25.248-05:00",
+  "duration_seconds": 183.53,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

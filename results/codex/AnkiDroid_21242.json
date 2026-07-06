@@ -1,0 +1,218 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "AnkiDroid",
+  "issue_id": 21242,
+  "issue_url": "https://github.com/ankidroid/Anki-Android/issues/21242",
+  "issue_title": "Snackbar appears in the card browser unnecessarily",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\ankidroid_Anki_Android",
+  "media_files": [],
+  "started_at": "2026-06-21T15:17:05.071-05:00",
+  "finished_at": "2026-06-21T15:22:29.375-05:00",
+  "duration_seconds": 324.3,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"class .*CardBrowser|CardBrowser|Browser\",\n      \"finding\": \"Located the card browser entry points and related classes, especially AnkiDroid/src/main/java/com/ichi2/anki/CardBrowser.kt, AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragment.kt, and AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"grep_pattern\",\n      \"target\": \"Snackbar|showSnackbar|snackbar|snack\",\n      \"finding\": \"Snackbar calls in the card browser cluster in CardBrowserFragment.kt, with a search-completion snackbar path around onSearchCompleted(), and CardBrowserViewModel.kt has a SearchResultMessage described as driving a snackbar.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"grep_pattern\",\n      \"target\": \"*CardBrowser*.kt, *Browser*.kt, *cardbrowser*.xml, *browser*.xml\",\n      \"finding\": \"Confirmed the relevant implementation files and layouts: CardBrowser.kt, CardBrowserFragment.kt, CardBrowserViewModel.kt, CardBrowserLaunchOptions.kt, activity_card_browser.xml, fragment_card_browser.xml, include_browser_toolbar.xml, and card-browser string resources.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/CardBrowser.kt\",\n      \"finding\": \"CardBrowser is the Activity entry point. onCreate creates CardBrowserViewModel, attaches CardBrowserFragment, starts loading the collection, and setupFlows observes flowOfSearchState for header/subtitle updates.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragment.kt\",\n      \"finding\": \"CardBrowserFragment observes activityViewModel.flowOfSearchState at line 1139 and calls onSearchCompleted() for every SearchState.Completed at lines 944-949.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt\",\n      \"finding\": \"CardBrowserViewModel holds searchRequestFlow initialized with SearchRequest(query = \\\"\\\"), selected deck filters, launchSearchForCards(), and SearchState.Completed.fromCurrentState(), which determines whether the UI should offer a Search all decks action.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"trace_call\",\n      \"target\": \"CardBrowser.onCreate() -> createViewModel() -> CardBrowserViewModel.init\",\n      \"finding\": \"Opening the browser constructs the ViewModel; init calls setSelectedDeck(initialDeckId) at line 557, then sets flowOfInitCompleted to true and calls launchSearchForCards() at line 591.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"trace_call\",\n      \"target\": \"CardBrowser.onDeckSelected(SelectableDeck?) -> CardBrowserViewModel.setSelectedDeck(SelectableDeck)\",\n      \"finding\": \"Changing the deck from the browser calls setSelectedDeck(), which updates the deck filter and calls launchSearchForCards(updatedFilter, forceRefresh = false) at line 410.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchRequest.kt\",\n      \"finding\": \"SearchRequest.toSearchString() treats the user query separately from filters. A blank query with a selected deck is represented as a deck filter, not as user-entered search text.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchFilters.kt\",\n      \"finding\": \"SearchFilters.activeFilters includes decks when a deck is selected, confirming deck selection alone creates an active filter even when SearchRequest.query remains blank.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"trace_call\",\n      \"target\": \"CardBrowserViewModel.launchSearchForCards(cardOrNoteIdsToSelect)\",\n      \"finding\": \"The concrete search path emits SearchState.Searching, runs searchForRows(), updates cards, then emits SearchState.Completed.fromCurrentState() at line 1416.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"trace_call\",\n      \"target\": \"CardBrowserViewModel.SearchState.Completed.Companion.fromCurrentState()\",\n      \"finding\": \"The result-message decision is based on all-decks selection and rowCount only. It does not check whether searchRequestFlow.value.query is blank or whether the user actually submitted a search.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Wrong condition in SearchState.Completed.fromCurrentState(): non-all-decks results are always marked actionable\",\n      \"finding\": \"For a selected deck with cards and an empty query, line 1533 returns CardCount(includeSearchAllDecksAction = true), which tells the fragment an action is available and therefore a snackbar should be shown.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"trace_call\",\n      \"target\": \"CardBrowserFragment.onSearchCompleted(SearchState.Completed)\",\n      \"finding\": \"CardBrowserFragment receives CardCount and calls showSnackbar(message = state.formatCardCount(resources), searchAllDecks = result.includeSearchAllDecksAction) at lines 931-935.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"trace_call\",\n      \"target\": \"CardBrowserFragment.onSearchCompleted() local showSnackbar(message, searchAllDecks)\",\n      \"finding\": \"The local helper suppresses the snackbar only when the count is visible in the header and searchAllDecks is false. The comment says to show the snackbar if an action is available, so includeSearchAllDecksAction=true forces a snackbar.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"inspect_layout_xml\",\n      \"target\": \"AnkiDroid/src/main/res/layout/fragment_card_browser.xml\",\n      \"finding\": \"The fragment layout contains the RecyclerView/progress UI, not the toolbar subtitle; snackbar display is not caused by layout anchoring or an XML visibility issue.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"inspect_layout_xml\",\n      \"target\": \"AnkiDroid/src/main/res/layout/activity_card_browser.xml\",\n      \"finding\": \"The Activity hosts include_browser_toolbar and card_browser_frame; no XML behavior directly triggers snackbars.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"inspect_layout_xml\",\n      \"target\": \"AnkiDroid/src/main/res/layout/include_browser_toolbar.xml\",\n      \"finding\": \"The toolbar includes deck_name and subtitle TextViews, so the card count is already visible in normal legacy UI. The fragment snackbar helper intentionally bypasses suppression only when searchAllDecks is true.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserLaunchOptions.kt\",\n      \"finding\": \"Launch options can carry real search text for deep links, JS search, or context menu; normal browser opening has null options and therefore no user search query.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"grep_pattern\",\n      \"target\": \"card_browser_subtitle|card_browser_no_cards_in_deck|card_browser_search_all_decks in AnkiDroid/src/main/res/values/07-cardbrowser.xml\",\n      \"finding\": \"The relevant snackbar/header strings are card count plurals, 'No cards found in deck %s', and the 'Search all decks' action label.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt\",\n      \"finding\": \"Tests around lines 1574-1610 assert current behavior: all-decks has no action, a specific deck with cards has includeSearchAllDecksAction=true, and a specific empty deck emits NoCardsInSelectedDeck. These tests encode the behavior now reported as unwanted for empty user queries.\"\n    },\n    {\n      \"step\": 22,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserFragmentTest.kt\",\n      \"finding\": \"Fragment tests cover SearchView submit shortcuts but do not cover suppressing snackbars on initial browser open or deck-only changes.\"\n    },\n    {\n      \"step\": 23,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"CardBrowserFragment.kt line 922 showSnackbar(message, Snackbar.LENGTH_SHORT)\",\n      \"finding\": \"This statement directly displays the snackbar, but it is deliberately gated by searchAllDecks. The incorrect input to that gate originates in the ViewModel's result-message construction.\"\n    },\n    {\n      \"step\": 24,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"CardBrowserViewModel.kt line 410 launchSearchForCards(updatedFilter, forceRefresh = false)\",\n      \"finding\": \"Deck changes should refresh the browser list, so launching a search for a changed deck is necessary. The bug is not the refresh itself but treating that deck-only refresh as user-search feedback.\"\n    },\n    {\n      \"step\": 25,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"CardBrowserViewModel.kt line 1532 rowCount == 0 -> SearchResultMessage.NoCardsInSelectedDeck\",\n      \"finding\": \"This neighboring branch can also show an unwanted snackbar for empty deck-only browsing, but the report's common 'opening/changing deck shows a snackbar' case with existing cards is explained by the line 1533 CardCount action flag.\"\n    },\n    {\n      \"step\": 26,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Final fault statement\",\n      \"finding\": \"The most likely faulty statement is CardBrowserViewModel.kt line 1533 because it unconditionally marks any non-all-decks, non-empty result as having a Search all decks action, without checking whether the user searched for anything.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt\",\n      \"class\": \"CardBrowserViewModel\",\n      \"method\": \"SearchState.Completed.Companion.fromCurrentState()\",\n      \"line\": 1533,\n      \"statement\": \"else -> SearchResultMessage.CardCount(includeSearchAllDecksAction = true)\",\n      \"suspicion_score\": 0.93,\n      \"reasoning\": \"This statement marks every successful search result in a specific deck as actionable with 'Search all decks', even when SearchRequest.query is blank and the operation was only opening the browser or changing decks. CardBrowserFragment intentionally shows a snackbar whenever that action flag is true, so this creates the unnecessary snackbar described in the report.\"\n    },\n    {\n      \"rank\": 2,\n      \"file\": \"AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragment.kt\",\n      \"class\": \"CardBrowserFragment\",\n      \"method\": \"setupFlows()\",\n      \"line\": 932,\n      \"statement\": \"showSnackbar(\",\n      \"suspicion_score\": 0.54,\n      \"reasoning\": \"This is the direct UI display call for card-count search results, but it is following the ViewModel's includeSearchAllDecksAction flag. The fragment's comment and condition show that action-bearing results are intentionally shown, so the upstream action flag is the more likely fault.\"\n    },\n    {\n      \"rank\": 3,\n      \"file\": \"AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt\",\n      \"class\": \"CardBrowserViewModel\",\n      \"method\": \"SearchState.Completed.Companion.fromCurrentState()\",\n      \"line\": 1532,\n      \"statement\": \"rowCount == 0 -> SearchResultMessage.NoCardsInSelectedDeck\",\n      \"suspicion_score\": 0.42,\n      \"reasoning\": \"This branch can also cause an unnecessary snackbar when opening or switching to an empty deck with no user query. It is adjacent to the same missing user-query condition, but the primary reported snackbar on ordinary deck changes with cards is caused by line 1533.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt\",\n    \"class\": \"CardBrowserViewModel\",\n    \"method\": \"SearchState.Completed.Companion.fromCurrentState()\",\n    \"line\": 1533,\n    \"statement\": \"else -> SearchResultMessage.CardCount(includeSearchAllDecksAction = true)\",\n    \"confidence\": 0.93,\n    \"causal_chain\": \"Opening CardBrowser creates CardBrowserViewModel with SearchRequest(query = \\\"\\\"). ViewModel init selects the initial deck via setSelectedDeck(), which stores the deck as a filter and launches the initial search. Changing deck later follows the same setSelectedDeck() path. After the search finishes, launchSearchForCards() emits SearchState.Completed.fromCurrentState(). Because the selected deck is not all decks and rowCount is nonzero, line 1533 creates CardCount(includeSearchAllDecksAction = true) even though the user did not enter a search. CardBrowserFragment.onSearchCompleted() passes that flag as searchAllDecks=true, and its snackbar helper shows a snackbar whenever an action is available. The result is an unnecessary card-count snackbar on browser open or deck-only changes.\",\n    \"fix_hint\": \"Only set includeSearchAllDecksAction, and likely NoCardsInSelectedDeck, when the user query is non-blank or a real search/filter was explicitly submitted, not for an empty query caused only by opening or changing decks.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "class .*CardBrowser|CardBrowser|Browser",
+        "finding": "Located the card browser entry points and related classes, especially AnkiDroid/src/main/java/com/ichi2/anki/CardBrowser.kt, AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragment.kt, and AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt."
+      },
+      {
+        "step": 2,
+        "action": "grep_pattern",
+        "target": "Snackbar|showSnackbar|snackbar|snack",
+        "finding": "Snackbar calls in the card browser cluster in CardBrowserFragment.kt, with a search-completion snackbar path around onSearchCompleted(), and CardBrowserViewModel.kt has a SearchResultMessage described as driving a snackbar."
+      },
+      {
+        "step": 3,
+        "action": "grep_pattern",
+        "target": "*CardBrowser*.kt, *Browser*.kt, *cardbrowser*.xml, *browser*.xml",
+        "finding": "Confirmed the relevant implementation files and layouts: CardBrowser.kt, CardBrowserFragment.kt, CardBrowserViewModel.kt, CardBrowserLaunchOptions.kt, activity_card_browser.xml, fragment_card_browser.xml, include_browser_toolbar.xml, and card-browser string resources."
+      },
+      {
+        "step": 4,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/CardBrowser.kt",
+        "finding": "CardBrowser is the Activity entry point. onCreate creates CardBrowserViewModel, attaches CardBrowserFragment, starts loading the collection, and setupFlows observes flowOfSearchState for header/subtitle updates."
+      },
+      {
+        "step": 5,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragment.kt",
+        "finding": "CardBrowserFragment observes activityViewModel.flowOfSearchState at line 1139 and calls onSearchCompleted() for every SearchState.Completed at lines 944-949."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt",
+        "finding": "CardBrowserViewModel holds searchRequestFlow initialized with SearchRequest(query = \"\"), selected deck filters, launchSearchForCards(), and SearchState.Completed.fromCurrentState(), which determines whether the UI should offer a Search all decks action."
+      },
+      {
+        "step": 7,
+        "action": "trace_call",
+        "target": "CardBrowser.onCreate() -> createViewModel() -> CardBrowserViewModel.init",
+        "finding": "Opening the browser constructs the ViewModel; init calls setSelectedDeck(initialDeckId) at line 557, then sets flowOfInitCompleted to true and calls launchSearchForCards() at line 591."
+      },
+      {
+        "step": 8,
+        "action": "trace_call",
+        "target": "CardBrowser.onDeckSelected(SelectableDeck?) -> CardBrowserViewModel.setSelectedDeck(SelectableDeck)",
+        "finding": "Changing the deck from the browser calls setSelectedDeck(), which updates the deck filter and calls launchSearchForCards(updatedFilter, forceRefresh = false) at line 410."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchRequest.kt",
+        "finding": "SearchRequest.toSearchString() treats the user query separately from filters. A blank query with a selected deck is represented as a deck filter, not as user-entered search text."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/browser/search/SearchFilters.kt",
+        "finding": "SearchFilters.activeFilters includes decks when a deck is selected, confirming deck selection alone creates an active filter even when SearchRequest.query remains blank."
+      },
+      {
+        "step": 11,
+        "action": "trace_call",
+        "target": "CardBrowserViewModel.launchSearchForCards(cardOrNoteIdsToSelect)",
+        "finding": "The concrete search path emits SearchState.Searching, runs searchForRows(), updates cards, then emits SearchState.Completed.fromCurrentState() at line 1416."
+      },
+      {
+        "step": 12,
+        "action": "trace_call",
+        "target": "CardBrowserViewModel.SearchState.Completed.Companion.fromCurrentState()",
+        "finding": "The result-message decision is based on all-decks selection and rowCount only. It does not check whether searchRequestFlow.value.query is blank or whether the user actually submitted a search."
+      },
+      {
+        "step": 13,
+        "action": "form_hypothesis",
+        "target": "Wrong condition in SearchState.Completed.fromCurrentState(): non-all-decks results are always marked actionable",
+        "finding": "For a selected deck with cards and an empty query, line 1533 returns CardCount(includeSearchAllDecksAction = true), which tells the fragment an action is available and therefore a snackbar should be shown."
+      },
+      {
+        "step": 14,
+        "action": "trace_call",
+        "target": "CardBrowserFragment.onSearchCompleted(SearchState.Completed)",
+        "finding": "CardBrowserFragment receives CardCount and calls showSnackbar(message = state.formatCardCount(resources), searchAllDecks = result.includeSearchAllDecksAction) at lines 931-935."
+      },
+      {
+        "step": 15,
+        "action": "trace_call",
+        "target": "CardBrowserFragment.onSearchCompleted() local showSnackbar(message, searchAllDecks)",
+        "finding": "The local helper suppresses the snackbar only when the count is visible in the header and searchAllDecks is false. The comment says to show the snackbar if an action is available, so includeSearchAllDecksAction=true forces a snackbar."
+      },
+      {
+        "step": 16,
+        "action": "inspect_layout_xml",
+        "target": "AnkiDroid/src/main/res/layout/fragment_card_browser.xml",
+        "finding": "The fragment layout contains the RecyclerView/progress UI, not the toolbar subtitle; snackbar display is not caused by layout anchoring or an XML visibility issue."
+      },
+      {
+        "step": 17,
+        "action": "inspect_layout_xml",
+        "target": "AnkiDroid/src/main/res/layout/activity_card_browser.xml",
+        "finding": "The Activity hosts include_browser_toolbar and card_browser_frame; no XML behavior directly triggers snackbars."
+      },
+      {
+        "step": 18,
+        "action": "inspect_layout_xml",
+        "target": "AnkiDroid/src/main/res/layout/include_browser_toolbar.xml",
+        "finding": "The toolbar includes deck_name and subtitle TextViews, so the card count is already visible in normal legacy UI. The fragment snackbar helper intentionally bypasses suppression only when searchAllDecks is true."
+      },
+      {
+        "step": 19,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserLaunchOptions.kt",
+        "finding": "Launch options can carry real search text for deep links, JS search, or context menu; normal browser opening has null options and therefore no user search query."
+      },
+      {
+        "step": 20,
+        "action": "grep_pattern",
+        "target": "card_browser_subtitle|card_browser_no_cards_in_deck|card_browser_search_all_decks in AnkiDroid/src/main/res/values/07-cardbrowser.xml",
+        "finding": "The relevant snackbar/header strings are card count plurals, 'No cards found in deck %s', and the 'Search all decks' action label."
+      },
+      {
+        "step": 21,
+        "action": "read_file",
+        "target": "AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt",
+        "finding": "Tests around lines 1574-1610 assert current behavior: all-decks has no action, a specific deck with cards has includeSearchAllDecksAction=true, and a specific empty deck emits NoCardsInSelectedDeck. These tests encode the behavior now reported as unwanted for empty user queries."
+      },
+      {
+        "step": 22,
+        "action": "read_file",
+        "target": "AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserFragmentTest.kt",
+        "finding": "Fragment tests cover SearchView submit shortcuts but do not cover suppressing snackbars on initial browser open or deck-only changes."
+      },
+      {
+        "step": 23,
+        "action": "eliminate_candidate",
+        "target": "CardBrowserFragment.kt line 922 showSnackbar(message, Snackbar.LENGTH_SHORT)",
+        "finding": "This statement directly displays the snackbar, but it is deliberately gated by searchAllDecks. The incorrect input to that gate originates in the ViewModel's result-message construction."
+      },
+      {
+        "step": 24,
+        "action": "eliminate_candidate",
+        "target": "CardBrowserViewModel.kt line 410 launchSearchForCards(updatedFilter, forceRefresh = false)",
+        "finding": "Deck changes should refresh the browser list, so launching a search for a changed deck is necessary. The bug is not the refresh itself but treating that deck-only refresh as user-search feedback."
+      },
+      {
+        "step": 25,
+        "action": "eliminate_candidate",
+        "target": "CardBrowserViewModel.kt line 1532 rowCount == 0 -> SearchResultMessage.NoCardsInSelectedDeck",
+        "finding": "This neighboring branch can also show an unwanted snackbar for empty deck-only browsing, but the report's common 'opening/changing deck shows a snackbar' case with existing cards is explained by the line 1533 CardCount action flag."
+      },
+      {
+        "step": 26,
+        "action": "form_hypothesis",
+        "target": "Final fault statement",
+        "finding": "The most likely faulty statement is CardBrowserViewModel.kt line 1533 because it unconditionally marks any non-all-decks, non-empty result as having a Search all decks action, without checking whether the user searched for anything."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt",
+        "class": "CardBrowserViewModel",
+        "method": "SearchState.Completed.Companion.fromCurrentState()",
+        "line": 1533,
+        "statement": "else -> SearchResultMessage.CardCount(includeSearchAllDecksAction = true)",
+        "suspicion_score": 0.93,
+        "reasoning": "This statement marks every successful search result in a specific deck as actionable with 'Search all decks', even when SearchRequest.query is blank and the operation was only opening the browser or changing decks. CardBrowserFragment intentionally shows a snackbar whenever that action flag is true, so this creates the unnecessary snackbar described in the report."
+      },
+      {
+        "rank": 2,
+        "file": "AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragment.kt",
+        "class": "CardBrowserFragment",
+        "method": "setupFlows()",
+        "line": 932,
+        "statement": "showSnackbar(",
+        "suspicion_score": 0.54,
+        "reasoning": "This is the direct UI display call for card-count search results, but it is following the ViewModel's includeSearchAllDecksAction flag. The fragment's comment and condition show that action-bearing results are intentionally shown, so the upstream action flag is the more likely fault."
+      },
+      {
+        "rank": 3,
+        "file": "AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt",
+        "class": "CardBrowserViewModel",
+        "method": "SearchState.Completed.Companion.fromCurrentState()",
+        "line": 1532,
+        "statement": "rowCount == 0 -> SearchResultMessage.NoCardsInSelectedDeck",
+        "suspicion_score": 0.42,
+        "reasoning": "This branch can also cause an unnecessary snackbar when opening or switching to an empty deck with no user query. It is adjacent to the same missing user-query condition, but the primary reported snackbar on ordinary deck changes with cards is caused by line 1533."
+      }
+    ],
+    "final_answer": {
+      "file": "AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt",
+      "class": "CardBrowserViewModel",
+      "method": "SearchState.Completed.Companion.fromCurrentState()",
+      "line": 1533,
+      "statement": "else -> SearchResultMessage.CardCount(includeSearchAllDecksAction = true)",
+      "confidence": 0.93,
+      "causal_chain": "Opening CardBrowser creates CardBrowserViewModel with SearchRequest(query = \"\"). ViewModel init selects the initial deck via setSelectedDeck(), which stores the deck as a filter and launches the initial search. Changing deck later follows the same setSelectedDeck() path. After the search finishes, launchSearchForCards() emits SearchState.Completed.fromCurrentState(). Because the selected deck is not all decks and rowCount is nonzero, line 1533 creates CardCount(includeSearchAllDecksAction = true) even though the user did not enter a search. CardBrowserFragment.onSearchCompleted() passes that flag as searchAllDecks=true, and its snackbar helper shows a snackbar whenever an action is available. The result is an unnecessary card-count snackbar on browser open or deck-only changes.",
+      "fix_hint": "Only set includeSearchAllDecksAction, and likely NoCardsInSelectedDeck, when the user query is non-blank or a real search/filter was explicitly submitted, not for an empty query caused only by opening or changing decks."
+    }
+  },
+  "error": null
+}

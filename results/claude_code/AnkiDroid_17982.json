@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "AnkiDroid",
+  "issue_id": 17982,
+  "issue_url": "https://github.com/ankidroid/Anki-Android/issues/17982",
+  "issue_title": "Empty cards dialog has white background in Black theme",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\ankidroid_Anki_Android",
+  "media_files": [
+    "089a1493-0bf8-4ae3-90fb-4e76aff135d5"
+  ],
+  "started_at": "2026-06-21T14:43:50.587-05:00",
+  "finished_at": "2026-06-21T14:47:03.463-05:00",
+  "duration_seconds": 192.89,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

@@ -1,0 +1,156 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "NewPipe",
+  "issue_id": 13548,
+  "issue_url": "https://github.com/TeamNewPipe/NewPipe/issues/13548",
+  "issue_title": "Occasional complete UI freeze when playlist is open and you going back to a smaller video frame and don't close the playlist before",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\TeamNewPipe_NewPipe",
+  "media_files": [
+    "9b8ba829-12e2-4381-9286-64406cf8a3c4"
+  ],
+  "started_at": "2026-06-22T15:19:39.765-05:00",
+  "finished_at": "2026-06-22T15:27:11.405-05:00",
+  "duration_seconds": 451.66,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"app/src/main/java app/src/main/res: playlist|queue|fullscreen|onBackPressed|overlay\",\n      \"finding\": \"PowerShell search found the relevant entry points in MainActivity.onBackPressed, VideoDetailFragment.onBackPressed, and MainPlayerUi queue/fullscreen handling. The attached screenshot directory named in the report was not present in the checkout.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/MainActivity.java\",\n      \"finding\": \"MainActivity.onBackPressed delegates back presses to the fragment in R.id.fragment_player_holder when the player bottom sheet is expanded; otherwise it delegates to the main content fragment.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"grep_pattern\",\n      \"target\": \"class VideoDetailFragment|implements BackPressable|isQueueVisible|closeItemsList|toggleFullscreen\",\n      \"finding\": \"VideoDetailFragment is the BackPressable player fragment. MainPlayerUi owns isQueueVisible and closeItemsList(), so fullscreen exit and queue overlay state cross these two classes.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/fragments/detail/VideoDetailFragment.java\",\n      \"finding\": \"VideoDetailFragment.onBackPressed first checks isFullscreen(); if true it calls restoreDefaultOrientation(), setAutoPlay(false), and returns true, so the back press is consumed before bottom-sheet collapse or normal navigation.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"trace_call\",\n      \"target\": \"VideoDetailFragment.restoreDefaultOrientation() -> toggleFullscreenIfInFullscreenMode()\",\n      \"finding\": \"restoreDefaultOrientation() calls toggleFullscreenIfInFullscreenMode() when the video player is selected. That method calls MainPlayerUi.toggleFullscreen() if the UI is fullscreen.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/ui/MainPlayerUi.java\",\n      \"finding\": \"MainPlayerUi.toggleFullscreen() flips isFullscreen and notifies VideoDetailFragment via onFullscreenStateChanged(), but it does not close the queue/segments item list when leaving fullscreen.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/ui/MainPlayerUi.java\",\n      \"finding\": \"MainPlayerUi.onQueueClicked() sets isQueueVisible = true, builds the play queue, hides controls, requests focus on itemsListPanel, and animates itemsListPanel visible.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/ui/MainPlayerUi.java\",\n      \"finding\": \"MainPlayerUi.closeItemsList() is the only local path that resets isQueueVisible/areSegmentsVisible, detaches ItemTouchHelper, hides itemsListPanel, translates it away to avoid touch interception, and moves focus back.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"inspect_layout_xml\",\n      \"target\": \"app/src/main/res/layout/player.xml\",\n      \"finding\": \"itemsListPanel is a match_parent RelativeLayout with queue_background_color and initial visibility gone. When visible, it covers the entire player root and can intercept touches.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/ui/MainPlayerUi.java\",\n      \"finding\": \"MainPlayerUi.onBroadcastReceived() closes the item list only on ACTION_CONFIGURATION_CHANGED, with a comment that fullscreen queue layout can exceed the screen after orientation changes.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/fragments/detail/VideoDetailFragment.java\",\n      \"finding\": \"VideoDetailFragment.onScreenRotationButtonClicked() explicitly avoids orientation changes on tablets in landscape/unlocked cases and just toggles fullscreen. Therefore leaving fullscreen on a tablet may not send ACTION_CONFIGURATION_CHANGED, so the queue remains open.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"inspect_layout_xml\",\n      \"target\": \"app/src/main/res/layout-large-land/fragment_video_detail.xml\",\n      \"finding\": \"Tablet landscape detail layout has a left detail_main_content/player_placeholder column and related content on the right, matching the report's smaller left video frame scenario.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"inspect_layout_xml\",\n      \"target\": \"app/src/main/res/layout/activity_main.xml\",\n      \"finding\": \"fragment_player_holder is a match_parent bottom sheet over the main activity, so when expanded the player fragment can intercept app-level input.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/ui/VideoPlayerUi.java\",\n      \"finding\": \"Generic player UI does not close item lists on back. It only avoids interfering with focus while isAnyListViewOpen() is true, confirming no central back handler closes the queue before fullscreen exit.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/fragments/detail/VideoDetailFragment.java\",\n      \"finding\": \"tryAddVideoPlayerView() recomputes thumbnail/player height on fullscreen state changes, so the tall player frame is a secondary layout effect, while the non-clickable grey playlist is caused by the still-visible itemsListPanel.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"BottomSheetBehavior.STATE_COLLAPSED branch in VideoDetailFragment\",\n      \"finding\": \"The collapsed branch explicitly calls MainPlayerUi.closeItemsList(), so bottom-sheet collapse is not the failing path. The report path is fullscreen back with the bottom sheet still expanded.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Fullscreen exit consumes back without closing queue overlay\",\n      \"finding\": \"If the play queue is open in fullscreen, VideoDetailFragment.onBackPressed() exits fullscreen and returns true. On tablets this does not necessarily rotate/config-change, so MainPlayerUi.closeItemsList() is never called. The visible match_parent itemsListPanel remains over the resized player and intercepts touch/focus, making the app appear frozen.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"app/src/main/java/org/schabi/newpipe/fragments/detail/VideoDetailFragment.java\",\n      \"class\": \"VideoDetailFragment\",\n      \"method\": \"onBackPressed()\",\n      \"line\": 714,\n      \"statement\": \"restoreDefaultOrientation();\",\n      \"suspicion_score\": 0.9,\n      \"reasoning\": \"This statement is executed for the exact trigger: pressing back while fullscreen. It exits fullscreen through MainPlayerUi.toggleFullscreen() but does not close MainPlayerUi's queue overlay first. Because the method immediately returns true, the bottom-sheet collapsed path that would close the queue is bypassed. On tablets the fullscreen transition may not generate ACTION_CONFIGURATION_CHANGED, so the queue panel remains visible and touch-consuming over the resized player.\"\n    },\n    {\n      \"rank\": 2,\n      \"file\": \"app/src/main/java/org/schabi/newpipe/player/ui/MainPlayerUi.java\",\n      \"class\": \"MainPlayerUi\",\n      \"method\": \"toggleFullscreen()\",\n      \"line\": 922,\n      \"statement\": \"isFullscreen = !isFullscreen;\",\n      \"suspicion_score\": 0.78,\n      \"reasoning\": \"This is the lower-level state transition that changes fullscreen without closing itemsListPanel. A robust fix could live here by closing the queue when isFullscreen becomes false.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"app/src/main/java/org/schabi/newpipe/fragments/detail/VideoDetailFragment.java\",\n    \"class\": \"VideoDetailFragment\",\n    \"method\": \"onBackPressed()\",\n    \"line\": 714,\n    \"statement\": \"restoreDefaultOrientation();\",\n    \"confidence\": 0.9,\n    \"causal_chain\": \"MainActivity delegates back to VideoDetailFragment because the player bottom sheet is expanded. VideoDetailFragment.onBackPressed() sees fullscreen and executes restoreDefaultOrientation(), which calls toggleFullscreenIfInFullscreenMode() and then MainPlayerUi.toggleFullscreen(). The queue overlay opened by MainPlayerUi.onQueueClicked() remains marked isQueueVisible and itemsListPanel remains visible/focused because the fullscreen-exit path does not call closeItemsList(). On tablets this fullscreen exit can occur without an orientation/configuration change, so MainPlayerUi.onBroadcastReceived() does not close the list either. The match_parent itemsListPanel with queue background stays over the resized player and intercepts input, making the playlist grey/nonselectable and the app appear completely frozen.\",\n    \"fix_hint\": \"Close MainPlayerUi.closeItemsList() before or during fullscreen exit, especially when VideoDetailFragment.onBackPressed() consumes back for isFullscreen(), or make MainPlayerUi.toggleFullscreen() close the item list when leaving fullscreen.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "app/src/main/java app/src/main/res: playlist|queue|fullscreen|onBackPressed|overlay",
+        "finding": "PowerShell search found the relevant entry points in MainActivity.onBackPressed, VideoDetailFragment.onBackPressed, and MainPlayerUi queue/fullscreen handling. The attached screenshot directory named in the report was not present in the checkout."
+      },
+      {
+        "step": 2,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/MainActivity.java",
+        "finding": "MainActivity.onBackPressed delegates back presses to the fragment in R.id.fragment_player_holder when the player bottom sheet is expanded; otherwise it delegates to the main content fragment."
+      },
+      {
+        "step": 3,
+        "action": "grep_pattern",
+        "target": "class VideoDetailFragment|implements BackPressable|isQueueVisible|closeItemsList|toggleFullscreen",
+        "finding": "VideoDetailFragment is the BackPressable player fragment. MainPlayerUi owns isQueueVisible and closeItemsList(), so fullscreen exit and queue overlay state cross these two classes."
+      },
+      {
+        "step": 4,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/fragments/detail/VideoDetailFragment.java",
+        "finding": "VideoDetailFragment.onBackPressed first checks isFullscreen(); if true it calls restoreDefaultOrientation(), setAutoPlay(false), and returns true, so the back press is consumed before bottom-sheet collapse or normal navigation."
+      },
+      {
+        "step": 5,
+        "action": "trace_call",
+        "target": "VideoDetailFragment.restoreDefaultOrientation() -> toggleFullscreenIfInFullscreenMode()",
+        "finding": "restoreDefaultOrientation() calls toggleFullscreenIfInFullscreenMode() when the video player is selected. That method calls MainPlayerUi.toggleFullscreen() if the UI is fullscreen."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/ui/MainPlayerUi.java",
+        "finding": "MainPlayerUi.toggleFullscreen() flips isFullscreen and notifies VideoDetailFragment via onFullscreenStateChanged(), but it does not close the queue/segments item list when leaving fullscreen."
+      },
+      {
+        "step": 7,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/ui/MainPlayerUi.java",
+        "finding": "MainPlayerUi.onQueueClicked() sets isQueueVisible = true, builds the play queue, hides controls, requests focus on itemsListPanel, and animates itemsListPanel visible."
+      },
+      {
+        "step": 8,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/ui/MainPlayerUi.java",
+        "finding": "MainPlayerUi.closeItemsList() is the only local path that resets isQueueVisible/areSegmentsVisible, detaches ItemTouchHelper, hides itemsListPanel, translates it away to avoid touch interception, and moves focus back."
+      },
+      {
+        "step": 9,
+        "action": "inspect_layout_xml",
+        "target": "app/src/main/res/layout/player.xml",
+        "finding": "itemsListPanel is a match_parent RelativeLayout with queue_background_color and initial visibility gone. When visible, it covers the entire player root and can intercept touches."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/ui/MainPlayerUi.java",
+        "finding": "MainPlayerUi.onBroadcastReceived() closes the item list only on ACTION_CONFIGURATION_CHANGED, with a comment that fullscreen queue layout can exceed the screen after orientation changes."
+      },
+      {
+        "step": 11,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/fragments/detail/VideoDetailFragment.java",
+        "finding": "VideoDetailFragment.onScreenRotationButtonClicked() explicitly avoids orientation changes on tablets in landscape/unlocked cases and just toggles fullscreen. Therefore leaving fullscreen on a tablet may not send ACTION_CONFIGURATION_CHANGED, so the queue remains open."
+      },
+      {
+        "step": 12,
+        "action": "inspect_layout_xml",
+        "target": "app/src/main/res/layout-large-land/fragment_video_detail.xml",
+        "finding": "Tablet landscape detail layout has a left detail_main_content/player_placeholder column and related content on the right, matching the report's smaller left video frame scenario."
+      },
+      {
+        "step": 13,
+        "action": "inspect_layout_xml",
+        "target": "app/src/main/res/layout/activity_main.xml",
+        "finding": "fragment_player_holder is a match_parent bottom sheet over the main activity, so when expanded the player fragment can intercept app-level input."
+      },
+      {
+        "step": 14,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/ui/VideoPlayerUi.java",
+        "finding": "Generic player UI does not close item lists on back. It only avoids interfering with focus while isAnyListViewOpen() is true, confirming no central back handler closes the queue before fullscreen exit."
+      },
+      {
+        "step": 15,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/fragments/detail/VideoDetailFragment.java",
+        "finding": "tryAddVideoPlayerView() recomputes thumbnail/player height on fullscreen state changes, so the tall player frame is a secondary layout effect, while the non-clickable grey playlist is caused by the still-visible itemsListPanel."
+      },
+      {
+        "step": 16,
+        "action": "eliminate_candidate",
+        "target": "BottomSheetBehavior.STATE_COLLAPSED branch in VideoDetailFragment",
+        "finding": "The collapsed branch explicitly calls MainPlayerUi.closeItemsList(), so bottom-sheet collapse is not the failing path. The report path is fullscreen back with the bottom sheet still expanded."
+      },
+      {
+        "step": 17,
+        "action": "form_hypothesis",
+        "target": "Fullscreen exit consumes back without closing queue overlay",
+        "finding": "If the play queue is open in fullscreen, VideoDetailFragment.onBackPressed() exits fullscreen and returns true. On tablets this does not necessarily rotate/config-change, so MainPlayerUi.closeItemsList() is never called. The visible match_parent itemsListPanel remains over the resized player and intercepts touch/focus, making the app appear frozen."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "app/src/main/java/org/schabi/newpipe/fragments/detail/VideoDetailFragment.java",
+        "class": "VideoDetailFragment",
+        "method": "onBackPressed()",
+        "line": 714,
+        "statement": "restoreDefaultOrientation();",
+        "suspicion_score": 0.9,
+        "reasoning": "This statement is executed for the exact trigger: pressing back while fullscreen. It exits fullscreen through MainPlayerUi.toggleFullscreen() but does not close MainPlayerUi's queue overlay first. Because the method immediately returns true, the bottom-sheet collapsed path that would close the queue is bypassed. On tablets the fullscreen transition may not generate ACTION_CONFIGURATION_CHANGED, so the queue panel remains visible and touch-consuming over the resized player."
+      },
+      {
+        "rank": 2,
+        "file": "app/src/main/java/org/schabi/newpipe/player/ui/MainPlayerUi.java",
+        "class": "MainPlayerUi",
+        "method": "toggleFullscreen()",
+        "line": 922,
+        "statement": "isFullscreen = !isFullscreen;",
+        "suspicion_score": 0.78,
+        "reasoning": "This is the lower-level state transition that changes fullscreen without closing itemsListPanel. A robust fix could live here by closing the queue when isFullscreen becomes false."
+      }
+    ],
+    "final_answer": {
+      "file": "app/src/main/java/org/schabi/newpipe/fragments/detail/VideoDetailFragment.java",
+      "class": "VideoDetailFragment",
+      "method": "onBackPressed()",
+      "line": 714,
+      "statement": "restoreDefaultOrientation();",
+      "confidence": 0.9,
+      "causal_chain": "MainActivity delegates back to VideoDetailFragment because the player bottom sheet is expanded. VideoDetailFragment.onBackPressed() sees fullscreen and executes restoreDefaultOrientation(), which calls toggleFullscreenIfInFullscreenMode() and then MainPlayerUi.toggleFullscreen(). The queue overlay opened by MainPlayerUi.onQueueClicked() remains marked isQueueVisible and itemsListPanel remains visible/focused because the fullscreen-exit path does not call closeItemsList(). On tablets this fullscreen exit can occur without an orientation/configuration change, so MainPlayerUi.onBroadcastReceived() does not close the list either. The match_parent itemsListPanel with queue background stays over the resized player and intercepts input, making the playlist grey/nonselectable and the app appear completely frozen.",
+      "fix_hint": "Close MainPlayerUi.closeItemsList() before or during fullscreen exit, especially when VideoDetailFragment.onBackPressed() consumes back for isFullscreen(), or make MainPlayerUi.toggleFullscreen() close the item list when leaving fullscreen."
+    }
+  },
+  "error": "exit code 3221226505"
+}

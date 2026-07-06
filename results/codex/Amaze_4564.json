@@ -1,0 +1,202 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "Amaze",
+  "issue_id": 4564,
+  "issue_url": "https://github.com/TeamAmaze/AmazeFileManager/issues/4564",
+  "issue_title": "Chinese file names in zip file are garbled",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\TeamAmaze_AmazeFileManager",
+  "media_files": [
+    "chinese-example.zip",
+    "5d3c071c-e58b-4b29-a1ea-28bcb415b3e0",
+    "3ed74cb1-de8d-456d-83de-7937f68b9553"
+  ],
+  "started_at": "2026-06-21T16:21:43.321-05:00",
+  "finished_at": "2026-06-21T16:25:23.704-05:00",
+  "duration_seconds": 220.39,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"zip|Zip|archive|Archive|compressed|rar|7z\",\n      \"finding\": \"Initial broad source search found the app has compressed archive support, zip4j dependency declarations, CompressedExplorer UI classes, and zip-specific helper/extractor classes; rg was unavailable so PowerShell Select-String was used.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"grep_pattern\",\n      \"target\": \"automation_new_bugs/baselines_context\",\n      \"finding\": \"The referenced media context directory was not present under the current repo, so analysis proceeded from checked-out source only.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"grep_pattern\",\n      \"target\": \"ZipFile|ZipInputStream|Zip4j|net.lingala|CompressedExplorer|showcontents|extractcontents|getFileHeaders|getFileName|getName\\\\(\",\n      \"finding\": \"The concrete zip listing implementation is app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/compress/ZipHelperCallable.kt, using net.lingala.zip4j.ZipFile and FileHeader.fileName.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"grep_pattern\",\n      \"target\": \"CompressedExplorer|open.*zip|\\\\.zip|isArchive|Compressed\",\n      \"finding\": \"Opening a compressed file enters MainActivity.openCompressed, which creates CompressedExplorerFragment.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/compress/ZipHelperCallable.kt\",\n      \"finding\": \"ZipHelperCallable.addElements constructs val zipfile = ZipFile(fileLocation.path), then obtains zipFile.fileHeaders and builds CompressedObjectParcelable objects directly from entry.fileName.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/compressed/CompressedHelper.java\",\n      \"finding\": \"CompressedHelper.getCompressorInstance dispatches .zip/.jar/.apk/.apks files to ZipDecompressor; no charset or locale handling is configured there.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/fragments/CompressedExplorerFragment.kt\",\n      \"finding\": \"CompressedExplorerFragment.prepareCompressedFile resolves the archive file and onViewCreated calls CompressedHelper.getCompressorInstance followed by changePath(\\\"\\\"); createViews passes returned CompressedObjectParcelable items into CompressedExplorerAdapter.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/adapters/data/CompressedObjectParcelable.java\",\n      \"finding\": \"CompressedObjectParcelable stores the path string it receives and derives name with getNameForPath(path); it does not decode or re-encode archive entry names.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/compressed/showcontents/helpers/ZipDecompressor.kt\",\n      \"finding\": \"ZipDecompressor.changePath simply returns ZipHelperCallable(context, filePath, path, addGoBackItem), so ZipHelperCallable is the concrete listing path for zip contents.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/compress/CompressedHelperCallable.kt\",\n      \"finding\": \"CompressedHelperCallable.call creates the result list, invokes addElements, sorts the resulting CompressedObjectParcelable list, and returns it; it performs no filename decoding.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/adapters/CompressedExplorerAdapter.java\",\n      \"finding\": \"onBindViewHolder displays rowItem.name for directories and the last segment of rowItem.path for files via TextView.setText; this UI layer only renders the string already produced by ZipHelperCallable.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/compressed/extractcontents/helpers/ZipExtractor.kt\",\n      \"finding\": \"ZipExtractor also constructs ZipFile(filePath) without charset and uses fileHeader.fileName for filtering/extraction, confirming the zip path relies on zip4j default filename decoding.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"grep_pattern\",\n      \"target\": \"setCharset|charset|Charset|Cp437|GBK|Shift_JIS|fileHeaders|FileHeader\",\n      \"finding\": \"No zip-specific charset configuration was found in application source; only unrelated FTP/SFTP/text charset usage appeared.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"read_file\",\n      \"target\": \"build.gradle\",\n      \"finding\": \"The project defines zip4jVersion = \\\"2.6.4\\\", so zip archive handling is delegated to zip4j rather than Java ZipInputStream.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"read_file\",\n      \"target\": \"app/build.gradle\",\n      \"finding\": \"The app depends on net.lingala.zip4j:zip4j:$zip4jVersion for zip support; no app-level configuration selects a charset for legacy/non-UTF-8 zip names.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/compressed/showcontents/Decompressor.kt\",\n      \"finding\": \"Decompressor abstracts changePath/decompress and passes filePath/entries through services; it does not transform display names.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/test/java/com/amaze/filemanager/asynchronous/asynctasks/compress/ZipHelperCallableTest.kt\",\n      \"finding\": \"ZipHelperCallable tests cover path manipulation and invalid URI behavior, but not non-ASCII or legacy-encoded zip filenames.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/test/java/com/amaze/filemanager/asynchronous/asynctasks/compress/AbstractCompressedHelperCallableArchiveTest.kt\",\n      \"finding\": \"Shared archive-listing tests assert ASCII fixture names such as test-archive, 1, 2, a, and lipsum.bin; they would not catch Chinese filename mojibake.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"grep_pattern\",\n      \"target\": \"app/src/test/resources zip fixture names\",\n      \"finding\": \"Checked-in zip resources include test-archive.zip, encrypted zips, slash-prefix, and zip-slip fixtures, but no Chinese/non-ASCII filename fixture.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"grep_pattern\",\n      \"target\": \"chinese-example.zip|*chinese*|*4564*\",\n      \"finding\": \"No issue attachment or Chinese zip fixture exists under the current repo.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"inspect_manifest\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/activities/MainActivity.java lines 623-627 and 1485-1494\",\n      \"finding\": \"ACTION_VIEW for compressed files stores the sanitized URI and calls openCompressed, which creates CompressedExplorerFragment with KEY_PATH; this is the entry-point path for opening the reported zip.\"\n    },\n    {\n      \"step\": 22,\n      \"action\": \"trace_call\",\n      \"target\": \"MainActivity.openCompressed -> CompressedExplorerFragment.onViewCreated -> CompressedHelper.getCompressorInstance -> ZipDecompressor.changePath -> ZipHelperCallable.addElements -> CompressedExplorerAdapter.onBindViewHolder\",\n      \"finding\": \"The archive entry name is decoded before UI binding, at zip4j ZipFile/fileHeaders access; the decoded string then flows unchanged to the visible filename TextView.\"\n    },\n    {\n      \"step\": 23,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"ZipFile constructed without specifying a filename charset\",\n      \"finding\": \"Chinese zip files produced by common tools may store names in a legacy Chinese encoding such as GBK/CP936 when the UTF-8 flag is absent. Creating ZipFile with defaults lets zip4j decode names with its default behavior, producing garbled strings.\"\n    },\n    {\n      \"step\": 24,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"CompressedObjectParcelable.getNameForPath and CompressedExplorerAdapter.onBindViewHolder\",\n      \"finding\": \"These classes only split strings and call TextView.setText. If ZipHelperCallable supplied correct Chinese text, these paths would display it; therefore they are not the root cause.\"\n    },\n    {\n      \"step\": 25,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"CompressedExplorerFragment.prepareCompressedFile\",\n      \"finding\": \"This method copies/resolves the archive file itself and does not inspect or decode internal zip entry names, so it cannot directly garble filenames inside the archive.\"\n    },\n    {\n      \"step\": 26,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"ZipExtractor.extractWithFilter\",\n      \"finding\": \"ZipExtractor has the same missing charset pattern for extraction, but the reported symptom occurs when opening/listing the zip, before extraction; the listing-side ZipHelperCallable statement is the more direct trigger.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/compress/ZipHelperCallable.kt\",\n      \"class\": \"ZipHelperCallable\",\n      \"method\": \"addElements(ArrayList<CompressedObjectParcelable> elements)\",\n      \"line\": 53,\n      \"statement\": \"val zipfile = ZipFile(fileLocation.path)\",\n      \"suspicion_score\": 0.95,\n      \"reasoning\": \"This is where the app creates the zip4j reader used for listing archive contents. Because no filename charset is supplied or detected, zip4j decodes FileHeader.fileName with its default behavior. For Chinese zip files whose entry names are stored in a legacy Chinese encoding rather than UTF-8, the resulting FileHeader.fileName strings are already mojibake before they are wrapped in CompressedObjectParcelable and displayed.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/compress/ZipHelperCallable.kt\",\n    \"class\": \"ZipHelperCallable\",\n    \"method\": \"addElements(ArrayList<CompressedObjectParcelable> elements)\",\n    \"line\": 53,\n    \"statement\": \"val zipfile = ZipFile(fileLocation.path)\",\n    \"confidence\": 0.95,\n    \"causal_chain\": \"MainActivity detects an ACTION_VIEW compressed file and calls openCompressed. CompressedExplorerFragment creates a ZipDecompressor and calls changePath. ZipDecompressor returns ZipHelperCallable. ZipHelperCallable.addElements constructs ZipFile(fileLocation.path) without any charset. zip4j then decodes central-directory entry names using its default charset behavior. For a Chinese zip whose filenames are not marked/stored as UTF-8, FileHeader.fileName becomes garbled. filterValidEntryList stores that garbled entry.fileName in CompressedObjectParcelable, and CompressedExplorerAdapter displays the same string in the filename TextView.\",\n    \"fix_hint\": \"Create/configure the ZipFile with an appropriate filename charset or charset-detection fallback for non-UTF-8 zip entries, and use the same setting in ZipExtractor.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "zip|Zip|archive|Archive|compressed|rar|7z",
+        "finding": "Initial broad source search found the app has compressed archive support, zip4j dependency declarations, CompressedExplorer UI classes, and zip-specific helper/extractor classes; rg was unavailable so PowerShell Select-String was used."
+      },
+      {
+        "step": 2,
+        "action": "grep_pattern",
+        "target": "automation_new_bugs/baselines_context",
+        "finding": "The referenced media context directory was not present under the current repo, so analysis proceeded from checked-out source only."
+      },
+      {
+        "step": 3,
+        "action": "grep_pattern",
+        "target": "ZipFile|ZipInputStream|Zip4j|net.lingala|CompressedExplorer|showcontents|extractcontents|getFileHeaders|getFileName|getName\\(",
+        "finding": "The concrete zip listing implementation is app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/compress/ZipHelperCallable.kt, using net.lingala.zip4j.ZipFile and FileHeader.fileName."
+      },
+      {
+        "step": 4,
+        "action": "grep_pattern",
+        "target": "CompressedExplorer|open.*zip|\\.zip|isArchive|Compressed",
+        "finding": "Opening a compressed file enters MainActivity.openCompressed, which creates CompressedExplorerFragment."
+      },
+      {
+        "step": 5,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/compress/ZipHelperCallable.kt",
+        "finding": "ZipHelperCallable.addElements constructs val zipfile = ZipFile(fileLocation.path), then obtains zipFile.fileHeaders and builds CompressedObjectParcelable objects directly from entry.fileName."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/compressed/CompressedHelper.java",
+        "finding": "CompressedHelper.getCompressorInstance dispatches .zip/.jar/.apk/.apks files to ZipDecompressor; no charset or locale handling is configured there."
+      },
+      {
+        "step": 7,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/fragments/CompressedExplorerFragment.kt",
+        "finding": "CompressedExplorerFragment.prepareCompressedFile resolves the archive file and onViewCreated calls CompressedHelper.getCompressorInstance followed by changePath(\"\"); createViews passes returned CompressedObjectParcelable items into CompressedExplorerAdapter."
+      },
+      {
+        "step": 8,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/adapters/data/CompressedObjectParcelable.java",
+        "finding": "CompressedObjectParcelable stores the path string it receives and derives name with getNameForPath(path); it does not decode or re-encode archive entry names."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/compressed/showcontents/helpers/ZipDecompressor.kt",
+        "finding": "ZipDecompressor.changePath simply returns ZipHelperCallable(context, filePath, path, addGoBackItem), so ZipHelperCallable is the concrete listing path for zip contents."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/compress/CompressedHelperCallable.kt",
+        "finding": "CompressedHelperCallable.call creates the result list, invokes addElements, sorts the resulting CompressedObjectParcelable list, and returns it; it performs no filename decoding."
+      },
+      {
+        "step": 11,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/adapters/CompressedExplorerAdapter.java",
+        "finding": "onBindViewHolder displays rowItem.name for directories and the last segment of rowItem.path for files via TextView.setText; this UI layer only renders the string already produced by ZipHelperCallable."
+      },
+      {
+        "step": 12,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/compressed/extractcontents/helpers/ZipExtractor.kt",
+        "finding": "ZipExtractor also constructs ZipFile(filePath) without charset and uses fileHeader.fileName for filtering/extraction, confirming the zip path relies on zip4j default filename decoding."
+      },
+      {
+        "step": 13,
+        "action": "grep_pattern",
+        "target": "setCharset|charset|Charset|Cp437|GBK|Shift_JIS|fileHeaders|FileHeader",
+        "finding": "No zip-specific charset configuration was found in application source; only unrelated FTP/SFTP/text charset usage appeared."
+      },
+      {
+        "step": 14,
+        "action": "read_file",
+        "target": "build.gradle",
+        "finding": "The project defines zip4jVersion = \"2.6.4\", so zip archive handling is delegated to zip4j rather than Java ZipInputStream."
+      },
+      {
+        "step": 15,
+        "action": "read_file",
+        "target": "app/build.gradle",
+        "finding": "The app depends on net.lingala.zip4j:zip4j:$zip4jVersion for zip support; no app-level configuration selects a charset for legacy/non-UTF-8 zip names."
+      },
+      {
+        "step": 16,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/compressed/showcontents/Decompressor.kt",
+        "finding": "Decompressor abstracts changePath/decompress and passes filePath/entries through services; it does not transform display names."
+      },
+      {
+        "step": 17,
+        "action": "read_file",
+        "target": "app/src/test/java/com/amaze/filemanager/asynchronous/asynctasks/compress/ZipHelperCallableTest.kt",
+        "finding": "ZipHelperCallable tests cover path manipulation and invalid URI behavior, but not non-ASCII or legacy-encoded zip filenames."
+      },
+      {
+        "step": 18,
+        "action": "read_file",
+        "target": "app/src/test/java/com/amaze/filemanager/asynchronous/asynctasks/compress/AbstractCompressedHelperCallableArchiveTest.kt",
+        "finding": "Shared archive-listing tests assert ASCII fixture names such as test-archive, 1, 2, a, and lipsum.bin; they would not catch Chinese filename mojibake."
+      },
+      {
+        "step": 19,
+        "action": "grep_pattern",
+        "target": "app/src/test/resources zip fixture names",
+        "finding": "Checked-in zip resources include test-archive.zip, encrypted zips, slash-prefix, and zip-slip fixtures, but no Chinese/non-ASCII filename fixture."
+      },
+      {
+        "step": 20,
+        "action": "grep_pattern",
+        "target": "chinese-example.zip|*chinese*|*4564*",
+        "finding": "No issue attachment or Chinese zip fixture exists under the current repo."
+      },
+      {
+        "step": 21,
+        "action": "inspect_manifest",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/activities/MainActivity.java lines 623-627 and 1485-1494",
+        "finding": "ACTION_VIEW for compressed files stores the sanitized URI and calls openCompressed, which creates CompressedExplorerFragment with KEY_PATH; this is the entry-point path for opening the reported zip."
+      },
+      {
+        "step": 22,
+        "action": "trace_call",
+        "target": "MainActivity.openCompressed -> CompressedExplorerFragment.onViewCreated -> CompressedHelper.getCompressorInstance -> ZipDecompressor.changePath -> ZipHelperCallable.addElements -> CompressedExplorerAdapter.onBindViewHolder",
+        "finding": "The archive entry name is decoded before UI binding, at zip4j ZipFile/fileHeaders access; the decoded string then flows unchanged to the visible filename TextView."
+      },
+      {
+        "step": 23,
+        "action": "form_hypothesis",
+        "target": "ZipFile constructed without specifying a filename charset",
+        "finding": "Chinese zip files produced by common tools may store names in a legacy Chinese encoding such as GBK/CP936 when the UTF-8 flag is absent. Creating ZipFile with defaults lets zip4j decode names with its default behavior, producing garbled strings."
+      },
+      {
+        "step": 24,
+        "action": "eliminate_candidate",
+        "target": "CompressedObjectParcelable.getNameForPath and CompressedExplorerAdapter.onBindViewHolder",
+        "finding": "These classes only split strings and call TextView.setText. If ZipHelperCallable supplied correct Chinese text, these paths would display it; therefore they are not the root cause."
+      },
+      {
+        "step": 25,
+        "action": "eliminate_candidate",
+        "target": "CompressedExplorerFragment.prepareCompressedFile",
+        "finding": "This method copies/resolves the archive file itself and does not inspect or decode internal zip entry names, so it cannot directly garble filenames inside the archive."
+      },
+      {
+        "step": 26,
+        "action": "eliminate_candidate",
+        "target": "ZipExtractor.extractWithFilter",
+        "finding": "ZipExtractor has the same missing charset pattern for extraction, but the reported symptom occurs when opening/listing the zip, before extraction; the listing-side ZipHelperCallable statement is the more direct trigger."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/compress/ZipHelperCallable.kt",
+        "class": "ZipHelperCallable",
+        "method": "addElements(ArrayList<CompressedObjectParcelable> elements)",
+        "line": 53,
+        "statement": "val zipfile = ZipFile(fileLocation.path)",
+        "suspicion_score": 0.95,
+        "reasoning": "This is where the app creates the zip4j reader used for listing archive contents. Because no filename charset is supplied or detected, zip4j decodes FileHeader.fileName with its default behavior. For Chinese zip files whose entry names are stored in a legacy Chinese encoding rather than UTF-8, the resulting FileHeader.fileName strings are already mojibake before they are wrapped in CompressedObjectParcelable and displayed."
+      }
+    ],
+    "final_answer": {
+      "file": "app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/compress/ZipHelperCallable.kt",
+      "class": "ZipHelperCallable",
+      "method": "addElements(ArrayList<CompressedObjectParcelable> elements)",
+      "line": 53,
+      "statement": "val zipfile = ZipFile(fileLocation.path)",
+      "confidence": 0.95,
+      "causal_chain": "MainActivity detects an ACTION_VIEW compressed file and calls openCompressed. CompressedExplorerFragment creates a ZipDecompressor and calls changePath. ZipDecompressor returns ZipHelperCallable. ZipHelperCallable.addElements constructs ZipFile(fileLocation.path) without any charset. zip4j then decodes central-directory entry names using its default charset behavior. For a Chinese zip whose filenames are not marked/stored as UTF-8, FileHeader.fileName becomes garbled. filterValidEntryList stores that garbled entry.fileName in CompressedObjectParcelable, and CompressedExplorerAdapter displays the same string in the filename TextView.",
+      "fix_hint": "Create/configure the ZipFile with an appropriate filename charset or charset-detection fallback for non-UTF-8 zip entries, and use the same setting in ZipExtractor."
+    }
+  },
+  "error": null
+}

@@ -1,0 +1,181 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "AnkiDroid",
+  "issue_id": 19426,
+  "issue_url": "https://github.com/ankidroid/Anki-Android/issues/19426",
+  "issue_title": "(2.23.0alpha6) Changing the deck in the \"Deck\" field of the Image Occlusion editor doesn't make the new note to be added to the selected deck",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\ankidroid_Anki_Android",
+  "media_files": [
+    "1a7e941f-c893-4783-944b-427d59041a03",
+    "2af7c800-2d09-4864-8e7f-010a896b7d0e"
+  ],
+  "started_at": "2026-06-21T14:32:20.248-05:00",
+  "finished_at": "2026-06-21T14:36:27.524-05:00",
+  "duration_seconds": 247.28,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"Image Occlusion|ImageOcclusion|image occlusion|occlusion\",\n      \"finding\": \"Found the image-share manifest entry, IntentHandler image import path, NoteEditorFragment image occlusion setup, ImageOcclusion page, ImageOcclusionViewModel, and PostRequestHandler addImageOcclusionNote handling.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"grep_pattern\",\n      \"target\": \"ACTION_SEND|android.intent.action.SEND|image/\",\n      \"finding\": \"Confirmed shared images are classified as IMAGE_IMPORT and routed from ACTION_SEND/VIEW intents.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"inspect_manifest\",\n      \"target\": \"AnkiDroid/src/main/AndroidManifest.xml:279\",\n      \"finding\": \"The Image Occlusion share option is an intent-filter labelled @string/image_occlusion for image MIME types, handled by IntentHandler.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/IntentHandler.kt:253\",\n      \"finding\": \"handleImageImport extracts the shared image Uri and launches NoteEditorLauncher.ImageOcclusion via TaskStackBuilder.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorLauncher.kt:67\",\n      \"finding\": \"NoteEditorLauncher.ImageOcclusion only passes EXTRA_CALLER=IMG_OCCLUSION and EXTRA_IMG_OCCLUSION; it carries no deck id.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/IntentHandler2.kt\",\n      \"finding\": \"IntentHandler2 is a separate forwarding activity for ADD_IMAGE note editor intents, not the share-to-Image-Occlusion path described in the report.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:640\",\n      \"finding\": \"IMG_OCCLUSION is treated as addNote=true and later calls setupImageOcclusionEditor after copying the shared image into cache.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"trace_call\",\n      \"target\": \"NoteEditorFragment.setupImageOcclusionEditor(String)\",\n      \"finding\": \"For add mode, setupImageOcclusionEditor builds ImageOcclusionArgs.Add with imagePath, noteTypeId, and originalDeckId=deckId, then launches the ImageOcclusion page.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/pages/ImageOcclusion.kt\",\n      \"finding\": \"The ImageOcclusion fragment displays a deck name field, opens deck selection on click, and forwards selected decks to viewModel.handleDeckSelection(deck.deckId).\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"inspect_layout_xml\",\n      \"target\": \"AnkiDroid/src/main/res/layout/page_image_occlusion.xml\",\n      \"finding\": \"The Deck field in the IO editor is TextView id deck_name in the toolbar; it is UI-only unless the ViewModel propagates selection to backend state.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/pages/PostRequestHandler.kt:163\",\n      \"finding\": \"The webview save request addImageOcclusionNote calls withCol { addImageOcclusionNoteRaw(bytes) }; no deck id is passed in this request handler.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"trace_call\",\n      \"target\": \"ImageOcclusion.save -> addImageOcclusionNoteRaw(bytes)\",\n      \"finding\": \"Image Occlusion note creation depends on the collection/backend current deck, unlike normal NoteEditor save which calls addNote(editorNote!!, deckId).\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:1224\",\n      \"finding\": \"Normal note saves explicitly pass deckId into addNote(editorNote!!, deckId), eliminating this as the direct path for IO saves.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2100\",\n      \"finding\": \"Normal NoteEditor deckId is calculated from explicit extras, note type defaults, or CURRENT_DECK; it is only used by normal note saving, not IO webview saving.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/pages/viewmodel/ImageOcclusionViewModel.kt\",\n      \"finding\": \"The ViewModel stores selectedDeckIdFlow and deckNameFlow; the critical backend synchronization is selectedDeckIdFlow?.onEach { withCol { decks.select(it) } }.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Selected IO deck updates UI state but not collection current deck before addImageOcclusionNoteRaw\",\n      \"finding\": \"This exactly matches the report: the UI shows my-deck-4, but addImageOcclusionNoteRaw uses the stale current deck left by study, such as my-deck-1 or my-deck-3.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"IntentHandler.handleImageImport\",\n      \"finding\": \"IntentHandler only routes the image into the editor and does not choose or mutate the destination deck, so it cannot explain a changed deck field being ignored.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"ImageOcclusion.onDeckSelected\",\n      \"finding\": \"onDeckSelected receives the selected SelectableDeck.Deck and passes its deckId to the ViewModel; the missing/faulty behavior is downstream synchronization with backend selected deck.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"NoteEditorFragment.saveNoteWithProgress\",\n      \"finding\": \"This path is for regular note editor saves and explicitly passes deckId, but the IO toolbar calls webViewLayout.evaluateJavascript(\\\"anki.imageOcclusion.save()\\\") instead.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/test/java/com/ichi2/anki/pages/viewmodel/ImageOcclusionViewModelTest.kt\",\n      \"finding\": \"The test `ADD - selected deck is changed and reverted` documents the expected behavior: selecting a deck must change col.decks.getCurrentId() before save and revert it after save.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Fault statement is the current-deck synchronization statement in ImageOcclusionViewModel init\",\n      \"finding\": \"Because addImageOcclusionNoteRaw has no explicit deck parameter, failure of this statement to exist, execute, or complete leaves the backend on the last studied deck.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"AnkiDroid/src/main/java/com/ichi2/anki/pages/viewmodel/ImageOcclusionViewModel.kt\",\n      \"class\": \"ImageOcclusionViewModel\",\n      \"method\": \"init\",\n      \"line\": 115,\n      \"statement\": \"?.onEach { withCol { decks.select(it) } }\",\n      \"suspicion_score\": 0.95,\n      \"reasoning\": \"The Image Occlusion save backend call does not receive a deck id; it uses the collection's current selected deck. Therefore the deck chosen in the IO editor must be propagated to col.decks before addImageOcclusionNoteRaw(bytes) runs. If this statement is missing, wrong, or not executed, the UI deck field can change while the backend current deck remains the last studied deck, producing exactly the reported behavior.\"\n    },\n    {\n      \"rank\": 2,\n      \"file\": \"AnkiDroid/src/main/java/com/ichi2/anki/pages/PostRequestHandler.kt\",\n      \"class\": \"PostRequestHandlerKt\",\n      \"method\": \"uiMethods addImageOcclusionNote handler\",\n      \"line\": 165,\n      \"statement\": \"withCol { addImageOcclusionNoteRaw(bytes) }\",\n      \"suspicion_score\": 0.72,\n      \"reasoning\": \"This is the actual note-creation call for Image Occlusion, and it passes only raw webview bytes with no explicit deck id. It explains why stale collection deck state matters, but the more specific defect is the missing synchronization of the selected deck into that state.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"AnkiDroid/src/main/java/com/ichi2/anki/pages/viewmodel/ImageOcclusionViewModel.kt\",\n    \"class\": \"ImageOcclusionViewModel\",\n    \"method\": \"init\",\n    \"line\": 115,\n    \"statement\": \"?.onEach { withCol { decks.select(it) } }\",\n    \"confidence\": 0.95,\n    \"causal_chain\": \"A shared image is routed by IntentHandler.handleImageImport into NoteEditorLauncher.ImageOcclusion. NoteEditorFragment.setupImageOcclusionEditor opens the ImageOcclusion page with ImageOcclusionArgs.Add. The deck field in ImageOcclusion updates selectedDeckIdFlow through handleDeckSelection. The toolbar save calls anki.imageOcclusion.save(), which posts addImageOcclusionNote to PostRequestHandler. PostRequestHandler invokes addImageOcclusionNoteRaw(bytes) without passing a deck id, so the backend uses the collection's current selected deck. If selectedDeckIdFlow is not synchronized via decks.select(it), the collection current deck remains the last studied deck, so the new IO note is created there instead of the deck shown in the IO editor.\",\n    \"fix_hint\": \"Ensure every Image Occlusion deck-field change updates the collection/backend current deck before addImageOcclusionNoteRaw runs, or pass the selected deck id explicitly into the image occlusion add-note backend request.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "Image Occlusion|ImageOcclusion|image occlusion|occlusion",
+        "finding": "Found the image-share manifest entry, IntentHandler image import path, NoteEditorFragment image occlusion setup, ImageOcclusion page, ImageOcclusionViewModel, and PostRequestHandler addImageOcclusionNote handling."
+      },
+      {
+        "step": 2,
+        "action": "grep_pattern",
+        "target": "ACTION_SEND|android.intent.action.SEND|image/",
+        "finding": "Confirmed shared images are classified as IMAGE_IMPORT and routed from ACTION_SEND/VIEW intents."
+      },
+      {
+        "step": 3,
+        "action": "inspect_manifest",
+        "target": "AnkiDroid/src/main/AndroidManifest.xml:279",
+        "finding": "The Image Occlusion share option is an intent-filter labelled @string/image_occlusion for image MIME types, handled by IntentHandler."
+      },
+      {
+        "step": 4,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/IntentHandler.kt:253",
+        "finding": "handleImageImport extracts the shared image Uri and launches NoteEditorLauncher.ImageOcclusion via TaskStackBuilder."
+      },
+      {
+        "step": 5,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/noteeditor/NoteEditorLauncher.kt:67",
+        "finding": "NoteEditorLauncher.ImageOcclusion only passes EXTRA_CALLER=IMG_OCCLUSION and EXTRA_IMG_OCCLUSION; it carries no deck id."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/IntentHandler2.kt",
+        "finding": "IntentHandler2 is a separate forwarding activity for ADD_IMAGE note editor intents, not the share-to-Image-Occlusion path described in the report."
+      },
+      {
+        "step": 7,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:640",
+        "finding": "IMG_OCCLUSION is treated as addNote=true and later calls setupImageOcclusionEditor after copying the shared image into cache."
+      },
+      {
+        "step": 8,
+        "action": "trace_call",
+        "target": "NoteEditorFragment.setupImageOcclusionEditor(String)",
+        "finding": "For add mode, setupImageOcclusionEditor builds ImageOcclusionArgs.Add with imagePath, noteTypeId, and originalDeckId=deckId, then launches the ImageOcclusion page."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/pages/ImageOcclusion.kt",
+        "finding": "The ImageOcclusion fragment displays a deck name field, opens deck selection on click, and forwards selected decks to viewModel.handleDeckSelection(deck.deckId)."
+      },
+      {
+        "step": 10,
+        "action": "inspect_layout_xml",
+        "target": "AnkiDroid/src/main/res/layout/page_image_occlusion.xml",
+        "finding": "The Deck field in the IO editor is TextView id deck_name in the toolbar; it is UI-only unless the ViewModel propagates selection to backend state."
+      },
+      {
+        "step": 11,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/pages/PostRequestHandler.kt:163",
+        "finding": "The webview save request addImageOcclusionNote calls withCol { addImageOcclusionNoteRaw(bytes) }; no deck id is passed in this request handler."
+      },
+      {
+        "step": 12,
+        "action": "trace_call",
+        "target": "ImageOcclusion.save -> addImageOcclusionNoteRaw(bytes)",
+        "finding": "Image Occlusion note creation depends on the collection/backend current deck, unlike normal NoteEditor save which calls addNote(editorNote!!, deckId)."
+      },
+      {
+        "step": 13,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:1224",
+        "finding": "Normal note saves explicitly pass deckId into addNote(editorNote!!, deckId), eliminating this as the direct path for IO saves."
+      },
+      {
+        "step": 14,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/NoteEditorFragment.kt:2100",
+        "finding": "Normal NoteEditor deckId is calculated from explicit extras, note type defaults, or CURRENT_DECK; it is only used by normal note saving, not IO webview saving."
+      },
+      {
+        "step": 15,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/pages/viewmodel/ImageOcclusionViewModel.kt",
+        "finding": "The ViewModel stores selectedDeckIdFlow and deckNameFlow; the critical backend synchronization is selectedDeckIdFlow?.onEach { withCol { decks.select(it) } }."
+      },
+      {
+        "step": 16,
+        "action": "form_hypothesis",
+        "target": "Selected IO deck updates UI state but not collection current deck before addImageOcclusionNoteRaw",
+        "finding": "This exactly matches the report: the UI shows my-deck-4, but addImageOcclusionNoteRaw uses the stale current deck left by study, such as my-deck-1 or my-deck-3."
+      },
+      {
+        "step": 17,
+        "action": "eliminate_candidate",
+        "target": "IntentHandler.handleImageImport",
+        "finding": "IntentHandler only routes the image into the editor and does not choose or mutate the destination deck, so it cannot explain a changed deck field being ignored."
+      },
+      {
+        "step": 18,
+        "action": "eliminate_candidate",
+        "target": "ImageOcclusion.onDeckSelected",
+        "finding": "onDeckSelected receives the selected SelectableDeck.Deck and passes its deckId to the ViewModel; the missing/faulty behavior is downstream synchronization with backend selected deck."
+      },
+      {
+        "step": 19,
+        "action": "eliminate_candidate",
+        "target": "NoteEditorFragment.saveNoteWithProgress",
+        "finding": "This path is for regular note editor saves and explicitly passes deckId, but the IO toolbar calls webViewLayout.evaluateJavascript(\"anki.imageOcclusion.save()\") instead."
+      },
+      {
+        "step": 20,
+        "action": "read_file",
+        "target": "AnkiDroid/src/test/java/com/ichi2/anki/pages/viewmodel/ImageOcclusionViewModelTest.kt",
+        "finding": "The test `ADD - selected deck is changed and reverted` documents the expected behavior: selecting a deck must change col.decks.getCurrentId() before save and revert it after save."
+      },
+      {
+        "step": 21,
+        "action": "form_hypothesis",
+        "target": "Fault statement is the current-deck synchronization statement in ImageOcclusionViewModel init",
+        "finding": "Because addImageOcclusionNoteRaw has no explicit deck parameter, failure of this statement to exist, execute, or complete leaves the backend on the last studied deck."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "AnkiDroid/src/main/java/com/ichi2/anki/pages/viewmodel/ImageOcclusionViewModel.kt",
+        "class": "ImageOcclusionViewModel",
+        "method": "init",
+        "line": 115,
+        "statement": "?.onEach { withCol { decks.select(it) } }",
+        "suspicion_score": 0.95,
+        "reasoning": "The Image Occlusion save backend call does not receive a deck id; it uses the collection's current selected deck. Therefore the deck chosen in the IO editor must be propagated to col.decks before addImageOcclusionNoteRaw(bytes) runs. If this statement is missing, wrong, or not executed, the UI deck field can change while the backend current deck remains the last studied deck, producing exactly the reported behavior."
+      },
+      {
+        "rank": 2,
+        "file": "AnkiDroid/src/main/java/com/ichi2/anki/pages/PostRequestHandler.kt",
+        "class": "PostRequestHandlerKt",
+        "method": "uiMethods addImageOcclusionNote handler",
+        "line": 165,
+        "statement": "withCol { addImageOcclusionNoteRaw(bytes) }",
+        "suspicion_score": 0.72,
+        "reasoning": "This is the actual note-creation call for Image Occlusion, and it passes only raw webview bytes with no explicit deck id. It explains why stale collection deck state matters, but the more specific defect is the missing synchronization of the selected deck into that state."
+      }
+    ],
+    "final_answer": {
+      "file": "AnkiDroid/src/main/java/com/ichi2/anki/pages/viewmodel/ImageOcclusionViewModel.kt",
+      "class": "ImageOcclusionViewModel",
+      "method": "init",
+      "line": 115,
+      "statement": "?.onEach { withCol { decks.select(it) } }",
+      "confidence": 0.95,
+      "causal_chain": "A shared image is routed by IntentHandler.handleImageImport into NoteEditorLauncher.ImageOcclusion. NoteEditorFragment.setupImageOcclusionEditor opens the ImageOcclusion page with ImageOcclusionArgs.Add. The deck field in ImageOcclusion updates selectedDeckIdFlow through handleDeckSelection. The toolbar save calls anki.imageOcclusion.save(), which posts addImageOcclusionNote to PostRequestHandler. PostRequestHandler invokes addImageOcclusionNoteRaw(bytes) without passing a deck id, so the backend uses the collection's current selected deck. If selectedDeckIdFlow is not synchronized via decks.select(it), the collection current deck remains the last studied deck, so the new IO note is created there instead of the deck shown in the IO editor.",
+      "fix_hint": "Ensure every Image Occlusion deck-field change updates the collection/backend current deck before addImageOcclusionNoteRaw runs, or pass the selected deck id explicitly into the image occlusion add-note backend request."
+    }
+  },
+  "error": null
+}

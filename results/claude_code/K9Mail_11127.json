@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "K9Mail",
+  "issue_id": 11127,
+  "issue_url": "https://github.com/thunderbird/thunderbird-android/issues/11127",
+  "issue_title": "Marking mail as spam missing on tablet",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\thunderbird_thunderbird_android",
+  "media_files": [
+    "d34420e7-0405-45ac-bb22-7bbdc2ee3ce9",
+    "3f44df20-8ec9-4d5b-a0d6-b56978aa0573"
+  ],
+  "started_at": "2026-06-22T14:26:53.693-05:00",
+  "finished_at": "2026-06-22T14:29:56.648-05:00",
+  "duration_seconds": 182.97,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

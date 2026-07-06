@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "Amaze",
+  "issue_id": 4562,
+  "issue_url": "https://github.com/TeamAmaze/AmazeFileManager/issues/4562",
+  "issue_title": "Text Editor's Search Feature only highlights results but doesn't jump to them",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\TeamAmaze_AmazeFileManager",
+  "media_files": [],
+  "started_at": "2026-06-21T16:25:24.055-05:00",
+  "finished_at": "2026-06-21T16:28:26.423-05:00",
+  "duration_seconds": 182.38,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

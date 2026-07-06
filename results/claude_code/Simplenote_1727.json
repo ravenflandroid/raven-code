@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "Simplenote",
+  "issue_id": 1727,
+  "issue_url": "https://github.com/Automattic/simplenote-android/issues/1727",
+  "issue_title": "Markdown Bold Not Applying to Korean Text - Android",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\Automattic_simplenote_android",
+  "media_files": [
+    "0a757bfb-853b-4735-b1e6-62665e0d977f",
+    "5d40bac6-8927-4d86-8dce-0be1100bfd89"
+  ],
+  "started_at": "2026-06-21T14:21:37.723-05:00",
+  "finished_at": "2026-06-21T14:24:41.535-05:00",
+  "duration_seconds": 183.81,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

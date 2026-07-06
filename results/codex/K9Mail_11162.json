@@ -1,0 +1,243 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "K9Mail",
+  "issue_id": 11162,
+  "issue_url": "https://github.com/thunderbird/thunderbird-android/issues/11162",
+  "issue_title": "Poor contrast/legibility in message lists, items look greyed out/deactivated",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\thunderbird_thunderbird_android",
+  "media_files": [
+    "ab04cc02-e646-4eed-84ea-383309ac0624",
+    "k9mail-logs.txt"
+  ],
+  "started_at": "2026-06-21T17:29:56.864-05:00",
+  "finished_at": "2026-06-21T17:36:39.335-05:00",
+  "duration_seconds": 402.47,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"MessageList|message list|messagelist|MessageView|isRead|read\",\n      \"finding\": \"The first search using rg failed because rg is not installed; switched to PowerShell Select-String for local-only static analysis.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"read_file\",\n      \"target\": \"README.md\",\n      \"finding\": \"Confirmed the repo is Thunderbird for Android/K-9 Mail with shared code and white-label apps.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"read_file\",\n      \"target\": \"docs/CONTRIBUTING.md\",\n      \"finding\": \"Confirmed the project uses Kotlin, Compose for new UI, existing architecture, and local verification conventions; no external sources were needed.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"grep_pattern\",\n      \"target\": \"MessageList|MessageListItem|MessageItem|Folder|message list|isRead|read\",\n      \"finding\": \"Found message list feature modules, legacy message list files, and app feature flags controlling message-list implementations.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"read_file\",\n      \"target\": \"app-k9mail/src/release/kotlin/app/k9mail/featureflag/K9FeatureFlagFactory.kt\",\n      \"finding\": \"K-9 release has MessageListFeatureFlags.UseComposeForMessageListItems disabled and EnableMessageListNewState disabled, routing release users to legacy message-list UI.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"app-thunderbird/src/release/kotlin/net/thunderbird/android/featureflag/TbFeatureFlagFactory.kt\",\n      \"finding\": \"Thunderbird release uses the same disabled flags for Compose list items and new message-list state, matching the report's Thunderbird app context.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"grep_pattern\",\n      \"target\": \"feature/mail/message/list files\",\n      \"finding\": \"Located newer Compose message-list API/internal components, but release flags indicate they are not the primary path for the reported version.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"grep_pattern\",\n      \"target\": \"legacy message list files\",\n      \"finding\": \"Located legacy UI implementation files: LegacyMessageListFragment, MessageListAdapter, MessageViewHolder, MessageViewHolderColors, and message_list_item.xml.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListAdapter.kt\",\n      \"finding\": \"MessageListAdapter resolves MessageViewHolderColors once, creates MessageViewHolder when UseComposeForMessageListItems is disabled, and binds MessageListItem rows through MessageViewHolder.bind().\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListAppearance.kt\",\n      \"finding\": \"MessageListAppearance includes read-background behavior and display preferences, but no text color values.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"inspect_layout_xml\",\n      \"target\": \"legacy/ui/legacy/src/main/res/layout/message_list_item.xml\",\n      \"finding\": \"The row XML defines subject, preview, date, thread count, star, and icons; subject and preview main colors are assigned dynamically by code, not fixed in XML.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/item/MessageListViewHolder.kt\",\n      \"finding\": \"This is only the sealed RecyclerView ViewHolder base class; no color or binding logic.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/item/MessageViewHolder.kt\",\n      \"finding\": \"MessageViewHolder.bind() computes foregroundColor via selectForegroundColor(isSelected, isRead, isActive) and applies it to preview, subject, date, star, attachment, and status icon.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"trace_call\",\n      \"target\": \"MessageViewHolder.selectForegroundColor(Boolean selected, Boolean read, Boolean active)\",\n      \"finding\": \"For ordinary read rows, selected and active are false, so the read branch returns colors.read.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/item/MessageViewHolderColors.kt\",\n      \"finding\": \"MessageViewHolderColors.resolveColors() sets read to Material colorOutline, previewText to colorOutline, and unread to colorOnSurface.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Read message rows are greyed out because read foreground color is resolved to Material colorOutline\",\n      \"finding\": \"The report specifically says mailboxes filled with read emails look greyed out/deactivated; colorOutline is a low-emphasis outline/secondary color and is applied to the main visible content for read rows.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/item/MessageItemContent.kt\",\n      \"finding\": \"The deprecated Compose row bridge chooses ReadMessageItem for item.isRead and UnreadMessageItem otherwise, but this path is only used when UseComposeForMessageListItems is enabled.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"read_file\",\n      \"target\": \"feature/mail/message/list/api/src/main/kotlin/net/thunderbird/feature/mail/message/list/ui/component/organism/ReadMessageItem.kt\",\n      \"finding\": \"Compose read rows use MessageItemDefaults.defaultMessageItemColors() unless colorizeBackgroundWhenRead is enabled, so read rows are not forced to outline color in the normal Compose path.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"read_file\",\n      \"target\": \"feature/mail/message/list/api/src/main/kotlin/net/thunderbird/feature/mail/message/list/ui/component/organism/MessageItemDefaults.kt\",\n      \"finding\": \"defaultMessageItemColors uses MainTheme.colors.onSurface for content; readMessageItemColors uses onSurfaceVariant only when read-background colorization is requested. This eliminates the normal Compose component as the release fault path.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"read_file\",\n      \"target\": \"app-common/src/main/kotlin/net/thunderbird/app/common/feature/MessageListLauncher.kt\",\n      \"finding\": \"MessageListLauncher launches MessageHomeActivity, identifying the mailbox list entry point used from the app shell.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"inspect_manifest\",\n      \"target\": \"legacy/common/src/main/AndroidManifest.xml\",\n      \"finding\": \"MessageHomeActivity is declared as the message-list activity handling k9mail://messages links.\"\n    },\n    {\n      \"step\": 22,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageHomeActivity.kt\",\n      \"finding\": \"MessageHomeActivity is the main activity and obtains MessageListFragmentBridgeContract.Factory to create the mailbox list fragment.\"\n    },\n    {\n      \"step\": 23,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/KoinModule.kt\",\n      \"finding\": \"The fragment factory returns LegacyMessageListFragment.Factory when EnableMessageListNewState is disabled; release flags set it disabled.\"\n    },\n    {\n      \"step\": 24,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListFragmentBridgeContract.kt\",\n      \"finding\": \"The bridge contract documents that the factory chooses modern MessageListFragment or LegacyMessageListFragment based on EnableMessageListNewState.\"\n    },\n    {\n      \"step\": 25,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/LegacyMessageListFragment.kt\",\n      \"finding\": \"LegacyMessageListFragment creates MessageListAdapter in onCreate(), observes message list LiveData, and assigns loaded rows to adapter.viewItems.\"\n    },\n    {\n      \"step\": 26,\n      \"action\": \"trace_call\",\n      \"target\": \"LegacyMessageListFragment.createMessageListAdapter()\",\n      \"finding\": \"The adapter is built with activity theme and resources, so MessageViewHolderColors.resolveColors(requireActivity().theme) supplies the row colors.\"\n    },\n    {\n      \"step\": 27,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListLoader.kt\",\n      \"finding\": \"MessageListLoader loads messages from MessageListRepository and maps them through MessageListItemMapper.\"\n    },\n    {\n      \"step\": 28,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListItemMapper.kt\",\n      \"finding\": \"MessageListItemMapper copies message.isRead directly into MessageListItem.isRead, so read rows are correctly identified and the symptom is not caused by inverted state mapping.\"\n    },\n    {\n      \"step\": 29,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListItem.kt\",\n      \"finding\": \"MessageListItem stores isRead as a Boolean that drives MessageViewHolder color selection.\"\n    },\n    {\n      \"step\": 30,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"message_list_item.xml default textAppearance/textColor\",\n      \"finding\": \"XML defaults are overridden for subject, preview, date, attachment, star, and status in MessageViewHolder.bind(), so the XML is not the main fault statement.\"\n    },\n    {\n      \"step\": 31,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"MessageListItemMapper message.isRead mapping\",\n      \"finding\": \"The mapping preserves the storage read flag and matches the report trigger of read emails; it does not explain low contrast by itself.\"\n    },\n    {\n      \"step\": 32,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"Compose ReadMessageItem/MessageItemDefaults\",\n      \"finding\": \"Release flags disable the Compose row path, and the normal Compose default uses onSurface for content rather than outline, so it is not the most likely release fault.\"\n    },\n    {\n      \"step\": 33,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Fault statement: read = theme.resolveColorAttribute(MaterialR.attr.colorOutline),\",\n      \"finding\": \"This single statement assigns the low-emphasis outline color to the foreground color used for all main text and icons in read legacy message-list rows, directly causing the greyed-out low-contrast appearance.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/item/MessageViewHolderColors.kt\",\n      \"class\": \"MessageViewHolderColors.Companion\",\n      \"method\": \"resolveColors(Theme theme)\",\n      \"line\": 45,\n      \"statement\": \"read = theme.resolveColorAttribute(MaterialR.attr.colorOutline),\",\n      \"suspicion_score\": 0.93,\n      \"reasoning\": \"Release builds route mailbox rows through the legacy MessageViewHolder. For read messages, MessageViewHolder.selectForegroundColor() returns colors.read, and bind() applies that color to the row's subject/sender, preview prefix, date, star, attachment, and status icon. This statement defines colors.read as Material colorOutline, a low-emphasis grey intended for outlines rather than primary list content, which matches the reported greyed-out/deactivated read message rows.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/item/MessageViewHolderColors.kt\",\n    \"class\": \"MessageViewHolderColors.Companion\",\n    \"method\": \"resolveColors(Theme theme)\",\n    \"line\": 45,\n    \"statement\": \"read = theme.resolveColorAttribute(MaterialR.attr.colorOutline),\",\n    \"confidence\": 0.93,\n    \"causal_chain\": \"K-9/Thunderbird release feature flags disable the new message-list state and Compose list items. MessageHomeActivity therefore creates LegacyMessageListFragment, which creates MessageListAdapter. MessageListAdapter creates legacy MessageViewHolder instances and supplies MessageViewHolderColors.resolveColors(theme). MessageListLoader and MessageListItemMapper preserve message.isRead into MessageListItem.isRead. For a mailbox of read emails, MessageViewHolder.bind() calls selectForegroundColor(false, true, false), which returns colors.read. Because resolveColors() assigned colors.read from MaterialR.attr.colorOutline, the main row foreground becomes a low-emphasis outline grey and is applied to the row's visible text and icons, producing the reported poor contrast and deactivated appearance.\",\n    \"fix_hint\": \"Use a higher-emphasis foreground color for read row primary content, such as colorOnSurface or colorOnSurfaceVariant, instead of Material colorOutline.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "MessageList|message list|messagelist|MessageView|isRead|read",
+        "finding": "The first search using rg failed because rg is not installed; switched to PowerShell Select-String for local-only static analysis."
+      },
+      {
+        "step": 2,
+        "action": "read_file",
+        "target": "README.md",
+        "finding": "Confirmed the repo is Thunderbird for Android/K-9 Mail with shared code and white-label apps."
+      },
+      {
+        "step": 3,
+        "action": "read_file",
+        "target": "docs/CONTRIBUTING.md",
+        "finding": "Confirmed the project uses Kotlin, Compose for new UI, existing architecture, and local verification conventions; no external sources were needed."
+      },
+      {
+        "step": 4,
+        "action": "grep_pattern",
+        "target": "MessageList|MessageListItem|MessageItem|Folder|message list|isRead|read",
+        "finding": "Found message list feature modules, legacy message list files, and app feature flags controlling message-list implementations."
+      },
+      {
+        "step": 5,
+        "action": "read_file",
+        "target": "app-k9mail/src/release/kotlin/app/k9mail/featureflag/K9FeatureFlagFactory.kt",
+        "finding": "K-9 release has MessageListFeatureFlags.UseComposeForMessageListItems disabled and EnableMessageListNewState disabled, routing release users to legacy message-list UI."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "app-thunderbird/src/release/kotlin/net/thunderbird/android/featureflag/TbFeatureFlagFactory.kt",
+        "finding": "Thunderbird release uses the same disabled flags for Compose list items and new message-list state, matching the report's Thunderbird app context."
+      },
+      {
+        "step": 7,
+        "action": "grep_pattern",
+        "target": "feature/mail/message/list files",
+        "finding": "Located newer Compose message-list API/internal components, but release flags indicate they are not the primary path for the reported version."
+      },
+      {
+        "step": 8,
+        "action": "grep_pattern",
+        "target": "legacy message list files",
+        "finding": "Located legacy UI implementation files: LegacyMessageListFragment, MessageListAdapter, MessageViewHolder, MessageViewHolderColors, and message_list_item.xml."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListAdapter.kt",
+        "finding": "MessageListAdapter resolves MessageViewHolderColors once, creates MessageViewHolder when UseComposeForMessageListItems is disabled, and binds MessageListItem rows through MessageViewHolder.bind()."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListAppearance.kt",
+        "finding": "MessageListAppearance includes read-background behavior and display preferences, but no text color values."
+      },
+      {
+        "step": 11,
+        "action": "inspect_layout_xml",
+        "target": "legacy/ui/legacy/src/main/res/layout/message_list_item.xml",
+        "finding": "The row XML defines subject, preview, date, thread count, star, and icons; subject and preview main colors are assigned dynamically by code, not fixed in XML."
+      },
+      {
+        "step": 12,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/item/MessageListViewHolder.kt",
+        "finding": "This is only the sealed RecyclerView ViewHolder base class; no color or binding logic."
+      },
+      {
+        "step": 13,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/item/MessageViewHolder.kt",
+        "finding": "MessageViewHolder.bind() computes foregroundColor via selectForegroundColor(isSelected, isRead, isActive) and applies it to preview, subject, date, star, attachment, and status icon."
+      },
+      {
+        "step": 14,
+        "action": "trace_call",
+        "target": "MessageViewHolder.selectForegroundColor(Boolean selected, Boolean read, Boolean active)",
+        "finding": "For ordinary read rows, selected and active are false, so the read branch returns colors.read."
+      },
+      {
+        "step": 15,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/item/MessageViewHolderColors.kt",
+        "finding": "MessageViewHolderColors.resolveColors() sets read to Material colorOutline, previewText to colorOutline, and unread to colorOnSurface."
+      },
+      {
+        "step": 16,
+        "action": "form_hypothesis",
+        "target": "Read message rows are greyed out because read foreground color is resolved to Material colorOutline",
+        "finding": "The report specifically says mailboxes filled with read emails look greyed out/deactivated; colorOutline is a low-emphasis outline/secondary color and is applied to the main visible content for read rows."
+      },
+      {
+        "step": 17,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/item/MessageItemContent.kt",
+        "finding": "The deprecated Compose row bridge chooses ReadMessageItem for item.isRead and UnreadMessageItem otherwise, but this path is only used when UseComposeForMessageListItems is enabled."
+      },
+      {
+        "step": 18,
+        "action": "read_file",
+        "target": "feature/mail/message/list/api/src/main/kotlin/net/thunderbird/feature/mail/message/list/ui/component/organism/ReadMessageItem.kt",
+        "finding": "Compose read rows use MessageItemDefaults.defaultMessageItemColors() unless colorizeBackgroundWhenRead is enabled, so read rows are not forced to outline color in the normal Compose path."
+      },
+      {
+        "step": 19,
+        "action": "read_file",
+        "target": "feature/mail/message/list/api/src/main/kotlin/net/thunderbird/feature/mail/message/list/ui/component/organism/MessageItemDefaults.kt",
+        "finding": "defaultMessageItemColors uses MainTheme.colors.onSurface for content; readMessageItemColors uses onSurfaceVariant only when read-background colorization is requested. This eliminates the normal Compose component as the release fault path."
+      },
+      {
+        "step": 20,
+        "action": "read_file",
+        "target": "app-common/src/main/kotlin/net/thunderbird/app/common/feature/MessageListLauncher.kt",
+        "finding": "MessageListLauncher launches MessageHomeActivity, identifying the mailbox list entry point used from the app shell."
+      },
+      {
+        "step": 21,
+        "action": "inspect_manifest",
+        "target": "legacy/common/src/main/AndroidManifest.xml",
+        "finding": "MessageHomeActivity is declared as the message-list activity handling k9mail://messages links."
+      },
+      {
+        "step": 22,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageHomeActivity.kt",
+        "finding": "MessageHomeActivity is the main activity and obtains MessageListFragmentBridgeContract.Factory to create the mailbox list fragment."
+      },
+      {
+        "step": 23,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/KoinModule.kt",
+        "finding": "The fragment factory returns LegacyMessageListFragment.Factory when EnableMessageListNewState is disabled; release flags set it disabled."
+      },
+      {
+        "step": 24,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListFragmentBridgeContract.kt",
+        "finding": "The bridge contract documents that the factory chooses modern MessageListFragment or LegacyMessageListFragment based on EnableMessageListNewState."
+      },
+      {
+        "step": 25,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/LegacyMessageListFragment.kt",
+        "finding": "LegacyMessageListFragment creates MessageListAdapter in onCreate(), observes message list LiveData, and assigns loaded rows to adapter.viewItems."
+      },
+      {
+        "step": 26,
+        "action": "trace_call",
+        "target": "LegacyMessageListFragment.createMessageListAdapter()",
+        "finding": "The adapter is built with activity theme and resources, so MessageViewHolderColors.resolveColors(requireActivity().theme) supplies the row colors."
+      },
+      {
+        "step": 27,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListLoader.kt",
+        "finding": "MessageListLoader loads messages from MessageListRepository and maps them through MessageListItemMapper."
+      },
+      {
+        "step": 28,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListItemMapper.kt",
+        "finding": "MessageListItemMapper copies message.isRead directly into MessageListItem.isRead, so read rows are correctly identified and the symptom is not caused by inverted state mapping."
+      },
+      {
+        "step": 29,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListItem.kt",
+        "finding": "MessageListItem stores isRead as a Boolean that drives MessageViewHolder color selection."
+      },
+      {
+        "step": 30,
+        "action": "eliminate_candidate",
+        "target": "message_list_item.xml default textAppearance/textColor",
+        "finding": "XML defaults are overridden for subject, preview, date, attachment, star, and status in MessageViewHolder.bind(), so the XML is not the main fault statement."
+      },
+      {
+        "step": 31,
+        "action": "eliminate_candidate",
+        "target": "MessageListItemMapper message.isRead mapping",
+        "finding": "The mapping preserves the storage read flag and matches the report trigger of read emails; it does not explain low contrast by itself."
+      },
+      {
+        "step": 32,
+        "action": "eliminate_candidate",
+        "target": "Compose ReadMessageItem/MessageItemDefaults",
+        "finding": "Release flags disable the Compose row path, and the normal Compose default uses onSurface for content rather than outline, so it is not the most likely release fault."
+      },
+      {
+        "step": 33,
+        "action": "form_hypothesis",
+        "target": "Fault statement: read = theme.resolveColorAttribute(MaterialR.attr.colorOutline),",
+        "finding": "This single statement assigns the low-emphasis outline color to the foreground color used for all main text and icons in read legacy message-list rows, directly causing the greyed-out low-contrast appearance."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/item/MessageViewHolderColors.kt",
+        "class": "MessageViewHolderColors.Companion",
+        "method": "resolveColors(Theme theme)",
+        "line": 45,
+        "statement": "read = theme.resolveColorAttribute(MaterialR.attr.colorOutline),",
+        "suspicion_score": 0.93,
+        "reasoning": "Release builds route mailbox rows through the legacy MessageViewHolder. For read messages, MessageViewHolder.selectForegroundColor() returns colors.read, and bind() applies that color to the row's subject/sender, preview prefix, date, star, attachment, and status icon. This statement defines colors.read as Material colorOutline, a low-emphasis grey intended for outlines rather than primary list content, which matches the reported greyed-out/deactivated read message rows."
+      }
+    ],
+    "final_answer": {
+      "file": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/item/MessageViewHolderColors.kt",
+      "class": "MessageViewHolderColors.Companion",
+      "method": "resolveColors(Theme theme)",
+      "line": 45,
+      "statement": "read = theme.resolveColorAttribute(MaterialR.attr.colorOutline),",
+      "confidence": 0.93,
+      "causal_chain": "K-9/Thunderbird release feature flags disable the new message-list state and Compose list items. MessageHomeActivity therefore creates LegacyMessageListFragment, which creates MessageListAdapter. MessageListAdapter creates legacy MessageViewHolder instances and supplies MessageViewHolderColors.resolveColors(theme). MessageListLoader and MessageListItemMapper preserve message.isRead into MessageListItem.isRead. For a mailbox of read emails, MessageViewHolder.bind() calls selectForegroundColor(false, true, false), which returns colors.read. Because resolveColors() assigned colors.read from MaterialR.attr.colorOutline, the main row foreground becomes a low-emphasis outline grey and is applied to the row's visible text and icons, producing the reported poor contrast and deactivated appearance.",
+      "fix_hint": "Use a higher-emphasis foreground color for read row primary content, such as colorOnSurface or colorOnSurfaceVariant, instead of Material colorOutline."
+    }
+  },
+  "error": null
+}

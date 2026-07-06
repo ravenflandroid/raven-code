@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "NewPipe",
+  "issue_id": 13548,
+  "issue_url": "https://github.com/TeamNewPipe/NewPipe/issues/13548",
+  "issue_title": "Occasional complete UI freeze when playlist is open and you going back to a smaller video frame and don't close the playlist before",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\TeamNewPipe_NewPipe",
+  "media_files": [
+    "9b8ba829-12e2-4381-9286-64406cf8a3c4"
+  ],
+  "started_at": "2026-06-22T15:16:38.730-05:00",
+  "finished_at": "2026-06-22T15:19:39.763-05:00",
+  "duration_seconds": 181.05,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

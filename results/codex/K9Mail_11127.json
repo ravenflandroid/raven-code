@@ -1,0 +1,199 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "K9Mail",
+  "issue_id": 11127,
+  "issue_url": "https://github.com/thunderbird/thunderbird-android/issues/11127",
+  "issue_title": "Marking mail as spam missing on tablet",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\thunderbird_thunderbird_android",
+  "media_files": [
+    "d34420e7-0405-45ac-bb22-7bbdc2ee3ce9",
+    "3f44df20-8ec9-4d5b-a0d6-b56978aa0573"
+  ],
+  "started_at": "2026-06-22T14:29:56.656-05:00",
+  "finished_at": "2026-06-22T14:36:12.499-05:00",
+  "duration_seconds": 375.86,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"refile|archive|spam|move|copy\",\n      \"finding\": \"Searched local source only. Key hits were the message view menu XML, MessageViewFragment.prepareMenu(), and messageview_visible_refile_actions settings.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"read_file\",\n      \"target\": \"README.md\",\n      \"finding\": \"Confirmed the repository is Thunderbird for Android/K-9 shared code.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"read_file\",\n      \"target\": \"docs/CONTRIBUTING.md\",\n      \"finding\": \"Confirmed project development context; no external sources used.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"read_file\",\n      \"target\": \"docs/architecture/adr/0009-api-internal-split.md\",\n      \"finding\": \"Confirmed legacy UI code is outside the new feature API/internal split concern for this localization task.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"inspect_layout_xml\",\n      \"target\": \"legacy/ui/legacy/src/main/res/menu/message_view_option_menu.xml\",\n      \"finding\": \"The message view overflow contains a refile submenu with four declared items: refile_archive, refile_spam, refile_move, and refile_copy. Therefore the XML itself does not omit Archive or Spam.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/res/values/arrays_general_settings_values.xml\",\n      \"finding\": \"The settings entry values include archive, move, copy, and spam for messageview_visible_refile_actions.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"grep_pattern\",\n      \"target\": \"refile_archive|refile_spam|message_view_option_menu|onPrepareOptionsMenu|prepareMenu|setVisible\",\n      \"finding\": \"Found the only runtime visibility handling for refile_archive/refile_spam in MessageViewFragment.prepareMenu().\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt\",\n      \"finding\": \"MessageViewFragment inflates message_view_option_menu in onCreateMenu() and calls prepareMenu() in onPrepareMenu().\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"trace_call\",\n      \"target\": \"MessageViewFragment.prepareMenu(Menu menu)\",\n      \"finding\": \"When isMoveCapable is true, the refile submenu is shown and refile_move is forced visible, while refile_archive and refile_spam depend on canMessageBeArchived and canMessageBeMovedToSpam.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/settings/general/GeneralSettingsDataStore.kt\",\n      \"finding\": \"The visible message actions settings map archive/spam booleans separately from move/copy.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"inspect_layout_xml\",\n      \"target\": \"legacy/ui/legacy/src/main/res/xml/general_settings.xml\",\n      \"finding\": \"The general settings screen exposes messageview_visible_refile_actions as a MultiSelectListPreference.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"grep_pattern\",\n      \"target\": \"isMessageViewArchiveActionVisible|isMessageViewSpamActionVisible|VisualSettings\",\n      \"finding\": \"The top-level Archive and Spam menu items are gated by visual settings, but the refile submenu visibility is controlled in MessageViewFragment.prepareMenu().\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"read_file\",\n      \"target\": \"core/preference/api/src/commonMain/kotlin/net/thunderbird/core/preference/display/visualSettings/DisplayVisualSettings.kt\",\n      \"finding\": \"Defaults for message view archive, move, copy, and spam action visibility are false, so any submenu code tied to those booleans would hide Archive and Spam by default.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"read_file\",\n      \"target\": \"core/preference/impl/src/commonMain/kotlin/net/thunderbird/core/preference/display/visualSettings/DefaultDisplayVisualSettingsPreferenceManager.kt\",\n      \"finding\": \"The display visual settings manager loads and saves the archive/spam visibility booleans using the defaults from DisplayVisualSettings.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/preferences/GeneralSettingsDescriptions.java\",\n      \"finding\": \"Legacy settings descriptions also default messageViewArchiveActionVisible and messageViewSpamActionVisible to false.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"trace_call\",\n      \"target\": \"MessageViewFragment.canMessageBeArchived() and canMessageBeMovedToSpam()\",\n      \"finding\": \"canMessageBeArchived returns false if no archive folder is configured or if the current message is already in the archive folder; canMessageBeMovedToSpam returns false under the analogous spam conditions.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageHomeActivity.kt\",\n      \"finding\": \"Tablet split view uses MessageViewContainerFragment and still ultimately displays a MessageViewFragment; there is no tablet-specific message view menu implementation.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewContainerFragment.kt\",\n      \"finding\": \"The split-view container creates MessageViewFragment instances from MessageListItem.messageReference and delegates actions to the active MessageViewFragment.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListItem.kt\",\n      \"finding\": \"MessageListItem.messageReference is built from account uuid, folderId, and messageUid.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListItemMapper.kt\",\n      \"finding\": \"MessageListItem.folderId comes directly from MessageDetailsAccessor.message.folderId.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListLoader.kt\",\n      \"finding\": \"The message list loader maps stored message rows into MessageListItem objects; it does not apply a tablet-specific action filter.\"\n    },\n    {\n      \"step\": 22,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"message_view_option_menu.xml\",\n      \"finding\": \"Eliminated the XML as the primary fault because Archive and Spam submenu items are declared there.\"\n    },\n    {\n      \"step\": 23,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"MessageHomeActivity / MessageViewContainerFragment\",\n      \"finding\": \"Eliminated the split-view container as the direct visibility fault because it only hosts MessageViewFragment and delegates menu/action behavior.\"\n    },\n    {\n      \"step\": 24,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"MessageViewFragment.prepareMenu() refile visibility assignments\",\n      \"finding\": \"The symptom exactly matches runtime hiding of refile_archive and refile_spam while refile_move/refile_copy remain visible. The statement controlling refile_spam is the strongest single fault location for the issue title.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt\",\n      \"class\": \"MessageViewFragment\",\n      \"method\": \"prepareMenu(Menu menu)\",\n      \"line\": 390,\n      \"statement\": \"menu.findItem(R.id.refile_spam).isVisible = canMessageBeMovedToSpam\",\n      \"suspicion_score\": 0.9,\n      \"reasoning\": \"The reported missing Spam entry is controlled directly by this statement. The menu XML declares refile_spam, and tablet split view still uses MessageViewFragment.prepareMenu(); therefore the item can disappear only when this assignment sets it invisible during menu preparation.\"\n    },\n    {\n      \"rank\": 2,\n      \"file\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt\",\n      \"class\": \"MessageViewFragment\",\n      \"method\": \"prepareMenu(Menu menu)\",\n      \"line\": 389,\n      \"statement\": \"menu.findItem(R.id.refile_archive).isVisible = canMessageBeArchived\",\n      \"suspicion_score\": 0.86,\n      \"reasoning\": \"The same prepareMenu block directly controls the missing Archive entry. It shares the same failure pattern as Spam: the XML contains the item, but this runtime visibility assignment can hide it while Move and Copy stay visible.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt\",\n    \"class\": \"MessageViewFragment\",\n    \"method\": \"prepareMenu(Menu menu)\",\n    \"line\": 390,\n    \"statement\": \"menu.findItem(R.id.refile_spam).isVisible = canMessageBeMovedToSpam\",\n    \"confidence\": 0.9,\n    \"causal_chain\": \"The user opens a message, the activity uses MessageViewFragment for both phone and tablet/split-view message display, MessageViewFragment inflates message_view_option_menu, the XML contains refile_spam, onPrepareMenu calls prepareMenu(), prepareMenu leaves refile_move and refile_copy visible but assigns refile_spam visibility from canMessageBeMovedToSpam, and when that predicate evaluates false the Spam row is removed from the Refile submenu.\",\n    \"fix_hint\": \"Ensure refile_spam and refile_archive visibility is based only on whether the action is actually possible for the current message/account, not on tablet/action-bar presentation state or unrelated visible-action settings.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "refile|archive|spam|move|copy",
+        "finding": "Searched local source only. Key hits were the message view menu XML, MessageViewFragment.prepareMenu(), and messageview_visible_refile_actions settings."
+      },
+      {
+        "step": 2,
+        "action": "read_file",
+        "target": "README.md",
+        "finding": "Confirmed the repository is Thunderbird for Android/K-9 shared code."
+      },
+      {
+        "step": 3,
+        "action": "read_file",
+        "target": "docs/CONTRIBUTING.md",
+        "finding": "Confirmed project development context; no external sources used."
+      },
+      {
+        "step": 4,
+        "action": "read_file",
+        "target": "docs/architecture/adr/0009-api-internal-split.md",
+        "finding": "Confirmed legacy UI code is outside the new feature API/internal split concern for this localization task."
+      },
+      {
+        "step": 5,
+        "action": "inspect_layout_xml",
+        "target": "legacy/ui/legacy/src/main/res/menu/message_view_option_menu.xml",
+        "finding": "The message view overflow contains a refile submenu with four declared items: refile_archive, refile_spam, refile_move, and refile_copy. Therefore the XML itself does not omit Archive or Spam."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "legacy/core/src/main/res/values/arrays_general_settings_values.xml",
+        "finding": "The settings entry values include archive, move, copy, and spam for messageview_visible_refile_actions."
+      },
+      {
+        "step": 7,
+        "action": "grep_pattern",
+        "target": "refile_archive|refile_spam|message_view_option_menu|onPrepareOptionsMenu|prepareMenu|setVisible",
+        "finding": "Found the only runtime visibility handling for refile_archive/refile_spam in MessageViewFragment.prepareMenu()."
+      },
+      {
+        "step": 8,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt",
+        "finding": "MessageViewFragment inflates message_view_option_menu in onCreateMenu() and calls prepareMenu() in onPrepareMenu()."
+      },
+      {
+        "step": 9,
+        "action": "trace_call",
+        "target": "MessageViewFragment.prepareMenu(Menu menu)",
+        "finding": "When isMoveCapable is true, the refile submenu is shown and refile_move is forced visible, while refile_archive and refile_spam depend on canMessageBeArchived and canMessageBeMovedToSpam."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/settings/general/GeneralSettingsDataStore.kt",
+        "finding": "The visible message actions settings map archive/spam booleans separately from move/copy."
+      },
+      {
+        "step": 11,
+        "action": "inspect_layout_xml",
+        "target": "legacy/ui/legacy/src/main/res/xml/general_settings.xml",
+        "finding": "The general settings screen exposes messageview_visible_refile_actions as a MultiSelectListPreference."
+      },
+      {
+        "step": 12,
+        "action": "grep_pattern",
+        "target": "isMessageViewArchiveActionVisible|isMessageViewSpamActionVisible|VisualSettings",
+        "finding": "The top-level Archive and Spam menu items are gated by visual settings, but the refile submenu visibility is controlled in MessageViewFragment.prepareMenu()."
+      },
+      {
+        "step": 13,
+        "action": "read_file",
+        "target": "core/preference/api/src/commonMain/kotlin/net/thunderbird/core/preference/display/visualSettings/DisplayVisualSettings.kt",
+        "finding": "Defaults for message view archive, move, copy, and spam action visibility are false, so any submenu code tied to those booleans would hide Archive and Spam by default."
+      },
+      {
+        "step": 14,
+        "action": "read_file",
+        "target": "core/preference/impl/src/commonMain/kotlin/net/thunderbird/core/preference/display/visualSettings/DefaultDisplayVisualSettingsPreferenceManager.kt",
+        "finding": "The display visual settings manager loads and saves the archive/spam visibility booleans using the defaults from DisplayVisualSettings."
+      },
+      {
+        "step": 15,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/preferences/GeneralSettingsDescriptions.java",
+        "finding": "Legacy settings descriptions also default messageViewArchiveActionVisible and messageViewSpamActionVisible to false."
+      },
+      {
+        "step": 16,
+        "action": "trace_call",
+        "target": "MessageViewFragment.canMessageBeArchived() and canMessageBeMovedToSpam()",
+        "finding": "canMessageBeArchived returns false if no archive folder is configured or if the current message is already in the archive folder; canMessageBeMovedToSpam returns false under the analogous spam conditions."
+      },
+      {
+        "step": 17,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageHomeActivity.kt",
+        "finding": "Tablet split view uses MessageViewContainerFragment and still ultimately displays a MessageViewFragment; there is no tablet-specific message view menu implementation."
+      },
+      {
+        "step": 18,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewContainerFragment.kt",
+        "finding": "The split-view container creates MessageViewFragment instances from MessageListItem.messageReference and delegates actions to the active MessageViewFragment."
+      },
+      {
+        "step": 19,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListItem.kt",
+        "finding": "MessageListItem.messageReference is built from account uuid, folderId, and messageUid."
+      },
+      {
+        "step": 20,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListItemMapper.kt",
+        "finding": "MessageListItem.folderId comes directly from MessageDetailsAccessor.message.folderId."
+      },
+      {
+        "step": 21,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListLoader.kt",
+        "finding": "The message list loader maps stored message rows into MessageListItem objects; it does not apply a tablet-specific action filter."
+      },
+      {
+        "step": 22,
+        "action": "eliminate_candidate",
+        "target": "message_view_option_menu.xml",
+        "finding": "Eliminated the XML as the primary fault because Archive and Spam submenu items are declared there."
+      },
+      {
+        "step": 23,
+        "action": "eliminate_candidate",
+        "target": "MessageHomeActivity / MessageViewContainerFragment",
+        "finding": "Eliminated the split-view container as the direct visibility fault because it only hosts MessageViewFragment and delegates menu/action behavior."
+      },
+      {
+        "step": 24,
+        "action": "form_hypothesis",
+        "target": "MessageViewFragment.prepareMenu() refile visibility assignments",
+        "finding": "The symptom exactly matches runtime hiding of refile_archive and refile_spam while refile_move/refile_copy remain visible. The statement controlling refile_spam is the strongest single fault location for the issue title."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt",
+        "class": "MessageViewFragment",
+        "method": "prepareMenu(Menu menu)",
+        "line": 390,
+        "statement": "menu.findItem(R.id.refile_spam).isVisible = canMessageBeMovedToSpam",
+        "suspicion_score": 0.9,
+        "reasoning": "The reported missing Spam entry is controlled directly by this statement. The menu XML declares refile_spam, and tablet split view still uses MessageViewFragment.prepareMenu(); therefore the item can disappear only when this assignment sets it invisible during menu preparation."
+      },
+      {
+        "rank": 2,
+        "file": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt",
+        "class": "MessageViewFragment",
+        "method": "prepareMenu(Menu menu)",
+        "line": 389,
+        "statement": "menu.findItem(R.id.refile_archive).isVisible = canMessageBeArchived",
+        "suspicion_score": 0.86,
+        "reasoning": "The same prepareMenu block directly controls the missing Archive entry. It shares the same failure pattern as Spam: the XML contains the item, but this runtime visibility assignment can hide it while Move and Copy stay visible."
+      }
+    ],
+    "final_answer": {
+      "file": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt",
+      "class": "MessageViewFragment",
+      "method": "prepareMenu(Menu menu)",
+      "line": 390,
+      "statement": "menu.findItem(R.id.refile_spam).isVisible = canMessageBeMovedToSpam",
+      "confidence": 0.9,
+      "causal_chain": "The user opens a message, the activity uses MessageViewFragment for both phone and tablet/split-view message display, MessageViewFragment inflates message_view_option_menu, the XML contains refile_spam, onPrepareMenu calls prepareMenu(), prepareMenu leaves refile_move and refile_copy visible but assigns refile_spam visibility from canMessageBeMovedToSpam, and when that predicate evaluates false the Spam row is removed from the Refile submenu.",
+      "fix_hint": "Ensure refile_spam and refile_archive visibility is based only on whether the action is actually possible for the current message/account, not on tablet/action-bar presentation state or unrelated visible-action settings."
+    }
+  },
+  "error": null
+}

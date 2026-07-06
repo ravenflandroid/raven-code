@@ -1,0 +1,180 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "K9Mail",
+  "issue_id": 11137,
+  "issue_url": "https://github.com/thunderbird/thunderbird-android/issues/11137",
+  "issue_title": "Outbox: move to drafts not working all the time",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\thunderbird_thunderbird_android",
+  "media_files": [
+    "k9mail-logs.1.txt"
+  ],
+  "started_at": "2026-06-21T18:06:35.943-05:00",
+  "finished_at": "2026-06-21T18:12:57.919-05:00",
+  "duration_seconds": 381.98,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"read_file\",\n      \"target\": \"README.md\",\n      \"finding\": \"Confirmed repository context: Thunderbird for Android includes K-9 Mail as a white-label app built from the same codebase.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"read_file\",\n      \"target\": \"docs/CONTRIBUTING.md\",\n      \"finding\": \"Confirmed repository conventions and that legacy code still exists; this task is static fault localization, not an architectural change.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"grep_pattern\",\n      \"target\": \"automation_new_bugs/baselines_context/k9mail-logs.1.txt\",\n      \"finding\": \"The prompt-mentioned local attachment directory/file was not present in the checked-out repository, so no issue log contents were available locally.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"grep_pattern\",\n      \"target\": \"move to drafts|Move to drafts|moveToDraft|move.*Draft|Drafts|OUTBOX|Outbox|outbox\",\n      \"finding\": \"Search located Outbox/Drafts handling primarily in legacy UI and legacy core controller code, especially MessagingController.moveToDraftsFolder().\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"read_file\",\n      \"target\": \"feature/mail/message/list/api/src/main/kotlin/net/thunderbird/feature/mail/message/list/ui/event/FolderEvent.kt\",\n      \"finding\": \"The newer message-list feature has OutboxFolderEvent only for sending pending messages; it does not define the reported Move to Drafts action.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"feature/mail/message/list/api/src/main/kotlin/net/thunderbird/feature/mail/message/list/ui/effect/MessageListEffect.kt\",\n      \"finding\": \"Effects include navigation and discarded-draft messages but no direct Move to Drafts effect for Outbox messages.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"grep_pattern\",\n      \"target\": \"moveToDraftsFolder\\\\(|move_to_drafts|DraftsDiscarded\",\n      \"finding\": \"Found concrete UI entry points in MessageViewFragment, MessageListFragment, and LegacyMessageListFragment; all call MessagingControllerWrapper.moveToDraftsFolder() or MessagingController.moveToDraftsFolder().\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt\",\n      \"finding\": \"The message-view overflow menu shows R.id.move_to_drafts when viewing Outbox and dispatches R.id.move_to_drafts to onMoveToDrafts(), which calls messagingController.moveToDraftsFolder(account, folderId, messages).\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListFragment.kt\",\n      \"finding\": \"The selected-message action mode shows Move to Drafts for Outbox when the account has a drafts folder and calls messagingController.moveToDraftsFolder(accountId, currentFolder.databaseId, selectedMessages).\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/LegacyMessageListFragment.kt\",\n      \"finding\": \"The legacy list fragment has the same selected-message path as MessageListFragment, confirming both reproduction variants share the same controller path.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/controller/MessagingControllerWrapper.kt\",\n      \"finding\": \"Wrapper method moveToDraftsFolder(id, folderId, messages) resolves the account DTO and delegates directly to MessagingController.moveToDraftsFolder(account, folderId, messages).\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/controller/MessagingController.java\",\n      \"finding\": \"moveToDraftsFolder() posts background work; moveToDraftsFolderInBackground() loads each Outbox message, calls saveDraft(), and only calls message.destroy() if saveDraft() returns a non-null draft ID.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"trace_call\",\n      \"target\": \"MessagingController.moveToDraftsFolderInBackground() -> MessagingController.saveDraft() -> DraftOperations.saveDraft()\",\n      \"finding\": \"The conversion from Outbox to Drafts depends on saveDraft() returning a message ID. If it returns null, the original Outbox message is left untouched, producing the visible 'nothing happens' behavior.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/controller/DraftOperations.kt\",\n      \"finding\": \"saveDraft() chooses saveAndUploadDraft() whenever messagingController.supportsUpload(account) is true. saveAndUploadDraft() saves locally, queues a PendingAppend, then immediately calls messagingController.processPendingCommands(account).\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"trace_call\",\n      \"target\": \"DraftOperations.saveAndUploadDraft()\",\n      \"finding\": \"For upload-capable accounts, Move to Drafts is made dependent on immediate remote upload of the new draft. Any MessagingException from processPendingCommands() is caught by saveDraft(), logged, and converted to null.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/mailstore/SaveMessageDataCreator.kt\",\n      \"finding\": \"The local draft save data is created from the loaded message and is not itself tied to Outbox-specific UI state; the intermittent nature is more consistent with the later remote processing step.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/mailstore/LocalMessage.java\",\n      \"finding\": \"LocalMessage.destroy() completely removes the original Outbox row. It is only reached when draftSavedSuccessfully is true, so failure before this call leaves the Outbox message visible.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/controller/MessagingController.java\",\n      \"finding\": \"loadMessage() can throw when a message is missing, but that would be a stale-reference/concurrency edge. The shared 'sometimes nothing happens after sending error' behavior is better explained by saveDraft() returning null after a remote draft upload failure.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"UI menu visibility and selection handlers\",\n      \"finding\": \"Both message view and message list expose and dispatch the Move to Drafts action correctly; the fault is not the menu item dispatch.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"LocalMessage.destroy()\",\n      \"finding\": \"destroy() is downstream and only runs after a successful draft save. If it were the fault, the draft would still be saved and an exception would be expected, not an intermittent no-op tied to sending errors.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"DraftOperations.saveAndUploadDraft() should not require immediate remote draft upload for Outbox-to-Drafts conversion\",\n      \"finding\": \"The most likely fault is the call to processPendingCommands(account) inside saveAndUploadDraft(), because it turns an otherwise completed local draft save into a null result when upload fails, preventing removal from Outbox.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"legacy/core/src/main/java/com/fsck/k9/controller/DraftOperations.kt\",\n      \"class\": \"DraftOperations\",\n      \"method\": \"saveAndUploadDraft(LegacyAccountDto account, Message message, Long folderId, Long existingDraftId, String subject)\",\n      \"line\": 81,\n      \"statement\": \"messagingController.processPendingCommands(account)\",\n      \"suspicion_score\": 0.86,\n      \"reasoning\": \"Move to Drafts for Outbox messages calls saveDraft(); for upload-capable accounts this method saves the draft locally, queues a remote append, then immediately processes pending commands. If that remote processing fails intermittently, saveDraft() catches the MessagingException and returns null. MessagingController.moveToDraftsFolderInBackground() then skips message.destroy(), so the Outbox message remains and the user observes that nothing happened.\"\n    },\n    {\n      \"rank\": 2,\n      \"file\": \"legacy/core/src/main/java/com/fsck/k9/controller/MessagingController.java\",\n      \"class\": \"MessagingController\",\n      \"method\": \"moveToDraftsFolderInBackground(LegacyAccountDto account, long folderId, List<MessageReference> messages)\",\n      \"line\": 1941,\n      \"statement\": \"Long draftMessageId = saveDraft(account, message, null, message.getSubject());\",\n      \"suspicion_score\": 0.71,\n      \"reasoning\": \"This is the direct call whose null result causes the operation to become a no-op. However, the deeper cause is that DraftOperations.saveAndUploadDraft() makes the save result depend on immediate remote upload success.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"legacy/core/src/main/java/com/fsck/k9/controller/DraftOperations.kt\",\n    \"class\": \"DraftOperations\",\n    \"method\": \"saveAndUploadDraft(LegacyAccountDto account, Message message, Long folderId, Long existingDraftId, String subject)\",\n    \"line\": 81,\n    \"statement\": \"messagingController.processPendingCommands(account)\",\n    \"confidence\": 0.86,\n    \"causal_chain\": \"User chooses Move to Drafts in Outbox -> MessageViewFragment or MessageListFragment calls MessagingController.moveToDraftsFolder() -> moveToDraftsFolderInBackground() loads the Outbox message and calls saveDraft() -> DraftOperations.saveDraft() routes upload-capable accounts to saveAndUploadDraft() -> saveAndUploadDraft() saves a local draft and queues PendingAppend, but then immediately calls processPendingCommands(account) -> an intermittent remote/upload MessagingException during this call makes saveDraft() return null -> moveToDraftsFolderInBackground() sees draftSavedSuccessfully == false and does not call message.destroy() -> the original message remains in Outbox, so the user sees no move.\",\n    \"fix_hint\": \"Decouple Outbox-to-Drafts local conversion from immediate remote draft upload: return the local draft message ID after queuing the append, and let pending command processing retry asynchronously instead of making the UI action fail.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "read_file",
+        "target": "README.md",
+        "finding": "Confirmed repository context: Thunderbird for Android includes K-9 Mail as a white-label app built from the same codebase."
+      },
+      {
+        "step": 2,
+        "action": "read_file",
+        "target": "docs/CONTRIBUTING.md",
+        "finding": "Confirmed repository conventions and that legacy code still exists; this task is static fault localization, not an architectural change."
+      },
+      {
+        "step": 3,
+        "action": "grep_pattern",
+        "target": "automation_new_bugs/baselines_context/k9mail-logs.1.txt",
+        "finding": "The prompt-mentioned local attachment directory/file was not present in the checked-out repository, so no issue log contents were available locally."
+      },
+      {
+        "step": 4,
+        "action": "grep_pattern",
+        "target": "move to drafts|Move to drafts|moveToDraft|move.*Draft|Drafts|OUTBOX|Outbox|outbox",
+        "finding": "Search located Outbox/Drafts handling primarily in legacy UI and legacy core controller code, especially MessagingController.moveToDraftsFolder()."
+      },
+      {
+        "step": 5,
+        "action": "read_file",
+        "target": "feature/mail/message/list/api/src/main/kotlin/net/thunderbird/feature/mail/message/list/ui/event/FolderEvent.kt",
+        "finding": "The newer message-list feature has OutboxFolderEvent only for sending pending messages; it does not define the reported Move to Drafts action."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "feature/mail/message/list/api/src/main/kotlin/net/thunderbird/feature/mail/message/list/ui/effect/MessageListEffect.kt",
+        "finding": "Effects include navigation and discarded-draft messages but no direct Move to Drafts effect for Outbox messages."
+      },
+      {
+        "step": 7,
+        "action": "grep_pattern",
+        "target": "moveToDraftsFolder\\(|move_to_drafts|DraftsDiscarded",
+        "finding": "Found concrete UI entry points in MessageViewFragment, MessageListFragment, and LegacyMessageListFragment; all call MessagingControllerWrapper.moveToDraftsFolder() or MessagingController.moveToDraftsFolder()."
+      },
+      {
+        "step": 8,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt",
+        "finding": "The message-view overflow menu shows R.id.move_to_drafts when viewing Outbox and dispatches R.id.move_to_drafts to onMoveToDrafts(), which calls messagingController.moveToDraftsFolder(account, folderId, messages)."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/MessageListFragment.kt",
+        "finding": "The selected-message action mode shows Move to Drafts for Outbox when the account has a drafts folder and calls messagingController.moveToDraftsFolder(accountId, currentFolder.databaseId, selectedMessages)."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messagelist/LegacyMessageListFragment.kt",
+        "finding": "The legacy list fragment has the same selected-message path as MessageListFragment, confirming both reproduction variants share the same controller path."
+      },
+      {
+        "step": 11,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/controller/MessagingControllerWrapper.kt",
+        "finding": "Wrapper method moveToDraftsFolder(id, folderId, messages) resolves the account DTO and delegates directly to MessagingController.moveToDraftsFolder(account, folderId, messages)."
+      },
+      {
+        "step": 12,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/controller/MessagingController.java",
+        "finding": "moveToDraftsFolder() posts background work; moveToDraftsFolderInBackground() loads each Outbox message, calls saveDraft(), and only calls message.destroy() if saveDraft() returns a non-null draft ID."
+      },
+      {
+        "step": 13,
+        "action": "trace_call",
+        "target": "MessagingController.moveToDraftsFolderInBackground() -> MessagingController.saveDraft() -> DraftOperations.saveDraft()",
+        "finding": "The conversion from Outbox to Drafts depends on saveDraft() returning a message ID. If it returns null, the original Outbox message is left untouched, producing the visible 'nothing happens' behavior."
+      },
+      {
+        "step": 14,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/controller/DraftOperations.kt",
+        "finding": "saveDraft() chooses saveAndUploadDraft() whenever messagingController.supportsUpload(account) is true. saveAndUploadDraft() saves locally, queues a PendingAppend, then immediately calls messagingController.processPendingCommands(account)."
+      },
+      {
+        "step": 15,
+        "action": "trace_call",
+        "target": "DraftOperations.saveAndUploadDraft()",
+        "finding": "For upload-capable accounts, Move to Drafts is made dependent on immediate remote upload of the new draft. Any MessagingException from processPendingCommands() is caught by saveDraft(), logged, and converted to null."
+      },
+      {
+        "step": 16,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/mailstore/SaveMessageDataCreator.kt",
+        "finding": "The local draft save data is created from the loaded message and is not itself tied to Outbox-specific UI state; the intermittent nature is more consistent with the later remote processing step."
+      },
+      {
+        "step": 17,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/mailstore/LocalMessage.java",
+        "finding": "LocalMessage.destroy() completely removes the original Outbox row. It is only reached when draftSavedSuccessfully is true, so failure before this call leaves the Outbox message visible."
+      },
+      {
+        "step": 18,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/controller/MessagingController.java",
+        "finding": "loadMessage() can throw when a message is missing, but that would be a stale-reference/concurrency edge. The shared 'sometimes nothing happens after sending error' behavior is better explained by saveDraft() returning null after a remote draft upload failure."
+      },
+      {
+        "step": 19,
+        "action": "eliminate_candidate",
+        "target": "UI menu visibility and selection handlers",
+        "finding": "Both message view and message list expose and dispatch the Move to Drafts action correctly; the fault is not the menu item dispatch."
+      },
+      {
+        "step": 20,
+        "action": "eliminate_candidate",
+        "target": "LocalMessage.destroy()",
+        "finding": "destroy() is downstream and only runs after a successful draft save. If it were the fault, the draft would still be saved and an exception would be expected, not an intermittent no-op tied to sending errors."
+      },
+      {
+        "step": 21,
+        "action": "form_hypothesis",
+        "target": "DraftOperations.saveAndUploadDraft() should not require immediate remote draft upload for Outbox-to-Drafts conversion",
+        "finding": "The most likely fault is the call to processPendingCommands(account) inside saveAndUploadDraft(), because it turns an otherwise completed local draft save into a null result when upload fails, preventing removal from Outbox."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "legacy/core/src/main/java/com/fsck/k9/controller/DraftOperations.kt",
+        "class": "DraftOperations",
+        "method": "saveAndUploadDraft(LegacyAccountDto account, Message message, Long folderId, Long existingDraftId, String subject)",
+        "line": 81,
+        "statement": "messagingController.processPendingCommands(account)",
+        "suspicion_score": 0.86,
+        "reasoning": "Move to Drafts for Outbox messages calls saveDraft(); for upload-capable accounts this method saves the draft locally, queues a remote append, then immediately processes pending commands. If that remote processing fails intermittently, saveDraft() catches the MessagingException and returns null. MessagingController.moveToDraftsFolderInBackground() then skips message.destroy(), so the Outbox message remains and the user observes that nothing happened."
+      },
+      {
+        "rank": 2,
+        "file": "legacy/core/src/main/java/com/fsck/k9/controller/MessagingController.java",
+        "class": "MessagingController",
+        "method": "moveToDraftsFolderInBackground(LegacyAccountDto account, long folderId, List<MessageReference> messages)",
+        "line": 1941,
+        "statement": "Long draftMessageId = saveDraft(account, message, null, message.getSubject());",
+        "suspicion_score": 0.71,
+        "reasoning": "This is the direct call whose null result causes the operation to become a no-op. However, the deeper cause is that DraftOperations.saveAndUploadDraft() makes the save result depend on immediate remote upload success."
+      }
+    ],
+    "final_answer": {
+      "file": "legacy/core/src/main/java/com/fsck/k9/controller/DraftOperations.kt",
+      "class": "DraftOperations",
+      "method": "saveAndUploadDraft(LegacyAccountDto account, Message message, Long folderId, Long existingDraftId, String subject)",
+      "line": 81,
+      "statement": "messagingController.processPendingCommands(account)",
+      "confidence": 0.86,
+      "causal_chain": "User chooses Move to Drafts in Outbox -> MessageViewFragment or MessageListFragment calls MessagingController.moveToDraftsFolder() -> moveToDraftsFolderInBackground() loads the Outbox message and calls saveDraft() -> DraftOperations.saveDraft() routes upload-capable accounts to saveAndUploadDraft() -> saveAndUploadDraft() saves a local draft and queues PendingAppend, but then immediately calls processPendingCommands(account) -> an intermittent remote/upload MessagingException during this call makes saveDraft() return null -> moveToDraftsFolderInBackground() sees draftSavedSuccessfully == false and does not call message.destroy() -> the original message remains in Outbox, so the user sees no move.",
+      "fix_hint": "Decouple Outbox-to-Drafts local conversion from immediate remote draft upload: return the local draft message ID after queuing the append, and let pending command processing retry asynchronously instead of making the UI action fail."
+    }
+  },
+  "error": null
+}

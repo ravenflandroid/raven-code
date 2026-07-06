@@ -1,0 +1,181 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "AnkiDroid",
+  "issue_id": 21153,
+  "issue_url": "https://github.com/ankidroid/Anki-Android/issues/21153",
+  "issue_title": "Card browser column headers are not updated after changing them from the \"Card Browser\" context menu",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\ankidroid_Anki_Android",
+  "media_files": [
+    "5639bf6b-76e2-4ac5-83f9-c4be2e8c0fc5",
+    "2c5ee98b-0732-4838-b13d-ebd6d795d984"
+  ],
+  "started_at": "2026-06-21T15:08:54.729-05:00",
+  "finished_at": "2026-06-21T15:14:07.098-05:00",
+  "duration_seconds": 312.38,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"CardBrowser|Card Browser|columns|Column|headers\",\n      \"finding\": \"Located the card browser implementation and column-related classes under AnkiDroid/src/main/java/com/ichi2/anki and com/ichi2/anki/browser. ripgrep was unavailable, so PowerShell recursive Select-String was used locally.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"grep_pattern\",\n      \"target\": \"class CardBrowser|CardBrowser|browser.*column|column.*browser\",\n      \"finding\": \"Identified CardBrowser.kt as the Activity entry point, CardBrowserFragment.kt as the browser UI/controller, CardBrowserViewModel.kt as the column state owner, BrowserColumnSelectionFragment.kt as the column editing dialog, and BrowserMultiColumnAdapter.kt as the row renderer.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/CardBrowser.kt\",\n      \"finding\": \"Read the lifecycle path. CardBrowser.onResume() calls viewModel.refreshColumnsFromPrefs(), so returning to the original browser after another browser instance changes shared column preferences is meant to refresh column state.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt\",\n      \"finding\": \"Read active column state. flowOfActiveColumns stores the current BrowserColumnCollection, flowOfColumnHeadings derives header labels from flowOfActiveColumns, flowOfCardsOrNotes, and flowOfAllColumns, and updateActiveColumns() sets backend active columns then updates flowOfActiveColumns.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragment.kt\",\n      \"finding\": \"Read setupFlows(). The fragment separately subscribes to flowOfActiveColumns via onColumnsChanged() and flowOfColumnHeadings via onColumnNamesChanged(). onColumnsChanged() only calls cardsAdapter.notifyDataSetChanged(), while onColumnNamesChanged() rebuilds browserColumnHeadings.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserMultiColumnAdapter.kt\",\n      \"finding\": \"Read row rendering. BrowserMultiColumnAdapter.onBindViewHolder() asks viewModel.transformBrowserRow() for a BrowserRow and renders row.cellsCount cells, so row contents follow backend active browser columns.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnCollection.kt\",\n      \"finding\": \"Read column persistence. BrowserColumnCollection.load() reads active columns from SharedPreferences; replace()/save() writes the new pipe-separated backend column keys for cards or notes mode.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnSelectionFragment.kt\",\n      \"finding\": \"Read the save path. Selecting Save calls viewModel.updateActiveColumns(columnAdapter.selected, cardsOrNotes), which persists the selected columns and, if editing the current mode, updates the active column flow.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/contextmenu/CardBrowserContextMenu.kt\",\n      \"finding\": \"Confirmed the Card Browser context menu is a system text-selection context menu integration.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserLaunchOptions.kt\",\n      \"finding\": \"Confirmed ACTION_PROCESS_TEXT is parsed as CardBrowserLaunchOptions.SystemContextMenu, meaning the context menu launches a CardBrowser instance using the selected text as the search.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"inspect_manifest\",\n      \"target\": \"AnkiDroid/src/main/AndroidManifest.xml\",\n      \"finding\": \"Read the CardBrowserContextMenuAction activity-alias targeting com.ichi2.anki.CardBrowser and the CardBrowser activity declaration. The context menu can launch another CardBrowser activity over the original one.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"grep_pattern\",\n      \"target\": \"setActiveBrowserColumns|browserRowForId|allBrowserColumns\",\n      \"finding\": \"Found comments and calls showing backend browser row rendering depends on Backend.setActiveBrowserColumns(), which is process-global backend state rather than only local UI state.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserRowCollection.kt\",\n      \"finding\": \"Read documentation stating browserRowForId depends on Backend.setActiveBrowserColumns. This explains how row data can change when backend active columns are changed by another browser instance.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/browser/ColumnWithSample.kt\",\n      \"finding\": \"Read sample-row loading for the column selection dialog. It temporarily sets backend active browser columns to all columns, fetches a sample row, and restores backend columns from SharedPreferences.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt\",\n      \"finding\": \"Read relevant test areas and imports. Tests cover many CardBrowserViewModel column operations but did not reveal a direct regression test for returning from a context-menu-launched browser and verifying header view text.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserFragmentTest.kt\",\n      \"finding\": \"Read CardBrowserFragment tests. Existing fragment tests cover search view behavior and shortcut labels, not column header refresh after external column changes.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Rows update from backend active columns but headers remain stale because the active-column change handler invalidates only the RecyclerView rows.\",\n      \"finding\": \"The symptom is specifically a mismatch: displayed row columns change but column headers do not. That aligns with CardBrowserFragment.onColumnsChanged() only notifying the adapter and not rebuilding browserColumnHeadings.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"BrowserColumnSelectionFragment.updateActiveColumns save path\",\n      \"finding\": \"Eliminated as primary trigger because it does persist new columns and updates the current browser instance when the edited mode is active.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"BrowserMultiColumnAdapter.onBindViewHolder row rendering\",\n      \"finding\": \"Eliminated as primary trigger because it correctly follows BrowserRow.cellsCount and renders row cells; the complaint is stale headers, not stale row cell values.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"trace_call\",\n      \"target\": \"CardBrowser.onResume() -> CardBrowserViewModel.refreshColumnsFromPrefs() -> updateActiveColumns() -> flowOfActiveColumns -> CardBrowserFragment.onColumnsChanged()\",\n      \"finding\": \"The return-from-context-menu path reaches onColumnsChanged(), where the observed mismatch can be produced: only cardsAdapter.notifyDataSetChanged() runs, so row cells are refreshed while header views are not directly rebuilt.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Fault statement is cardsAdapter.notifyDataSetChanged() in CardBrowserFragment.setupFlows().onColumnsChanged().\",\n      \"finding\": \"This statement is the narrowest source line on the active-column refresh path that updates the table body without updating the table header, matching the reported behavior.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragment.kt\",\n      \"class\": \"CardBrowserFragment\",\n      \"method\": \"setupFlows()\",\n      \"line\": 877,\n      \"statement\": \"cardsAdapter.notifyDataSetChanged()\",\n      \"suspicion_score\": 0.82,\n      \"reasoning\": \"When the original CardBrowser resumes after a context-menu-launched CardBrowser changes shared column preferences, CardBrowserViewModel.refreshColumnsFromPrefs() can update active columns. The fragment handles that active-column change in onColumnsChanged(), but the only UI update there is a RecyclerView adapter refresh. Row cells are rendered from backend active columns through BrowserMultiColumnAdapter, while header views are separate children of browserColumnHeadings and are only rebuilt by onColumnNamesChanged(). Thus this statement refreshes the body without guaranteeing the header row is rebuilt, producing the observed mismatch between updated columns and stale headers.\"\n    },\n    {\n      \"rank\": 2,\n      \"file\": \"AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt\",\n      \"class\": \"CardBrowserViewModel\",\n      \"method\": \"refreshColumnsFromPrefs()\",\n      \"line\": 652,\n      \"statement\": \"if (stored.columns == activeColumns) return@launch\",\n      \"suspicion_score\": 0.34,\n      \"reasoning\": \"This early return could skip restoring backend/header-related state if shared preferences match the in-memory active column list but backend global active columns were changed by another browser instance. However, in the reported scenario the original browser's in-memory columns should usually differ from the newly saved preferences, making this a weaker candidate.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragment.kt\",\n    \"class\": \"CardBrowserFragment\",\n    \"method\": \"setupFlows()\",\n    \"line\": 877,\n    \"statement\": \"cardsAdapter.notifyDataSetChanged()\",\n    \"confidence\": 0.82,\n    \"causal_chain\": \"The user opens an original CardBrowser, then launches a second CardBrowser through ACTION_PROCESS_TEXT from the system Card Browser context menu. In the second browser, BrowserColumnSelectionFragment saves new active columns through CardBrowserViewModel.updateActiveColumns(), updating shared preferences and backend active browser columns. Returning to the original browser calls CardBrowser.onResume(), which calls refreshColumnsFromPrefs() and emits a new flowOfActiveColumns value. CardBrowserFragment receives that in onColumnsChanged(), but line 877 only refreshes the RecyclerView adapter. The adapter rebinds rows using backend browserRowForId(), so table body cells reflect the new active columns. The column header row is not rebuilt by this handler, leaving browserColumnHeadings with the previous labels and causing headers not to match the updated columns.\",\n    \"fix_hint\": \"When active columns change, rebuild or explicitly refresh browserColumnHeadings from the updated column heading data instead of only notifying the row adapter.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "CardBrowser|Card Browser|columns|Column|headers",
+        "finding": "Located the card browser implementation and column-related classes under AnkiDroid/src/main/java/com/ichi2/anki and com/ichi2/anki/browser. ripgrep was unavailable, so PowerShell recursive Select-String was used locally."
+      },
+      {
+        "step": 2,
+        "action": "grep_pattern",
+        "target": "class CardBrowser|CardBrowser|browser.*column|column.*browser",
+        "finding": "Identified CardBrowser.kt as the Activity entry point, CardBrowserFragment.kt as the browser UI/controller, CardBrowserViewModel.kt as the column state owner, BrowserColumnSelectionFragment.kt as the column editing dialog, and BrowserMultiColumnAdapter.kt as the row renderer."
+      },
+      {
+        "step": 3,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/CardBrowser.kt",
+        "finding": "Read the lifecycle path. CardBrowser.onResume() calls viewModel.refreshColumnsFromPrefs(), so returning to the original browser after another browser instance changes shared column preferences is meant to refresh column state."
+      },
+      {
+        "step": 4,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt",
+        "finding": "Read active column state. flowOfActiveColumns stores the current BrowserColumnCollection, flowOfColumnHeadings derives header labels from flowOfActiveColumns, flowOfCardsOrNotes, and flowOfAllColumns, and updateActiveColumns() sets backend active columns then updates flowOfActiveColumns."
+      },
+      {
+        "step": 5,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragment.kt",
+        "finding": "Read setupFlows(). The fragment separately subscribes to flowOfActiveColumns via onColumnsChanged() and flowOfColumnHeadings via onColumnNamesChanged(). onColumnsChanged() only calls cardsAdapter.notifyDataSetChanged(), while onColumnNamesChanged() rebuilds browserColumnHeadings."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserMultiColumnAdapter.kt",
+        "finding": "Read row rendering. BrowserMultiColumnAdapter.onBindViewHolder() asks viewModel.transformBrowserRow() for a BrowserRow and renders row.cellsCount cells, so row contents follow backend active browser columns."
+      },
+      {
+        "step": 7,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnCollection.kt",
+        "finding": "Read column persistence. BrowserColumnCollection.load() reads active columns from SharedPreferences; replace()/save() writes the new pipe-separated backend column keys for cards or notes mode."
+      },
+      {
+        "step": 8,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserColumnSelectionFragment.kt",
+        "finding": "Read the save path. Selecting Save calls viewModel.updateActiveColumns(columnAdapter.selected, cardsOrNotes), which persists the selected columns and, if editing the current mode, updates the active column flow."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/contextmenu/CardBrowserContextMenu.kt",
+        "finding": "Confirmed the Card Browser context menu is a system text-selection context menu integration."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserLaunchOptions.kt",
+        "finding": "Confirmed ACTION_PROCESS_TEXT is parsed as CardBrowserLaunchOptions.SystemContextMenu, meaning the context menu launches a CardBrowser instance using the selected text as the search."
+      },
+      {
+        "step": 11,
+        "action": "inspect_manifest",
+        "target": "AnkiDroid/src/main/AndroidManifest.xml",
+        "finding": "Read the CardBrowserContextMenuAction activity-alias targeting com.ichi2.anki.CardBrowser and the CardBrowser activity declaration. The context menu can launch another CardBrowser activity over the original one."
+      },
+      {
+        "step": 12,
+        "action": "grep_pattern",
+        "target": "setActiveBrowserColumns|browserRowForId|allBrowserColumns",
+        "finding": "Found comments and calls showing backend browser row rendering depends on Backend.setActiveBrowserColumns(), which is process-global backend state rather than only local UI state."
+      },
+      {
+        "step": 13,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/browser/BrowserRowCollection.kt",
+        "finding": "Read documentation stating browserRowForId depends on Backend.setActiveBrowserColumns. This explains how row data can change when backend active columns are changed by another browser instance."
+      },
+      {
+        "step": 14,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/browser/ColumnWithSample.kt",
+        "finding": "Read sample-row loading for the column selection dialog. It temporarily sets backend active browser columns to all columns, fetches a sample row, and restores backend columns from SharedPreferences."
+      },
+      {
+        "step": 15,
+        "action": "read_file",
+        "target": "AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserViewModelTest.kt",
+        "finding": "Read relevant test areas and imports. Tests cover many CardBrowserViewModel column operations but did not reveal a direct regression test for returning from a context-menu-launched browser and verifying header view text."
+      },
+      {
+        "step": 16,
+        "action": "read_file",
+        "target": "AnkiDroid/src/test/java/com/ichi2/anki/browser/CardBrowserFragmentTest.kt",
+        "finding": "Read CardBrowserFragment tests. Existing fragment tests cover search view behavior and shortcut labels, not column header refresh after external column changes."
+      },
+      {
+        "step": 17,
+        "action": "form_hypothesis",
+        "target": "Rows update from backend active columns but headers remain stale because the active-column change handler invalidates only the RecyclerView rows.",
+        "finding": "The symptom is specifically a mismatch: displayed row columns change but column headers do not. That aligns with CardBrowserFragment.onColumnsChanged() only notifying the adapter and not rebuilding browserColumnHeadings."
+      },
+      {
+        "step": 18,
+        "action": "eliminate_candidate",
+        "target": "BrowserColumnSelectionFragment.updateActiveColumns save path",
+        "finding": "Eliminated as primary trigger because it does persist new columns and updates the current browser instance when the edited mode is active."
+      },
+      {
+        "step": 19,
+        "action": "eliminate_candidate",
+        "target": "BrowserMultiColumnAdapter.onBindViewHolder row rendering",
+        "finding": "Eliminated as primary trigger because it correctly follows BrowserRow.cellsCount and renders row cells; the complaint is stale headers, not stale row cell values."
+      },
+      {
+        "step": 20,
+        "action": "trace_call",
+        "target": "CardBrowser.onResume() -> CardBrowserViewModel.refreshColumnsFromPrefs() -> updateActiveColumns() -> flowOfActiveColumns -> CardBrowserFragment.onColumnsChanged()",
+        "finding": "The return-from-context-menu path reaches onColumnsChanged(), where the observed mismatch can be produced: only cardsAdapter.notifyDataSetChanged() runs, so row cells are refreshed while header views are not directly rebuilt."
+      },
+      {
+        "step": 21,
+        "action": "form_hypothesis",
+        "target": "Fault statement is cardsAdapter.notifyDataSetChanged() in CardBrowserFragment.setupFlows().onColumnsChanged().",
+        "finding": "This statement is the narrowest source line on the active-column refresh path that updates the table body without updating the table header, matching the reported behavior."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragment.kt",
+        "class": "CardBrowserFragment",
+        "method": "setupFlows()",
+        "line": 877,
+        "statement": "cardsAdapter.notifyDataSetChanged()",
+        "suspicion_score": 0.82,
+        "reasoning": "When the original CardBrowser resumes after a context-menu-launched CardBrowser changes shared column preferences, CardBrowserViewModel.refreshColumnsFromPrefs() can update active columns. The fragment handles that active-column change in onColumnsChanged(), but the only UI update there is a RecyclerView adapter refresh. Row cells are rendered from backend active columns through BrowserMultiColumnAdapter, while header views are separate children of browserColumnHeadings and are only rebuilt by onColumnNamesChanged(). Thus this statement refreshes the body without guaranteeing the header row is rebuilt, producing the observed mismatch between updated columns and stale headers."
+      },
+      {
+        "rank": 2,
+        "file": "AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserViewModel.kt",
+        "class": "CardBrowserViewModel",
+        "method": "refreshColumnsFromPrefs()",
+        "line": 652,
+        "statement": "if (stored.columns == activeColumns) return@launch",
+        "suspicion_score": 0.34,
+        "reasoning": "This early return could skip restoring backend/header-related state if shared preferences match the in-memory active column list but backend global active columns were changed by another browser instance. However, in the reported scenario the original browser's in-memory columns should usually differ from the newly saved preferences, making this a weaker candidate."
+      }
+    ],
+    "final_answer": {
+      "file": "AnkiDroid/src/main/java/com/ichi2/anki/browser/CardBrowserFragment.kt",
+      "class": "CardBrowserFragment",
+      "method": "setupFlows()",
+      "line": 877,
+      "statement": "cardsAdapter.notifyDataSetChanged()",
+      "confidence": 0.82,
+      "causal_chain": "The user opens an original CardBrowser, then launches a second CardBrowser through ACTION_PROCESS_TEXT from the system Card Browser context menu. In the second browser, BrowserColumnSelectionFragment saves new active columns through CardBrowserViewModel.updateActiveColumns(), updating shared preferences and backend active browser columns. Returning to the original browser calls CardBrowser.onResume(), which calls refreshColumnsFromPrefs() and emits a new flowOfActiveColumns value. CardBrowserFragment receives that in onColumnsChanged(), but line 877 only refreshes the RecyclerView adapter. The adapter rebinds rows using backend browserRowForId(), so table body cells reflect the new active columns. The column header row is not rebuilt by this handler, leaving browserColumnHeadings with the previous labels and causing headers not to match the updated columns.",
+      "fix_hint": "When active columns change, rebuild or explicitly refresh browserColumnHeadings from the updated column heading data instead of only notifying the row adapter."
+    }
+  },
+  "error": null
+}

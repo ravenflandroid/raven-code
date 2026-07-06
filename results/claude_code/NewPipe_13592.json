@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "NewPipe",
+  "issue_id": 13592,
+  "issue_url": "https://github.com/TeamNewPipe/NewPipe/issues/13592",
+  "issue_title": "Watch count increases automatically after playback stops due to network loss",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\TeamNewPipe_NewPipe",
+  "media_files": [],
+  "started_at": "2026-06-22T15:49:35.658-05:00",
+  "finished_at": "2026-06-22T15:52:38.537-05:00",
+  "duration_seconds": 182.89,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

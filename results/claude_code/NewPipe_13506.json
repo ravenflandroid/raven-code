@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "NewPipe",
+  "issue_id": 13506,
+  "issue_url": "https://github.com/TeamNewPipe/NewPipe/issues/13506",
+  "issue_title": "Repeat mode UI becomes out of sync when switching videos from mini player",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\TeamNewPipe_NewPipe",
+  "media_files": [
+    "f38f34dc-ba5d-4b42-b86a-995086516890"
+  ],
+  "started_at": "2026-06-22T15:08:44.285-05:00",
+  "finished_at": "2026-06-22T15:11:48.534-05:00",
+  "duration_seconds": 184.25,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

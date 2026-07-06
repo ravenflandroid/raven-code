@@ -1,0 +1,242 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "WordPress",
+  "issue_id": 22879,
+  "issue_url": "https://github.com/wordpress-mobile/WordPress-Android/issues/22879",
+  "issue_title": "Editor fails to load on Atomic sites when theme-styles capability over-reports availability",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\wordpress_mobile_WordPress_Android",
+  "media_files": [],
+  "started_at": "2026-06-21T15:25:36.210-05:00",
+  "finished_at": "2026-06-21T15:30:45.018-05:00",
+  "duration_seconds": 308.81,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"class EditorSettingsRepository|fetchRouteSupport|siteSupportsEditorSettings|Use Theme Styles|theme-styles|wp-block-editor/v1/settings|EditorHTTPClient|GutenbergView|WpApiClientProvider|getApiUrlResolver|getWpApiClient\",\n      \"finding\": \"Initial ripgrep attempt failed because rg is unavailable in this environment; switched to PowerShell-only search scoped to the current checkout.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"grep_pattern\",\n      \"target\": \"PowerShell Select-String over repository for editor capability and Gutenberg API patterns\",\n      \"finding\": \"Found the main relevant files: WordPress/src/main/java/org/wordpress/android/repositories/EditorSettingsRepository.kt, libs/fluxc/src/main/java/org/wordpress/android/fluxc/network/rest/wpapi/rs/WpApiClientProvider.kt, GutenbergKit settings/preloader/activity/fragment files, and tests. Search also found a local release note mentioning this issue, but the analysis stayed within source files.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"read_file\",\n      \"target\": \"AGENTS.md\",\n      \"finding\": \"Read repository agent instructions; they emphasize Kotlin/Android lifecycle, DI, coroutine, and code hygiene constraints. No fault-localization-specific code facts found.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"read_file\",\n      \"target\": \"CLAUDE.md\",\n      \"finding\": \"Read build/architecture guidance. Confirmed app module is WordPress, networking/data layer is libs/fluxc, and editor integration lives in libs/editor plus WordPress UI code.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/repositories/EditorSettingsRepository.kt\",\n      \"finding\": \"Found capability detection. fetchEditorCapabilitiesForSite calls fetchRouteSupport and fetchThemeBlockStyleSupport. The route support path persists siteSupportsEditorSettings based on data.hasRouteForEndpoint(resolver, \\\"/wp-block-editor/v1\\\", \\\"settings\\\"). Current checkout contains an Atomic-specific direct-host branch in fetchRouteSupport, indicating the reported bug is in the older configured-client route path.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/network/rest/wpapi/rs/WpApiClientProvider.kt\",\n      \"finding\": \"Found getWpApiClient(site) returns getWpComApiClient(site) when site.isWPCom || site.isUsingWpComRestApi. getApiUrlResolver(site) uses the same condition to create a WpComDotOrgApiUrlResolver. Therefore any configured-client capability probe for a WP.com Atomic site reads routes from public-api.wordpress.com rather than the site's direct host.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitSettingsBuilder.kt\",\n      \"finding\": \"Found editor configuration construction. siteApiRoot may use WPCOM_API_ROOT when no application password and site.isUsingWpComRestApi, but the builder always passes siteURL = site.url to EditorConfiguration. It sets themeStyles from editorCapabilityResolver.resolveThemeStyles(site).shouldApplyInEditor.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergEditorPreloader.kt\",\n      \"finding\": \"Found preloadIfNeeded discovers wpApiRestUrl if needed, calls editorSettingsRepository.fetchEditorCapabilitiesForSite(site), then builds GutenbergKit configuration and prepares editor dependencies. This matches the report's preloader failure path.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitActivity.kt\",\n      \"finding\": \"Found GutenbergKitActivity as the editor Activity. It builds EditorConfiguration via gutenbergKitSettingsBuilder.buildPostConfiguration and creates GutenbergKitEditorFragment.newInstance(configuration, siteModel). It also refreshes editor settings after editor initialization, but current GutenbergKit comments say construction-time configuration is what matters.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/editor/GutenbergKitEditorFragment.kt\",\n      \"finding\": \"Found GutenbergKitEditorFragment.onCreateView creates GutenbergView(configuration = configuration, dependencies = preloader.getDependencies(siteLocalId), coroutineScope = lifecycleScope, context = requireContext()). This is the entry point where the editor consumes the previously built configuration and can stall if dependencies/settings fetch fails.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"grep_pattern\",\n      \"target\": \"class EditorCapabilityResolver|resolveThemeStyles|siteSupportsEditorSettings|getSupportsEditorSettingsForSite|setThemeStyles\",\n      \"finding\": \"Found EditorCapabilityResolver and SiteSettingsFragment usages. The theme styles UI and editor config are both driven by the same resolver state.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/test/java/org/wordpress/android/repositories/EditorSettingsRepositoryTest.kt\",\n      \"finding\": \"Tests in the current checkout explicitly cover Atomic direct-host discovery, asserting that Atomic sites use wpLoginClient.apiDiscovery(site.url), persist false when the direct host lacks editor settings, and never call getWpApiClient(atomicSite). These tests confirm the intended fix and isolate the prior faulty behavior as using the configured WpApiClient for Atomic route detection.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/test/java/org/wordpress/android/ui/posts/GutenbergKitSettingsBuilderTest.kt\",\n      \"finding\": \"Tests confirm WP.com configuration uses public-api.wordpress.com for siteApiRoot, siteURL is passed through unchanged, and themeStyles reflects EditorCapabilityResolver. This supports the host divergence: capability state is computed elsewhere, while the editor still receives the direct site URL.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/EditorCapabilityResolver.kt\",\n      \"finding\": \"resolveThemeStyles returns Unsupported only if getSupportsEditorSettingsForSite(site) is false; otherwise it returns Available using the user's useThemeStyles setting, defaulting true. Thus a false positive in route support directly enables theme styles in the editor.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/prefs/SiteSettingsFragment.java lines 1088-1122\",\n      \"finding\": \"Site Settings reads resolveThemeStyles(mSite). If state is Available, the Use Theme Styles preference remains enabled; if Unsupported, it is disabled. This explains the repro step where the setting appears enabled after the bad capability cache.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/repositories/EditorSettingsRepository.kt with line numbers\",\n      \"finding\": \"Line 135 in fetchRouteSupportViaConfiguredClient is val client = wpApiClientProvider.getWpApiClient(site); line 136 gets the matching resolver; line 139 persists route support from that response. In the buggy path, Atomic sites reached this configured-client method.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"read_file\",\n      \"target\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/network/rest/wpapi/rs/WpApiClientProvider.kt with line numbers\",\n      \"finding\": \"Line 61 is the branch site.isWPCom || site.isUsingWpComRestApi -> getWpComApiClient(site). Line 186 applies the same predicate for the WpCom resolver. These lines explain why line 135 in EditorSettingsRepository queries and resolves routes against the WP.com proxy.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/EditorCapabilityResolver.kt with line numbers\",\n      \"finding\": \"Line 49 blocks theme styles only when getSupportsEditorSettingsForSite is false; line 61 returns Available otherwise. Therefore a wrongly persisted true for editor settings causes shouldApplyInEditor to become true.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitSettingsBuilder.kt with line numbers\",\n      \"finding\": \"Line 58 passes siteURL = site.url; line 78 applies resolveThemeStyles(site).shouldApplyInEditor. This verifies that the editor receives the direct host and the capability-driven themeStyles flag in the same configuration.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/editor/GutenbergKitEditorFragment.kt with line numbers\",\n      \"finding\": \"Lines 186-191 instantiate GutenbergView with the configuration and preloaded dependencies. The source does not catch a recoverable error around a failed editor dependency/settings fetch here.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"read_file\",\n      \"target\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/model/SiteModel.java\",\n      \"finding\": \"SiteModel.isUsingWpComRestApi returns isWPCom() || (isJetpackConnected() && origin == ORIGIN_WPCOM_REST), and isWPComAtomic is a separate flag. Therefore Atomic sites that are WP.com sites satisfy the provider's WP.com proxy condition unless capability detection special-cases them.\"\n    },\n    {\n      \"step\": 22,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitActivity.kt lines 2208-2240\",\n      \"finding\": \"The Activity creates the GutenbergKitEditorFragment with configuration returned by GutenbergKitSettingsBuilder. This is the concrete Activity-to-fragment entry path for new post editing.\"\n    },\n    {\n      \"step\": 23,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/mysite/MySiteViewModel.kt lines 316-330\",\n      \"finding\": \"The My Site screen calls gutenbergEditorPreloader.preloadIfNeeded(site, viewModelScope) when not force-refreshing, matching the repro step that letting the dashboard settle runs the preloader/capability fetch.\"\n    },\n    {\n      \"step\": 24,\n      \"action\": \"trace_call\",\n      \"target\": \"MySiteViewModel -> GutenbergEditorPreloader -> EditorSettingsRepository -> WpApiClientProvider\",\n      \"finding\": \"Dashboard preload calls fetchEditorCapabilitiesForSite; the faulty configured-client route path calls getWpApiClient(site), which for WP.com Atomic resolves to public-api.wordpress.com. The proxy route list can report wp-block-editor/v1/settings available, so siteSupportsEditorSettings is persisted true.\"\n    },\n    {\n      \"step\": 25,\n      \"action\": \"trace_call\",\n      \"target\": \"GutenbergKitActivity -> GutenbergKitSettingsBuilder -> GutenbergKitEditorFragment -> GutenbergView\",\n      \"finding\": \"When creating a post, the Activity builds configuration with siteURL = direct host and themeStyles = true from the cached capability. GutenbergView then attempts to fetch block-editor settings from the direct host, where the endpoint can 404, causing dependency preload/editor initialization to fail around 81/100.\"\n    },\n    {\n      \"step\": 26,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Fault is in GutenbergKitSettingsBuilder.setThemeStyles\",\n      \"finding\": \"Rejected as primary fault. setThemeStyles simply consumes resolver state; it does not decide endpoint availability or host. If detection persisted false, the same line would correctly disable theme styles.\"\n    },\n    {\n      \"step\": 27,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Fault is in WpApiClientProvider.getWpApiClient WP.com branch\",\n      \"finding\": \"Partially causal but too broad as a single fault. The provider intentionally routes WP.com/Jetpack data paths through the WP.com proxy. The bug occurs because EditorSettingsRepository used that general data-path client for a capability check that must match GutenbergView's direct-host consumption path.\"\n    },\n    {\n      \"step\": 28,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"SiteSettingsFragment Use Theme Styles preference logic\",\n      \"finding\": \"Eliminated as source. It displays the resolver state and disables the preference only for Unsupported. The incorrect enabled state is downstream from the bad cached capability.\"\n    },\n    {\n      \"step\": 29,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"GutenbergKitEditorFragment GutenbergView construction\",\n      \"finding\": \"Eliminated as root cause. It consumes an already-built EditorConfiguration and dependencies. The failure emerges because the configuration says theme styles are supported for a direct host whose settings endpoint is not reachable.\"\n    },\n    {\n      \"step\": 30,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"EditorSettingsRepository.fetchRouteSupportViaConfiguredClient line 135\",\n      \"finding\": \"Accepted. The statement val client = wpApiClientProvider.getWpApiClient(site) is the concrete source statement that, in the buggy capability path, selects a WP.com proxy client for Atomic sites instead of probing the direct host used by GutenbergView.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"WordPress/src/main/java/org/wordpress/android/repositories/EditorSettingsRepository.kt\",\n      \"class\": \"EditorSettingsRepository\",\n      \"method\": \"fetchRouteSupportViaConfiguredClient(SiteModel site)\",\n      \"line\": 135,\n      \"statement\": \"val client = wpApiClientProvider.getWpApiClient(site)\",\n      \"suspicion_score\": 0.95,\n      \"reasoning\": \"This configured-client route probe delegates host selection to WpApiClientProvider. For WP.com Atomic sites, that provider returns the WP.com proxy client, so the route list being checked can differ from the direct host that GutenbergView later uses for wp-block-editor/v1/settings. A proxy-side true is persisted as siteSupportsEditorSettings, enabling theme styles and causing the editor to request a direct-host endpoint that 404s.\"\n    },\n    {\n      \"rank\": 2,\n      \"file\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/network/rest/wpapi/rs/WpApiClientProvider.kt\",\n      \"class\": \"WpApiClientProvider\",\n      \"method\": \"getWpApiClient(SiteModel site, WpRequestExecutor.UploadListener? uploadListener)\",\n      \"line\": 61,\n      \"statement\": \"site.isWPCom || site.isUsingWpComRestApi ->\",\n      \"suspicion_score\": 0.82,\n      \"reasoning\": \"This branch is what sends WP.com Atomic sites to the WP.com REST proxy. It is correct for many normal data paths, but wrong when reused by editor capability detection that must match GutenbergView's direct-host settings fetch.\"\n    },\n    {\n      \"rank\": 3,\n      \"file\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/network/rest/wpapi/rs/WpApiClientProvider.kt\",\n      \"class\": \"WpApiClientProvider\",\n      \"method\": \"getApiUrlResolver(SiteModel site)\",\n      \"line\": 186,\n      \"statement\": \"site.isWPCom || site.isUsingWpComRestApi ->\",\n      \"suspicion_score\": 0.72,\n      \"reasoning\": \"The resolver mirrors the proxy-client selection and resolves route endpoints against the WP.com API namespace. It contributes to the false-positive route check, but the first faulty action is the repository choosing the configured WP.com client for this Atomic capability probe.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"WordPress/src/main/java/org/wordpress/android/repositories/EditorSettingsRepository.kt\",\n    \"class\": \"EditorSettingsRepository\",\n    \"method\": \"fetchRouteSupportViaConfiguredClient(SiteModel site)\",\n    \"line\": 135,\n    \"statement\": \"val client = wpApiClientProvider.getWpApiClient(site)\",\n    \"confidence\": 0.95,\n    \"causal_chain\": \"MySiteViewModel starts GutenbergEditorPreloader after the dashboard settles. The preloader calls EditorSettingsRepository.fetchEditorCapabilitiesForSite, whose route detection path in the buggy behavior uses fetchRouteSupportViaConfiguredClient. At line 135 it obtains the generic WpApiClient; for WP.com Atomic sites WpApiClientProvider routes that to the WP.com proxy because site.isWPCom/isUsingWpComRestApi is true. The proxy apiRoot route list can report /wp-block-editor/v1/settings available, so persistRouteSupport stores siteSupportsEditorSettings=true. Later GutenbergKitSettingsBuilder uses that cached true through EditorCapabilityResolver to set themeStyles=true while also passing siteURL=site.url, the direct host, into EditorConfiguration. GutenbergView then fetches wp-block-editor/v1/settings from the direct host, receives 404, dependency preload logs failure, and the editor stalls during initialization.\",\n    \"fix_hint\": \"Special-case WP.com Atomic capability detection to probe the same direct host GutenbergView uses, or conservatively require the direct-host route check to pass before persisting siteSupportsEditorSettings=true.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "class EditorSettingsRepository|fetchRouteSupport|siteSupportsEditorSettings|Use Theme Styles|theme-styles|wp-block-editor/v1/settings|EditorHTTPClient|GutenbergView|WpApiClientProvider|getApiUrlResolver|getWpApiClient",
+        "finding": "Initial ripgrep attempt failed because rg is unavailable in this environment; switched to PowerShell-only search scoped to the current checkout."
+      },
+      {
+        "step": 2,
+        "action": "grep_pattern",
+        "target": "PowerShell Select-String over repository for editor capability and Gutenberg API patterns",
+        "finding": "Found the main relevant files: WordPress/src/main/java/org/wordpress/android/repositories/EditorSettingsRepository.kt, libs/fluxc/src/main/java/org/wordpress/android/fluxc/network/rest/wpapi/rs/WpApiClientProvider.kt, GutenbergKit settings/preloader/activity/fragment files, and tests. Search also found a local release note mentioning this issue, but the analysis stayed within source files."
+      },
+      {
+        "step": 3,
+        "action": "read_file",
+        "target": "AGENTS.md",
+        "finding": "Read repository agent instructions; they emphasize Kotlin/Android lifecycle, DI, coroutine, and code hygiene constraints. No fault-localization-specific code facts found."
+      },
+      {
+        "step": 4,
+        "action": "read_file",
+        "target": "CLAUDE.md",
+        "finding": "Read build/architecture guidance. Confirmed app module is WordPress, networking/data layer is libs/fluxc, and editor integration lives in libs/editor plus WordPress UI code."
+      },
+      {
+        "step": 5,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/repositories/EditorSettingsRepository.kt",
+        "finding": "Found capability detection. fetchEditorCapabilitiesForSite calls fetchRouteSupport and fetchThemeBlockStyleSupport. The route support path persists siteSupportsEditorSettings based on data.hasRouteForEndpoint(resolver, \"/wp-block-editor/v1\", \"settings\"). Current checkout contains an Atomic-specific direct-host branch in fetchRouteSupport, indicating the reported bug is in the older configured-client route path."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/network/rest/wpapi/rs/WpApiClientProvider.kt",
+        "finding": "Found getWpApiClient(site) returns getWpComApiClient(site) when site.isWPCom || site.isUsingWpComRestApi. getApiUrlResolver(site) uses the same condition to create a WpComDotOrgApiUrlResolver. Therefore any configured-client capability probe for a WP.com Atomic site reads routes from public-api.wordpress.com rather than the site's direct host."
+      },
+      {
+        "step": 7,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitSettingsBuilder.kt",
+        "finding": "Found editor configuration construction. siteApiRoot may use WPCOM_API_ROOT when no application password and site.isUsingWpComRestApi, but the builder always passes siteURL = site.url to EditorConfiguration. It sets themeStyles from editorCapabilityResolver.resolveThemeStyles(site).shouldApplyInEditor."
+      },
+      {
+        "step": 8,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergEditorPreloader.kt",
+        "finding": "Found preloadIfNeeded discovers wpApiRestUrl if needed, calls editorSettingsRepository.fetchEditorCapabilitiesForSite(site), then builds GutenbergKit configuration and prepares editor dependencies. This matches the report's preloader failure path."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitActivity.kt",
+        "finding": "Found GutenbergKitActivity as the editor Activity. It builds EditorConfiguration via gutenbergKitSettingsBuilder.buildPostConfiguration and creates GutenbergKitEditorFragment.newInstance(configuration, siteModel). It also refreshes editor settings after editor initialization, but current GutenbergKit comments say construction-time configuration is what matters."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/editor/GutenbergKitEditorFragment.kt",
+        "finding": "Found GutenbergKitEditorFragment.onCreateView creates GutenbergView(configuration = configuration, dependencies = preloader.getDependencies(siteLocalId), coroutineScope = lifecycleScope, context = requireContext()). This is the entry point where the editor consumes the previously built configuration and can stall if dependencies/settings fetch fails."
+      },
+      {
+        "step": 11,
+        "action": "grep_pattern",
+        "target": "class EditorCapabilityResolver|resolveThemeStyles|siteSupportsEditorSettings|getSupportsEditorSettingsForSite|setThemeStyles",
+        "finding": "Found EditorCapabilityResolver and SiteSettingsFragment usages. The theme styles UI and editor config are both driven by the same resolver state."
+      },
+      {
+        "step": 12,
+        "action": "read_file",
+        "target": "WordPress/src/test/java/org/wordpress/android/repositories/EditorSettingsRepositoryTest.kt",
+        "finding": "Tests in the current checkout explicitly cover Atomic direct-host discovery, asserting that Atomic sites use wpLoginClient.apiDiscovery(site.url), persist false when the direct host lacks editor settings, and never call getWpApiClient(atomicSite). These tests confirm the intended fix and isolate the prior faulty behavior as using the configured WpApiClient for Atomic route detection."
+      },
+      {
+        "step": 13,
+        "action": "read_file",
+        "target": "WordPress/src/test/java/org/wordpress/android/ui/posts/GutenbergKitSettingsBuilderTest.kt",
+        "finding": "Tests confirm WP.com configuration uses public-api.wordpress.com for siteApiRoot, siteURL is passed through unchanged, and themeStyles reflects EditorCapabilityResolver. This supports the host divergence: capability state is computed elsewhere, while the editor still receives the direct site URL."
+      },
+      {
+        "step": 14,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/EditorCapabilityResolver.kt",
+        "finding": "resolveThemeStyles returns Unsupported only if getSupportsEditorSettingsForSite(site) is false; otherwise it returns Available using the user's useThemeStyles setting, defaulting true. Thus a false positive in route support directly enables theme styles in the editor."
+      },
+      {
+        "step": 15,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/prefs/SiteSettingsFragment.java lines 1088-1122",
+        "finding": "Site Settings reads resolveThemeStyles(mSite). If state is Available, the Use Theme Styles preference remains enabled; if Unsupported, it is disabled. This explains the repro step where the setting appears enabled after the bad capability cache."
+      },
+      {
+        "step": 16,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/repositories/EditorSettingsRepository.kt with line numbers",
+        "finding": "Line 135 in fetchRouteSupportViaConfiguredClient is val client = wpApiClientProvider.getWpApiClient(site); line 136 gets the matching resolver; line 139 persists route support from that response. In the buggy path, Atomic sites reached this configured-client method."
+      },
+      {
+        "step": 17,
+        "action": "read_file",
+        "target": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/network/rest/wpapi/rs/WpApiClientProvider.kt with line numbers",
+        "finding": "Line 61 is the branch site.isWPCom || site.isUsingWpComRestApi -> getWpComApiClient(site). Line 186 applies the same predicate for the WpCom resolver. These lines explain why line 135 in EditorSettingsRepository queries and resolves routes against the WP.com proxy."
+      },
+      {
+        "step": 18,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/EditorCapabilityResolver.kt with line numbers",
+        "finding": "Line 49 blocks theme styles only when getSupportsEditorSettingsForSite is false; line 61 returns Available otherwise. Therefore a wrongly persisted true for editor settings causes shouldApplyInEditor to become true."
+      },
+      {
+        "step": 19,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitSettingsBuilder.kt with line numbers",
+        "finding": "Line 58 passes siteURL = site.url; line 78 applies resolveThemeStyles(site).shouldApplyInEditor. This verifies that the editor receives the direct host and the capability-driven themeStyles flag in the same configuration."
+      },
+      {
+        "step": 20,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/editor/GutenbergKitEditorFragment.kt with line numbers",
+        "finding": "Lines 186-191 instantiate GutenbergView with the configuration and preloaded dependencies. The source does not catch a recoverable error around a failed editor dependency/settings fetch here."
+      },
+      {
+        "step": 21,
+        "action": "read_file",
+        "target": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/model/SiteModel.java",
+        "finding": "SiteModel.isUsingWpComRestApi returns isWPCom() || (isJetpackConnected() && origin == ORIGIN_WPCOM_REST), and isWPComAtomic is a separate flag. Therefore Atomic sites that are WP.com sites satisfy the provider's WP.com proxy condition unless capability detection special-cases them."
+      },
+      {
+        "step": 22,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/posts/GutenbergKitActivity.kt lines 2208-2240",
+        "finding": "The Activity creates the GutenbergKitEditorFragment with configuration returned by GutenbergKitSettingsBuilder. This is the concrete Activity-to-fragment entry path for new post editing."
+      },
+      {
+        "step": 23,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/mysite/MySiteViewModel.kt lines 316-330",
+        "finding": "The My Site screen calls gutenbergEditorPreloader.preloadIfNeeded(site, viewModelScope) when not force-refreshing, matching the repro step that letting the dashboard settle runs the preloader/capability fetch."
+      },
+      {
+        "step": 24,
+        "action": "trace_call",
+        "target": "MySiteViewModel -> GutenbergEditorPreloader -> EditorSettingsRepository -> WpApiClientProvider",
+        "finding": "Dashboard preload calls fetchEditorCapabilitiesForSite; the faulty configured-client route path calls getWpApiClient(site), which for WP.com Atomic resolves to public-api.wordpress.com. The proxy route list can report wp-block-editor/v1/settings available, so siteSupportsEditorSettings is persisted true."
+      },
+      {
+        "step": 25,
+        "action": "trace_call",
+        "target": "GutenbergKitActivity -> GutenbergKitSettingsBuilder -> GutenbergKitEditorFragment -> GutenbergView",
+        "finding": "When creating a post, the Activity builds configuration with siteURL = direct host and themeStyles = true from the cached capability. GutenbergView then attempts to fetch block-editor settings from the direct host, where the endpoint can 404, causing dependency preload/editor initialization to fail around 81/100."
+      },
+      {
+        "step": 26,
+        "action": "form_hypothesis",
+        "target": "Fault is in GutenbergKitSettingsBuilder.setThemeStyles",
+        "finding": "Rejected as primary fault. setThemeStyles simply consumes resolver state; it does not decide endpoint availability or host. If detection persisted false, the same line would correctly disable theme styles."
+      },
+      {
+        "step": 27,
+        "action": "form_hypothesis",
+        "target": "Fault is in WpApiClientProvider.getWpApiClient WP.com branch",
+        "finding": "Partially causal but too broad as a single fault. The provider intentionally routes WP.com/Jetpack data paths through the WP.com proxy. The bug occurs because EditorSettingsRepository used that general data-path client for a capability check that must match GutenbergView's direct-host consumption path."
+      },
+      {
+        "step": 28,
+        "action": "eliminate_candidate",
+        "target": "SiteSettingsFragment Use Theme Styles preference logic",
+        "finding": "Eliminated as source. It displays the resolver state and disables the preference only for Unsupported. The incorrect enabled state is downstream from the bad cached capability."
+      },
+      {
+        "step": 29,
+        "action": "eliminate_candidate",
+        "target": "GutenbergKitEditorFragment GutenbergView construction",
+        "finding": "Eliminated as root cause. It consumes an already-built EditorConfiguration and dependencies. The failure emerges because the configuration says theme styles are supported for a direct host whose settings endpoint is not reachable."
+      },
+      {
+        "step": 30,
+        "action": "form_hypothesis",
+        "target": "EditorSettingsRepository.fetchRouteSupportViaConfiguredClient line 135",
+        "finding": "Accepted. The statement val client = wpApiClientProvider.getWpApiClient(site) is the concrete source statement that, in the buggy capability path, selects a WP.com proxy client for Atomic sites instead of probing the direct host used by GutenbergView."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "WordPress/src/main/java/org/wordpress/android/repositories/EditorSettingsRepository.kt",
+        "class": "EditorSettingsRepository",
+        "method": "fetchRouteSupportViaConfiguredClient(SiteModel site)",
+        "line": 135,
+        "statement": "val client = wpApiClientProvider.getWpApiClient(site)",
+        "suspicion_score": 0.95,
+        "reasoning": "This configured-client route probe delegates host selection to WpApiClientProvider. For WP.com Atomic sites, that provider returns the WP.com proxy client, so the route list being checked can differ from the direct host that GutenbergView later uses for wp-block-editor/v1/settings. A proxy-side true is persisted as siteSupportsEditorSettings, enabling theme styles and causing the editor to request a direct-host endpoint that 404s."
+      },
+      {
+        "rank": 2,
+        "file": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/network/rest/wpapi/rs/WpApiClientProvider.kt",
+        "class": "WpApiClientProvider",
+        "method": "getWpApiClient(SiteModel site, WpRequestExecutor.UploadListener? uploadListener)",
+        "line": 61,
+        "statement": "site.isWPCom || site.isUsingWpComRestApi ->",
+        "suspicion_score": 0.82,
+        "reasoning": "This branch is what sends WP.com Atomic sites to the WP.com REST proxy. It is correct for many normal data paths, but wrong when reused by editor capability detection that must match GutenbergView's direct-host settings fetch."
+      },
+      {
+        "rank": 3,
+        "file": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/network/rest/wpapi/rs/WpApiClientProvider.kt",
+        "class": "WpApiClientProvider",
+        "method": "getApiUrlResolver(SiteModel site)",
+        "line": 186,
+        "statement": "site.isWPCom || site.isUsingWpComRestApi ->",
+        "suspicion_score": 0.72,
+        "reasoning": "The resolver mirrors the proxy-client selection and resolves route endpoints against the WP.com API namespace. It contributes to the false-positive route check, but the first faulty action is the repository choosing the configured WP.com client for this Atomic capability probe."
+      }
+    ],
+    "final_answer": {
+      "file": "WordPress/src/main/java/org/wordpress/android/repositories/EditorSettingsRepository.kt",
+      "class": "EditorSettingsRepository",
+      "method": "fetchRouteSupportViaConfiguredClient(SiteModel site)",
+      "line": 135,
+      "statement": "val client = wpApiClientProvider.getWpApiClient(site)",
+      "confidence": 0.95,
+      "causal_chain": "MySiteViewModel starts GutenbergEditorPreloader after the dashboard settles. The preloader calls EditorSettingsRepository.fetchEditorCapabilitiesForSite, whose route detection path in the buggy behavior uses fetchRouteSupportViaConfiguredClient. At line 135 it obtains the generic WpApiClient; for WP.com Atomic sites WpApiClientProvider routes that to the WP.com proxy because site.isWPCom/isUsingWpComRestApi is true. The proxy apiRoot route list can report /wp-block-editor/v1/settings available, so persistRouteSupport stores siteSupportsEditorSettings=true. Later GutenbergKitSettingsBuilder uses that cached true through EditorCapabilityResolver to set themeStyles=true while also passing siteURL=site.url, the direct host, into EditorConfiguration. GutenbergView then fetches wp-block-editor/v1/settings from the direct host, receives 404, dependency preload logs failure, and the editor stalls during initialization.",
+      "fix_hint": "Special-case WP.com Atomic capability detection to probe the same direct host GutenbergView uses, or conservatively require the direct-host route check to pass before persisting siteSupportsEditorSettings=true."
+    }
+  },
+  "error": null
+}

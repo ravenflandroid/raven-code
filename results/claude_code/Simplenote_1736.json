@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "Simplenote",
+  "issue_id": 1736,
+  "issue_url": "https://github.com/Automattic/simplenote-android/issues/1736",
+  "issue_title": "Unrecoverable state after attempting to log in but failed to create network request",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\Automattic_simplenote_android",
+  "media_files": [
+    "4f542420-5559-4337-94ea-986ece42e4c2"
+  ],
+  "started_at": "2026-06-21T14:14:22.346-05:00",
+  "finished_at": "2026-06-21T14:17:19.856-05:00",
+  "duration_seconds": 177.52,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

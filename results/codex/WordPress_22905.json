@@ -1,0 +1,224 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "WordPress",
+  "issue_id": 22905,
+  "issue_url": "https://github.com/wordpress-mobile/WordPress-Android/issues/22905",
+  "issue_title": "Recovered `wpApiRestUrl` doesn't survive across launches on Atomic sites",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\wordpress_mobile_WordPress_Android",
+  "media_files": [],
+  "started_at": "2026-06-21T15:40:37.178-05:00",
+  "finished_at": "2026-06-21T15:45:11.465-05:00",
+  "duration_seconds": 274.28,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"insertOrUpdateSite|updateWpApiRestUrl|class UpdateAllExceptId|WP_API_REST_URL|fun updateSite|newFetchSiteAction|fetchSite\",\n      \"finding\": \"ripgrep was unavailable, so PowerShell Select-String was used. The relevant implementation files are SiteSqlUtils.kt, UpdateAllExceptId.java, SiteStore.kt, SiteRestClient.kt, AppInitializer.kt, WPMainActivity.java, ReactNativeStore.kt, and CookieNonceAuthenticator.kt.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"read_file\",\n      \"target\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/persistence/SiteSqlUtils.kt:107-130\",\n      \"finding\": \"SiteSqlUtils.insertOrUpdateSite delegates to insertOrUpdateSiteReturningId, which is the centralized insert/update writer for SiteModel rows.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"read_file\",\n      \"target\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/persistence/SiteSqlUtils.kt:224-258\",\n      \"finding\": \"The update branch logs 'Updating site', then performs WellSql.update(...).put(finalSiteModel, UpdateAllExceptId(...)).execute(). This is the full-row update path described by the bug report. In this checkout the mapper call already passes SiteModelTable.WP_API_REST_URL as an excluded column.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"read_file\",\n      \"target\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/persistence/UpdateAllExceptId.java:9-35\",\n      \"finding\": \"UpdateAllExceptId converts the entire model to ContentValues using mMapper.toCv(item), removes _id, and in this checkout can remove additional caller-supplied columns. Without WP_API_REST_URL in the additional skip list, a null model value is included in the UPDATE.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"read_file\",\n      \"target\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/store/SiteStore.kt:1371-1380\",\n      \"finding\": \"SiteStore handles FETCH_SITE by launching Fetch site and emitting the result of fetchSite(action.payload as SiteModel).\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/store/SiteStore.kt:1517-1526\",\n      \"finding\": \"SiteStore.fetchSite chooses siteRestClient.fetchSite for ORIGIN_WPCOM_REST sites and then calls updateSite(updatedSite). This matches Atomic / Jetpack-WPCom-REST sites in the report.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"read_file\",\n      \"target\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/network/rest/wpcom/site/SiteRestClient.kt:211-224\",\n      \"finding\": \"SiteRestClient.fetchSite builds a fresh SiteModel from the WP.com REST response and copies the existing local id into it. The fresh model comes from siteResponseToSiteModel and does not populate wpApiRestUrl.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"read_file\",\n      \"target\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/network/rest/wpcom/site/SiteRestClient.kt:1067-1115\",\n      \"finding\": \"siteResponseToSiteModel constructs SiteModel() and maps many WP.com response fields, but no wpApiRestUrl field is assigned in the inspected mapping. Therefore fetched Atomic site models can carry null wpApiRestUrl.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/store/SiteStore.kt:1663-1679\",\n      \"finding\": \"SiteStore.updateSite copies editor preferences from DB, then calls siteSqlUtils.insertOrUpdateSite(siteModel). Current comments state credentials and wpApiRestUrl are protected by SiteSqlUtils mapper exclusion, confirming this method previously depended on the full-row writer behavior.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/AppInitializer.kt:265-270\",\n      \"finding\": \"updateSelectedSite reads the selected site by local id and dispatches SiteActionBuilder.newFetchSiteAction(site).\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/AppInitializer.kt:903-919\",\n      \"finding\": \"On application foreground, AppInitializer runs updateSiteList and updateSelectedSite when network is available, confirming one foreground FETCH_SITE trigger.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/main/WPMainActivity.java:1058-1067\",\n      \"finding\": \"WPMainActivity.onResume calls initSelectedSite, confirming the second foreground entry point described by the report.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/main/WPMainActivity.java:1526-1529\",\n      \"finding\": \"setSelectedSite updates the selected site repository and dispatches SiteActionBuilder.newFetchSiteAction(selectedSite), providing another path into SiteStore.fetchSite.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"read_file\",\n      \"target\": \"WordPress/src/main/java/org/wordpress/android/ui/accounts/login/SiteApiRestUrlRecoverer.kt:60-67\",\n      \"finding\": \"The recovery flow persists a discovered API root by calling siteSqlUtils.updateWpApiRestUrl(localId, apiRootUrl), a targeted single-column update. This supports the report's claim that the recovery persist itself is correct.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"read_file\",\n      \"target\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/store/ReactNativeStore.kt:160-182\",\n      \"finding\": \"ReactNativeStore discovers a missing REST URL, assigns it in memory, and persists it through siteSqlUtils.updateWpApiRestUrl rather than a full-row write.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"read_file\",\n      \"target\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/store/ReactNativeStore.kt:232-241\",\n      \"finding\": \"On HTTP 404, ReactNativeStore sets site.wpApiRestUrl = null only in memory before retrying. In this checkout comments state the stored value is intentionally left intact.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"read_file\",\n      \"target\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/store/ReactNativeStore.kt:287-295\",\n      \"finding\": \"The application-password HTTP 404 path also clears only the in-memory wpApiRestUrl before retrying, not the database.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"read_file\",\n      \"target\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/network/rest/wpapi/CookieNonceAuthenticator.kt:53-91\",\n      \"finding\": \"CookieNonceAuthenticator behaves similarly: discovery persists through updateWpApiRestUrl, while 404 clears only the in-memory field. This is a plausible stale-model source but not the direct DB clobber in the current centralized writer.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"grep_pattern\",\n      \"target\": \"insertOrUpdateSite(\",\n      \"finding\": \"All durable SiteModel full-row writes go through SiteSqlUtils.insertOrUpdateSite/insertOrUpdateSiteReturningId. Other SiteStore call sites such as updateSiteEditors and editor preference changes still funnel into the same mapper, so the central mapper determines whether stale wpApiRestUrl can be clobbered.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"read_file\",\n      \"target\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/model/SiteModel.java:126-130\",\n      \"finding\": \"SiteModel has an @Column-backed mWpApiRestUrl field, so a full model-to-ContentValues mapping includes the database column unless the mapper removes it.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"read_file\",\n      \"target\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/model/SiteModel.java:440-453\",\n      \"finding\": \"The getter returns a synthesized public API URL only for WP.com simple sites; otherwise it returns mWpApiRestUrl. For Atomic sites, a null stored mWpApiRestUrl remains observable as null.\"\n    },\n    {\n      \"step\": 22,\n      \"action\": \"read_file\",\n      \"target\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/network/rest/wpapi/site/SiteWPAPIRestClient.kt:57-78\",\n      \"finding\": \"WPAPI fetch models can set wpApiRestUrl when discovery occurs, but this is separate from the WP.com REST FETCH_SITE path that returns a fresh model without the field.\"\n    },\n    {\n      \"step\": 23,\n      \"action\": \"read_file\",\n      \"target\": \"libs/fluxc/src/test/java/org/wordpress/android/fluxc/persistence/SiteSqlUtilsTest.kt:62-88\",\n      \"finding\": \"A regression test in the checkout explicitly verifies that insertOrUpdateSite update does not clobber wpApiRestUrl from a stale model. This confirms the fault class and that the checked-out code contains the intended fix.\"\n    },\n    {\n      \"step\": 24,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"A fresh FETCH_SITE SiteModel with null wpApiRestUrl reaches SiteSqlUtils.insertOrUpdateSite and a full-row WellSql update writes that null over a value recovered by updateWpApiRestUrl.\",\n      \"finding\": \"Supported by the foreground dispatch paths, SiteRestClient.fetchSite local-id stamping, SiteStore.updateSite persistence, and SiteModel column mapping.\"\n    },\n    {\n      \"step\": 25,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"FETCH_SITES -> createOrUpdateSites\",\n      \"finding\": \"createOrUpdateSites receives /me/sites models with local id 0 and matches by site id, while the report's log signature says 'Site found by (local) ID: 9'. This makes createOrUpdateSites less likely for the observed clobber.\"\n    },\n    {\n      \"step\": 26,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"ReactNativeStore and CookieNonceAuthenticator 404 paths\",\n      \"finding\": \"Both can set wpApiRestUrl to null in memory, but in this checkout they do not perform the single-column DB clear, and durable clobber still requires the generic full-row update path to write the stale null.\"\n    },\n    {\n      \"step\": 27,\n      \"action\": \"trace_call\",\n      \"target\": \"App foreground -> FETCH_SITE -> SiteRestClient.fetchSite -> SiteStore.updateSite -> SiteSqlUtils.insertOrUpdateSiteReturningId\",\n      \"finding\": \"This concrete path exactly matches the timing and log sequence in the report: recovered URL is persisted, FETCH_SITE finds the local id, then Updating site runs the full-row update.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/persistence/SiteSqlUtils.kt\",\n      \"class\": \"SiteSqlUtils\",\n      \"method\": \"insertOrUpdateSiteReturningId(SiteModel? site)\",\n      \"line\": 250,\n      \"statement\": \"                                UpdateAllExceptId(\",\n      \"suspicion_score\": 0.96,\n      \"reasoning\": \"This mapper argument is the site-row full-update mapper used by insertOrUpdateSite. In the buggy behavior, this update mapped every SiteModel column except _id, so a FETCH_SITE model whose wpApiRestUrl was null overwrote the value previously written by updateWpApiRestUrl. The current checkout shows the fix at the same statement by passing SiteModelTable.WP_API_REST_URL into UpdateAllExceptId's skip list.\"\n    },\n    {\n      \"rank\": 2,\n      \"file\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/persistence/UpdateAllExceptId.java\",\n      \"class\": \"UpdateAllExceptId\",\n      \"method\": \"toCv(T item)\",\n      \"line\": 29,\n      \"statement\": \"        ContentValues cv = mMapper.toCv(item);\",\n      \"suspicion_score\": 0.84,\n      \"reasoning\": \"This converts the full SiteModel into ContentValues, including WP_API_REST_URL when not later removed. It is the generic mechanism that allowed null wpApiRestUrl to participate in full-row updates, but the site-specific fault is the SiteSqlUtils call failing to exclude that column.\"\n    },\n    {\n      \"rank\": 3,\n      \"file\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/store/SiteStore.kt\",\n      \"class\": \"SiteStore\",\n      \"method\": \"updateSite(SiteModel siteModel)\",\n      \"line\": 1678,\n      \"statement\": \"                OnSiteChanged(siteSqlUtils.insertOrUpdateSite(siteModel))\",\n      \"suspicion_score\": 0.72,\n      \"reasoning\": \"This is the FETCH_SITE persistence call that sends the stale fetched SiteModel into the full-row writer. It is on the observed control-flow path, but the durable clobber occurs because the lower-level mapper writes WP_API_REST_URL.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"libs/fluxc/src/main/java/org/wordpress/android/fluxc/persistence/SiteSqlUtils.kt\",\n    \"class\": \"SiteSqlUtils\",\n    \"method\": \"insertOrUpdateSiteReturningId(SiteModel? site)\",\n    \"line\": 250,\n    \"statement\": \"                                UpdateAllExceptId(\",\n    \"confidence\": 0.96,\n    \"causal_chain\": \"On app foreground, AppInitializer.updateSelectedSite and WPMainActivity.setSelectedSite dispatch FETCH_SITE for the selected Atomic site. SiteStore.fetchSite routes ORIGIN_WPCOM_REST sites to SiteRestClient.fetchSite. SiteRestClient builds a fresh SiteModel from the /sites/<id> response, copies the existing local id into it, but does not populate wpApiRestUrl. SiteStore.updateSite then calls siteSqlUtils.insertOrUpdateSite(siteModel). In insertOrUpdateSiteReturningId, the existing row is found by local id and the WellSql.update(...).put(finalSiteModel, UpdateAllExceptId(...)).execute() full-row update runs. When the mapper does not exclude WP_API_REST_URL, the stale null from the fetched model is written over the value just persisted by SiteSqlUtils.updateWpApiRestUrl, so the recovered URL disappears after relaunch. The current checkout shows this location already fixed by adding SiteModelTable.WP_API_REST_URL to the UpdateAllExceptId skip list.\",\n    \"fix_hint\": \"Ensure the SiteModel full-row update mapper used by insertOrUpdateSite excludes WP_API_REST_URL, leaving that column writable only through targeted updateWpApiRestUrl/clearWpApiRestUrl methods.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "insertOrUpdateSite|updateWpApiRestUrl|class UpdateAllExceptId|WP_API_REST_URL|fun updateSite|newFetchSiteAction|fetchSite",
+        "finding": "ripgrep was unavailable, so PowerShell Select-String was used. The relevant implementation files are SiteSqlUtils.kt, UpdateAllExceptId.java, SiteStore.kt, SiteRestClient.kt, AppInitializer.kt, WPMainActivity.java, ReactNativeStore.kt, and CookieNonceAuthenticator.kt."
+      },
+      {
+        "step": 2,
+        "action": "read_file",
+        "target": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/persistence/SiteSqlUtils.kt:107-130",
+        "finding": "SiteSqlUtils.insertOrUpdateSite delegates to insertOrUpdateSiteReturningId, which is the centralized insert/update writer for SiteModel rows."
+      },
+      {
+        "step": 3,
+        "action": "read_file",
+        "target": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/persistence/SiteSqlUtils.kt:224-258",
+        "finding": "The update branch logs 'Updating site', then performs WellSql.update(...).put(finalSiteModel, UpdateAllExceptId(...)).execute(). This is the full-row update path described by the bug report. In this checkout the mapper call already passes SiteModelTable.WP_API_REST_URL as an excluded column."
+      },
+      {
+        "step": 4,
+        "action": "read_file",
+        "target": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/persistence/UpdateAllExceptId.java:9-35",
+        "finding": "UpdateAllExceptId converts the entire model to ContentValues using mMapper.toCv(item), removes _id, and in this checkout can remove additional caller-supplied columns. Without WP_API_REST_URL in the additional skip list, a null model value is included in the UPDATE."
+      },
+      {
+        "step": 5,
+        "action": "read_file",
+        "target": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/store/SiteStore.kt:1371-1380",
+        "finding": "SiteStore handles FETCH_SITE by launching Fetch site and emitting the result of fetchSite(action.payload as SiteModel)."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/store/SiteStore.kt:1517-1526",
+        "finding": "SiteStore.fetchSite chooses siteRestClient.fetchSite for ORIGIN_WPCOM_REST sites and then calls updateSite(updatedSite). This matches Atomic / Jetpack-WPCom-REST sites in the report."
+      },
+      {
+        "step": 7,
+        "action": "read_file",
+        "target": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/network/rest/wpcom/site/SiteRestClient.kt:211-224",
+        "finding": "SiteRestClient.fetchSite builds a fresh SiteModel from the WP.com REST response and copies the existing local id into it. The fresh model comes from siteResponseToSiteModel and does not populate wpApiRestUrl."
+      },
+      {
+        "step": 8,
+        "action": "read_file",
+        "target": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/network/rest/wpcom/site/SiteRestClient.kt:1067-1115",
+        "finding": "siteResponseToSiteModel constructs SiteModel() and maps many WP.com response fields, but no wpApiRestUrl field is assigned in the inspected mapping. Therefore fetched Atomic site models can carry null wpApiRestUrl."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/store/SiteStore.kt:1663-1679",
+        "finding": "SiteStore.updateSite copies editor preferences from DB, then calls siteSqlUtils.insertOrUpdateSite(siteModel). Current comments state credentials and wpApiRestUrl are protected by SiteSqlUtils mapper exclusion, confirming this method previously depended on the full-row writer behavior."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/AppInitializer.kt:265-270",
+        "finding": "updateSelectedSite reads the selected site by local id and dispatches SiteActionBuilder.newFetchSiteAction(site)."
+      },
+      {
+        "step": 11,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/AppInitializer.kt:903-919",
+        "finding": "On application foreground, AppInitializer runs updateSiteList and updateSelectedSite when network is available, confirming one foreground FETCH_SITE trigger."
+      },
+      {
+        "step": 12,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/main/WPMainActivity.java:1058-1067",
+        "finding": "WPMainActivity.onResume calls initSelectedSite, confirming the second foreground entry point described by the report."
+      },
+      {
+        "step": 13,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/main/WPMainActivity.java:1526-1529",
+        "finding": "setSelectedSite updates the selected site repository and dispatches SiteActionBuilder.newFetchSiteAction(selectedSite), providing another path into SiteStore.fetchSite."
+      },
+      {
+        "step": 14,
+        "action": "read_file",
+        "target": "WordPress/src/main/java/org/wordpress/android/ui/accounts/login/SiteApiRestUrlRecoverer.kt:60-67",
+        "finding": "The recovery flow persists a discovered API root by calling siteSqlUtils.updateWpApiRestUrl(localId, apiRootUrl), a targeted single-column update. This supports the report's claim that the recovery persist itself is correct."
+      },
+      {
+        "step": 15,
+        "action": "read_file",
+        "target": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/store/ReactNativeStore.kt:160-182",
+        "finding": "ReactNativeStore discovers a missing REST URL, assigns it in memory, and persists it through siteSqlUtils.updateWpApiRestUrl rather than a full-row write."
+      },
+      {
+        "step": 16,
+        "action": "read_file",
+        "target": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/store/ReactNativeStore.kt:232-241",
+        "finding": "On HTTP 404, ReactNativeStore sets site.wpApiRestUrl = null only in memory before retrying. In this checkout comments state the stored value is intentionally left intact."
+      },
+      {
+        "step": 17,
+        "action": "read_file",
+        "target": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/store/ReactNativeStore.kt:287-295",
+        "finding": "The application-password HTTP 404 path also clears only the in-memory wpApiRestUrl before retrying, not the database."
+      },
+      {
+        "step": 18,
+        "action": "read_file",
+        "target": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/network/rest/wpapi/CookieNonceAuthenticator.kt:53-91",
+        "finding": "CookieNonceAuthenticator behaves similarly: discovery persists through updateWpApiRestUrl, while 404 clears only the in-memory field. This is a plausible stale-model source but not the direct DB clobber in the current centralized writer."
+      },
+      {
+        "step": 19,
+        "action": "grep_pattern",
+        "target": "insertOrUpdateSite(",
+        "finding": "All durable SiteModel full-row writes go through SiteSqlUtils.insertOrUpdateSite/insertOrUpdateSiteReturningId. Other SiteStore call sites such as updateSiteEditors and editor preference changes still funnel into the same mapper, so the central mapper determines whether stale wpApiRestUrl can be clobbered."
+      },
+      {
+        "step": 20,
+        "action": "read_file",
+        "target": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/model/SiteModel.java:126-130",
+        "finding": "SiteModel has an @Column-backed mWpApiRestUrl field, so a full model-to-ContentValues mapping includes the database column unless the mapper removes it."
+      },
+      {
+        "step": 21,
+        "action": "read_file",
+        "target": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/model/SiteModel.java:440-453",
+        "finding": "The getter returns a synthesized public API URL only for WP.com simple sites; otherwise it returns mWpApiRestUrl. For Atomic sites, a null stored mWpApiRestUrl remains observable as null."
+      },
+      {
+        "step": 22,
+        "action": "read_file",
+        "target": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/network/rest/wpapi/site/SiteWPAPIRestClient.kt:57-78",
+        "finding": "WPAPI fetch models can set wpApiRestUrl when discovery occurs, but this is separate from the WP.com REST FETCH_SITE path that returns a fresh model without the field."
+      },
+      {
+        "step": 23,
+        "action": "read_file",
+        "target": "libs/fluxc/src/test/java/org/wordpress/android/fluxc/persistence/SiteSqlUtilsTest.kt:62-88",
+        "finding": "A regression test in the checkout explicitly verifies that insertOrUpdateSite update does not clobber wpApiRestUrl from a stale model. This confirms the fault class and that the checked-out code contains the intended fix."
+      },
+      {
+        "step": 24,
+        "action": "form_hypothesis",
+        "target": "A fresh FETCH_SITE SiteModel with null wpApiRestUrl reaches SiteSqlUtils.insertOrUpdateSite and a full-row WellSql update writes that null over a value recovered by updateWpApiRestUrl.",
+        "finding": "Supported by the foreground dispatch paths, SiteRestClient.fetchSite local-id stamping, SiteStore.updateSite persistence, and SiteModel column mapping."
+      },
+      {
+        "step": 25,
+        "action": "eliminate_candidate",
+        "target": "FETCH_SITES -> createOrUpdateSites",
+        "finding": "createOrUpdateSites receives /me/sites models with local id 0 and matches by site id, while the report's log signature says 'Site found by (local) ID: 9'. This makes createOrUpdateSites less likely for the observed clobber."
+      },
+      {
+        "step": 26,
+        "action": "eliminate_candidate",
+        "target": "ReactNativeStore and CookieNonceAuthenticator 404 paths",
+        "finding": "Both can set wpApiRestUrl to null in memory, but in this checkout they do not perform the single-column DB clear, and durable clobber still requires the generic full-row update path to write the stale null."
+      },
+      {
+        "step": 27,
+        "action": "trace_call",
+        "target": "App foreground -> FETCH_SITE -> SiteRestClient.fetchSite -> SiteStore.updateSite -> SiteSqlUtils.insertOrUpdateSiteReturningId",
+        "finding": "This concrete path exactly matches the timing and log sequence in the report: recovered URL is persisted, FETCH_SITE finds the local id, then Updating site runs the full-row update."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/persistence/SiteSqlUtils.kt",
+        "class": "SiteSqlUtils",
+        "method": "insertOrUpdateSiteReturningId(SiteModel? site)",
+        "line": 250,
+        "statement": "                                UpdateAllExceptId(",
+        "suspicion_score": 0.96,
+        "reasoning": "This mapper argument is the site-row full-update mapper used by insertOrUpdateSite. In the buggy behavior, this update mapped every SiteModel column except _id, so a FETCH_SITE model whose wpApiRestUrl was null overwrote the value previously written by updateWpApiRestUrl. The current checkout shows the fix at the same statement by passing SiteModelTable.WP_API_REST_URL into UpdateAllExceptId's skip list."
+      },
+      {
+        "rank": 2,
+        "file": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/persistence/UpdateAllExceptId.java",
+        "class": "UpdateAllExceptId",
+        "method": "toCv(T item)",
+        "line": 29,
+        "statement": "        ContentValues cv = mMapper.toCv(item);",
+        "suspicion_score": 0.84,
+        "reasoning": "This converts the full SiteModel into ContentValues, including WP_API_REST_URL when not later removed. It is the generic mechanism that allowed null wpApiRestUrl to participate in full-row updates, but the site-specific fault is the SiteSqlUtils call failing to exclude that column."
+      },
+      {
+        "rank": 3,
+        "file": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/store/SiteStore.kt",
+        "class": "SiteStore",
+        "method": "updateSite(SiteModel siteModel)",
+        "line": 1678,
+        "statement": "                OnSiteChanged(siteSqlUtils.insertOrUpdateSite(siteModel))",
+        "suspicion_score": 0.72,
+        "reasoning": "This is the FETCH_SITE persistence call that sends the stale fetched SiteModel into the full-row writer. It is on the observed control-flow path, but the durable clobber occurs because the lower-level mapper writes WP_API_REST_URL."
+      }
+    ],
+    "final_answer": {
+      "file": "libs/fluxc/src/main/java/org/wordpress/android/fluxc/persistence/SiteSqlUtils.kt",
+      "class": "SiteSqlUtils",
+      "method": "insertOrUpdateSiteReturningId(SiteModel? site)",
+      "line": 250,
+      "statement": "                                UpdateAllExceptId(",
+      "confidence": 0.96,
+      "causal_chain": "On app foreground, AppInitializer.updateSelectedSite and WPMainActivity.setSelectedSite dispatch FETCH_SITE for the selected Atomic site. SiteStore.fetchSite routes ORIGIN_WPCOM_REST sites to SiteRestClient.fetchSite. SiteRestClient builds a fresh SiteModel from the /sites/<id> response, copies the existing local id into it, but does not populate wpApiRestUrl. SiteStore.updateSite then calls siteSqlUtils.insertOrUpdateSite(siteModel). In insertOrUpdateSiteReturningId, the existing row is found by local id and the WellSql.update(...).put(finalSiteModel, UpdateAllExceptId(...)).execute() full-row update runs. When the mapper does not exclude WP_API_REST_URL, the stale null from the fetched model is written over the value just persisted by SiteSqlUtils.updateWpApiRestUrl, so the recovered URL disappears after relaunch. The current checkout shows this location already fixed by adding SiteModelTable.WP_API_REST_URL to the UpdateAllExceptId skip list.",
+      "fix_hint": "Ensure the SiteModel full-row update mapper used by insertOrUpdateSite excludes WP_API_REST_URL, leaving that column writable only through targeted updateWpApiRestUrl/clearWpApiRestUrl methods."
+    }
+  },
+  "error": null
+}

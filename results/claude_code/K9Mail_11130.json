@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "K9Mail",
+  "issue_id": 11130,
+  "issue_url": "https://github.com/thunderbird/thunderbird-android/issues/11130",
+  "issue_title": "Can't enable delete from notification button in settings",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\thunderbird_thunderbird_android",
+  "media_files": [],
+  "started_at": "2026-06-21T18:40:28.823-05:00",
+  "finished_at": "2026-06-21T18:43:27.131-05:00",
+  "duration_seconds": 178.31,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

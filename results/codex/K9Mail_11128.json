@@ -1,0 +1,202 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "K9Mail",
+  "issue_id": 11128,
+  "issue_url": "https://github.com/thunderbird/thunderbird-android/issues/11128",
+  "issue_title": "Manage folders does not switch accounts",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\thunderbird_thunderbird_android",
+  "media_files": [],
+  "started_at": "2026-06-22T14:09:30.718-05:00",
+  "finished_at": "2026-06-22T14:19:02.845-05:00",
+  "duration_seconds": 572.19,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"read_file\",\n      \"target\": \"README.md\",\n      \"finding\": \"Confirmed the repo is Thunderbird for Android/K-9 Mail shared codebase; the app supports multiple accounts and legacy K-9 code remains part of the app.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"read_file\",\n      \"target\": \"docs/CONTRIBUTING.md\",\n      \"finding\": \"Confirmed contribution context and that implementation may span current feature modules and legacy modules.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"read_file\",\n      \"target\": \"docs/architecture/adr/0009-api-internal-split.md\",\n      \"finding\": \"Confirmed newer feature/core API-internal boundaries; legacy modules are still out of scope for this split, so a folder-management UI under legacy is plausible.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"grep_pattern\",\n      \"target\": \"Manage Folders|Manage folders|manage folders|manage_folders|ManageFolders|FolderSettings\",\n      \"finding\": \"Search found folder-management strings and a legacy UI class named FolderSettingsFragment; this indicated the Manage folders screen likely lives under legacy/ui/legacy.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"grep_pattern\",\n      \"target\": \"*Folder*Settings*.kt and *Folder*List*.kt\",\n      \"finding\": \"Identified relevant files: legacy/ui/legacy/src/main/java/com/fsck/k9/ui/managefolders/ManageFoldersActivity.kt, ManageFoldersFragment.kt, ManageFoldersViewModel.kt, FolderSettingsFragment.kt, FolderSettingsViewModel.kt, FolderSettingsDataStore.kt, KoinModule.kt, and FolderListItem.kt.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/managefolders/FolderSettingsFragment.kt\",\n      \"finding\": \"FolderSettingsFragment reads EXTRA_ACCOUNT and EXTRA_FOLDER_ID from navigation arguments, then calls viewModel.getFolderSettingsLiveData(accountUuid, folderId). It does not independently choose the first account.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/managefolders/FolderSettingsViewModel.kt\",\n      \"finding\": \"FolderSettingsViewModel loads the account by the provided UUID via preferences.getAccount(accountUuid), then loads folder details for account.id. This code uses the supplied account argument correctly.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/managefolders/FolderSettingsDataStore.kt\",\n      \"finding\": \"FolderSettingsDataStore updates folder settings using the accountId passed from FolderSettingsViewModel. No account switching logic exists here.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/managefolders/ManageFoldersActivity.kt\",\n      \"finding\": \"ManageFoldersActivity reads EXTRA_ACCOUNT from its Intent and passes it into the navigation graph as ManageFoldersFragment.EXTRA_ACCOUNT. Its launch() helper writes account.uuid into the Intent.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/managefolders/ManageFoldersFragment.kt\",\n      \"finding\": \"ManageFoldersFragment loads account = preferences.getAccount(accountUuid) in onCreate(), displays folders via viewModel.getFolders(account), and passes account.uuid to FolderSettingsFragment. The fragment uses the Intent-provided account consistently.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/managefolders/ManageFoldersViewModel.kt\",\n      \"finding\": \"ManageFoldersViewModel delegates to folderRepository.getDisplayFoldersFlow(account, includeHiddenFolders = true), so wrong folders result from receiving the wrong account object.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/managefolders/KoinModule.kt\",\n      \"finding\": \"The manage-folders view models are normal Koin view models with injected repositories/controllers; no suspicious singleton account state is injected.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"grep_pattern\",\n      \"target\": \"ManageFoldersActivity.launch|onManageFoldersClick|OpenManageFolders\",\n      \"finding\": \"Found the only launch path in legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageHomeActivity.kt and the drawer event/effect path in feature/navigation/drawer/dropdown.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"read_file\",\n      \"target\": \"feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/ui/DrawerContract.kt\",\n      \"finding\": \"Drawer state contains selectedAccountId, but Effect.OpenManageFolders is a data object carrying no account id.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"read_file\",\n      \"target\": \"feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/ui/DrawerViewModel.kt\",\n      \"finding\": \"DrawerViewModel handles Event.SelectAccount by updating state.value.selectedAccountId. However Event.OnManageFoldersClick emits Effect.OpenManageFolders without including selectedAccountId.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"read_file\",\n      \"target\": \"feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/ui/DrawerView.kt\",\n      \"finding\": \"DrawerView maps Effect.OpenManageFolders to openManageFolders(), a zero-argument callback, so the drawer-selected account cannot reach the activity.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"read_file\",\n      \"target\": \"feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/DropDownDrawer.kt\",\n      \"finding\": \"DropDownDrawer stores FolderDrawerState(selectedAccountUuid, selectedFolderId), exposes selectAccount/selectFolder/selectUnifiedInbox, but its openManageFolders callback also has no account parameter.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageHomeActivity.kt\",\n      \"finding\": \"MessageHomeActivity owns a separate private var account: LegacyAccountDto? initialized from launch/search state. This is not the same as the drawer view model's selectedAccountId.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"trace_call\",\n      \"target\": \"MessageHomeActivity.initializeFolderDrawer()\",\n      \"finding\": \"The drawer is constructed with openManageFolders = { launchManageFoldersScreen() }, so clicking Manage folders calls the activity method without the drawer-selected account id.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"trace_call\",\n      \"target\": \"MessageHomeActivity.launchManageFoldersScreen()\",\n      \"finding\": \"The method checks account != null and then calls ManageFoldersActivity.launch(this, account!!), using the activity's current/stale account field rather than the drawer-selected account.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"trace_call\",\n      \"target\": \"MessageHomeActivity.openRealAccount(accountId: String)\",\n      \"finding\": \"Opening a real account can update search/activity state via performSearch(), but merely changing the drawer-selected account does not necessarily update MessageHomeActivity.account.\"\n    },\n    {\n      \"step\": 22,\n      \"action\": \"trace_call\",\n      \"target\": \"MessageHomeActivity.configureDrawer()\",\n      \"finding\": \"configureDrawer() pushes the activity account/search into the drawer via drawer.selectAccount(accountUuid). This proves the activity account drives drawer initial state, while drawer-only selection is separate state.\"\n    },\n    {\n      \"step\": 23,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"ManageFoldersActivity.launch(activity, account)\",\n      \"finding\": \"Although this helper writes account.uuid into the Intent, it is correct for the account it receives. The faulty value is already chosen by the caller.\"\n    },\n    {\n      \"step\": 24,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"ManageFoldersFragment.onCreate()\",\n      \"finding\": \"The fragment loads folders for the UUID argument it receives. It does not default to the first account unless the caller passed that first/default account UUID.\"\n    },\n    {\n      \"step\": 25,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"MessageHomeActivity.launchManageFoldersScreen() passes stale activity account\",\n      \"finding\": \"This directly matches the report: after app start the activity account is the first/default account; selecting another account in the drawer changes drawer state, but Manage folders still launches with the stale activity account.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageHomeActivity.kt\",\n      \"class\": \"MessageHomeActivity\",\n      \"method\": \"launchManageFoldersScreen()\",\n      \"line\": 738,\n      \"statement\": \"ManageFoldersActivity.launch(this, account!!)\",\n      \"suspicion_score\": 0.94,\n      \"reasoning\": \"This statement launches ManageFoldersActivity with MessageHomeActivity.account, which is derived from the current search/default launch state and can remain the first account from app startup. The drawer-selected account is held separately in DrawerViewModel.selectedAccountId and is not passed through the OpenManageFolders effect, so this statement supplies the wrong account UUID to the Manage folders screen.\"\n    },\n    {\n      \"rank\": 2,\n      \"file\": \"feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/ui/DrawerViewModel.kt\",\n      \"class\": \"DrawerViewModel\",\n      \"method\": \"event(Event event)\",\n      \"line\": 178,\n      \"statement\": \"Event.OnManageFoldersClick -> emitEffect(Effect.OpenManageFolders)\",\n      \"suspicion_score\": 0.82,\n      \"reasoning\": \"This emits a manage-folders effect without the selectedAccountId even though the view model knows it. It is a contributing design flaw, but the concrete wrong account is finally passed at MessageHomeActivity.launchManageFoldersScreen().\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageHomeActivity.kt\",\n    \"class\": \"MessageHomeActivity\",\n    \"method\": \"launchManageFoldersScreen()\",\n    \"line\": 738,\n    \"statement\": \"ManageFoldersActivity.launch(this, account!!)\",\n    \"confidence\": 0.94,\n    \"causal_chain\": \"The user changes the selected account in the navigation drawer. DrawerViewModel records that account in selectedAccountId, but OnManageFoldersClick emits OpenManageFolders without an account id. DrawerView maps that to a zero-argument openManageFolders callback. MessageHomeActivity receives that callback and launchManageFoldersScreen() uses its own account field, which was initialized from app startup/search state and can still be the first/default account. ManageFoldersActivity receives that stale account UUID, ManageFoldersFragment loads that account, and ManageFoldersViewModel displays that account's folders.\",\n    \"fix_hint\": \"Pass the drawer-selected account id through the OpenManageFolders effect/callback and launch ManageFoldersActivity with that account instead of MessageHomeActivity.account.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "read_file",
+        "target": "README.md",
+        "finding": "Confirmed the repo is Thunderbird for Android/K-9 Mail shared codebase; the app supports multiple accounts and legacy K-9 code remains part of the app."
+      },
+      {
+        "step": 2,
+        "action": "read_file",
+        "target": "docs/CONTRIBUTING.md",
+        "finding": "Confirmed contribution context and that implementation may span current feature modules and legacy modules."
+      },
+      {
+        "step": 3,
+        "action": "read_file",
+        "target": "docs/architecture/adr/0009-api-internal-split.md",
+        "finding": "Confirmed newer feature/core API-internal boundaries; legacy modules are still out of scope for this split, so a folder-management UI under legacy is plausible."
+      },
+      {
+        "step": 4,
+        "action": "grep_pattern",
+        "target": "Manage Folders|Manage folders|manage folders|manage_folders|ManageFolders|FolderSettings",
+        "finding": "Search found folder-management strings and a legacy UI class named FolderSettingsFragment; this indicated the Manage folders screen likely lives under legacy/ui/legacy."
+      },
+      {
+        "step": 5,
+        "action": "grep_pattern",
+        "target": "*Folder*Settings*.kt and *Folder*List*.kt",
+        "finding": "Identified relevant files: legacy/ui/legacy/src/main/java/com/fsck/k9/ui/managefolders/ManageFoldersActivity.kt, ManageFoldersFragment.kt, ManageFoldersViewModel.kt, FolderSettingsFragment.kt, FolderSettingsViewModel.kt, FolderSettingsDataStore.kt, KoinModule.kt, and FolderListItem.kt."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/managefolders/FolderSettingsFragment.kt",
+        "finding": "FolderSettingsFragment reads EXTRA_ACCOUNT and EXTRA_FOLDER_ID from navigation arguments, then calls viewModel.getFolderSettingsLiveData(accountUuid, folderId). It does not independently choose the first account."
+      },
+      {
+        "step": 7,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/managefolders/FolderSettingsViewModel.kt",
+        "finding": "FolderSettingsViewModel loads the account by the provided UUID via preferences.getAccount(accountUuid), then loads folder details for account.id. This code uses the supplied account argument correctly."
+      },
+      {
+        "step": 8,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/managefolders/FolderSettingsDataStore.kt",
+        "finding": "FolderSettingsDataStore updates folder settings using the accountId passed from FolderSettingsViewModel. No account switching logic exists here."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/managefolders/ManageFoldersActivity.kt",
+        "finding": "ManageFoldersActivity reads EXTRA_ACCOUNT from its Intent and passes it into the navigation graph as ManageFoldersFragment.EXTRA_ACCOUNT. Its launch() helper writes account.uuid into the Intent."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/managefolders/ManageFoldersFragment.kt",
+        "finding": "ManageFoldersFragment loads account = preferences.getAccount(accountUuid) in onCreate(), displays folders via viewModel.getFolders(account), and passes account.uuid to FolderSettingsFragment. The fragment uses the Intent-provided account consistently."
+      },
+      {
+        "step": 11,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/managefolders/ManageFoldersViewModel.kt",
+        "finding": "ManageFoldersViewModel delegates to folderRepository.getDisplayFoldersFlow(account, includeHiddenFolders = true), so wrong folders result from receiving the wrong account object."
+      },
+      {
+        "step": 12,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/managefolders/KoinModule.kt",
+        "finding": "The manage-folders view models are normal Koin view models with injected repositories/controllers; no suspicious singleton account state is injected."
+      },
+      {
+        "step": 13,
+        "action": "grep_pattern",
+        "target": "ManageFoldersActivity.launch|onManageFoldersClick|OpenManageFolders",
+        "finding": "Found the only launch path in legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageHomeActivity.kt and the drawer event/effect path in feature/navigation/drawer/dropdown."
+      },
+      {
+        "step": 14,
+        "action": "read_file",
+        "target": "feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/ui/DrawerContract.kt",
+        "finding": "Drawer state contains selectedAccountId, but Effect.OpenManageFolders is a data object carrying no account id."
+      },
+      {
+        "step": 15,
+        "action": "read_file",
+        "target": "feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/ui/DrawerViewModel.kt",
+        "finding": "DrawerViewModel handles Event.SelectAccount by updating state.value.selectedAccountId. However Event.OnManageFoldersClick emits Effect.OpenManageFolders without including selectedAccountId."
+      },
+      {
+        "step": 16,
+        "action": "read_file",
+        "target": "feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/ui/DrawerView.kt",
+        "finding": "DrawerView maps Effect.OpenManageFolders to openManageFolders(), a zero-argument callback, so the drawer-selected account cannot reach the activity."
+      },
+      {
+        "step": 17,
+        "action": "read_file",
+        "target": "feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/DropDownDrawer.kt",
+        "finding": "DropDownDrawer stores FolderDrawerState(selectedAccountUuid, selectedFolderId), exposes selectAccount/selectFolder/selectUnifiedInbox, but its openManageFolders callback also has no account parameter."
+      },
+      {
+        "step": 18,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageHomeActivity.kt",
+        "finding": "MessageHomeActivity owns a separate private var account: LegacyAccountDto? initialized from launch/search state. This is not the same as the drawer view model's selectedAccountId."
+      },
+      {
+        "step": 19,
+        "action": "trace_call",
+        "target": "MessageHomeActivity.initializeFolderDrawer()",
+        "finding": "The drawer is constructed with openManageFolders = { launchManageFoldersScreen() }, so clicking Manage folders calls the activity method without the drawer-selected account id."
+      },
+      {
+        "step": 20,
+        "action": "trace_call",
+        "target": "MessageHomeActivity.launchManageFoldersScreen()",
+        "finding": "The method checks account != null and then calls ManageFoldersActivity.launch(this, account!!), using the activity's current/stale account field rather than the drawer-selected account."
+      },
+      {
+        "step": 21,
+        "action": "trace_call",
+        "target": "MessageHomeActivity.openRealAccount(accountId: String)",
+        "finding": "Opening a real account can update search/activity state via performSearch(), but merely changing the drawer-selected account does not necessarily update MessageHomeActivity.account."
+      },
+      {
+        "step": 22,
+        "action": "trace_call",
+        "target": "MessageHomeActivity.configureDrawer()",
+        "finding": "configureDrawer() pushes the activity account/search into the drawer via drawer.selectAccount(accountUuid). This proves the activity account drives drawer initial state, while drawer-only selection is separate state."
+      },
+      {
+        "step": 23,
+        "action": "eliminate_candidate",
+        "target": "ManageFoldersActivity.launch(activity, account)",
+        "finding": "Although this helper writes account.uuid into the Intent, it is correct for the account it receives. The faulty value is already chosen by the caller."
+      },
+      {
+        "step": 24,
+        "action": "eliminate_candidate",
+        "target": "ManageFoldersFragment.onCreate()",
+        "finding": "The fragment loads folders for the UUID argument it receives. It does not default to the first account unless the caller passed that first/default account UUID."
+      },
+      {
+        "step": 25,
+        "action": "form_hypothesis",
+        "target": "MessageHomeActivity.launchManageFoldersScreen() passes stale activity account",
+        "finding": "This directly matches the report: after app start the activity account is the first/default account; selecting another account in the drawer changes drawer state, but Manage folders still launches with the stale activity account."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageHomeActivity.kt",
+        "class": "MessageHomeActivity",
+        "method": "launchManageFoldersScreen()",
+        "line": 738,
+        "statement": "ManageFoldersActivity.launch(this, account!!)",
+        "suspicion_score": 0.94,
+        "reasoning": "This statement launches ManageFoldersActivity with MessageHomeActivity.account, which is derived from the current search/default launch state and can remain the first account from app startup. The drawer-selected account is held separately in DrawerViewModel.selectedAccountId and is not passed through the OpenManageFolders effect, so this statement supplies the wrong account UUID to the Manage folders screen."
+      },
+      {
+        "rank": 2,
+        "file": "feature/navigation/drawer/dropdown/src/main/kotlin/net/thunderbird/feature/navigation/drawer/dropdown/ui/DrawerViewModel.kt",
+        "class": "DrawerViewModel",
+        "method": "event(Event event)",
+        "line": 178,
+        "statement": "Event.OnManageFoldersClick -> emitEffect(Effect.OpenManageFolders)",
+        "suspicion_score": 0.82,
+        "reasoning": "This emits a manage-folders effect without the selectedAccountId even though the view model knows it. It is a contributing design flaw, but the concrete wrong account is finally passed at MessageHomeActivity.launchManageFoldersScreen()."
+      }
+    ],
+    "final_answer": {
+      "file": "legacy/ui/legacy/src/main/java/com/fsck/k9/activity/MessageHomeActivity.kt",
+      "class": "MessageHomeActivity",
+      "method": "launchManageFoldersScreen()",
+      "line": 738,
+      "statement": "ManageFoldersActivity.launch(this, account!!)",
+      "confidence": 0.94,
+      "causal_chain": "The user changes the selected account in the navigation drawer. DrawerViewModel records that account in selectedAccountId, but OnManageFoldersClick emits OpenManageFolders without an account id. DrawerView maps that to a zero-argument openManageFolders callback. MessageHomeActivity receives that callback and launchManageFoldersScreen() uses its own account field, which was initialized from app startup/search state and can still be the first/default account. ManageFoldersActivity receives that stale account UUID, ManageFoldersFragment loads that account, and ManageFoldersViewModel displays that account's folders.",
+      "fix_hint": "Pass the drawer-selected account id through the OpenManageFolders effect/callback and launch ManageFoldersActivity with that account instead of MessageHomeActivity.account."
+    }
+  },
+  "error": null
+}

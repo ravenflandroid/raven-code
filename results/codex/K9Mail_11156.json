@@ -1,0 +1,212 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "K9Mail",
+  "issue_id": 11156,
+  "issue_url": "https://github.com/thunderbird/thunderbird-android/issues/11156",
+  "issue_title": "Saving multiple documents from inbox results in saving the same document with changed names multiple times",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\thunderbird_thunderbird_android",
+  "media_files": [],
+  "started_at": "2026-06-21T17:51:09.320-05:00",
+  "finished_at": "2026-06-21T17:54:34.967-05:00",
+  "duration_seconds": 205.66,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"read_file\",\n      \"target\": \"README.md\",\n      \"finding\": \"Confirmed the repository is Thunderbird for Android, based on K-9 Mail, and includes both Thunderbird and K-9 Mail app variants.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"read_file\",\n      \"target\": \"docs/CONTRIBUTING.md\",\n      \"finding\": \"Confirmed contribution context and that source is Kotlin/Android with legacy K-9 areas still present.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"grep_pattern\",\n      \"target\": \"Save all|save all|save_all|saveAll|SaveAll\",\n      \"finding\": \"Found the visible Save all UI path in legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/AttachmentListModalBottomSheet.kt and MessageViewFragment.kt.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"grep_pattern\",\n      \"target\": \"ACTION_CREATE_DOCUMENT|openOutputStream|saveAttachment|ActivityResult|CreateDocument\",\n      \"finding\": \"Found attachment saving uses CreateDocumentResultContract in MessageViewFragment and writes output in AttachmentController.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"read_file\",\n      \"target\": \"docs/architecture/adr/0009-api-internal-split.md\",\n      \"finding\": \"Confirmed legacy modules are outside the newer feature/core API-internal split migration scope, supporting focus on legacy message view implementation.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/AttachmentListModalBottomSheet.kt\",\n      \"finding\": \"AttachmentListHeader wires the Save all row to onSaveAllClick, and each item save button passes that item's AttachmentViewInfo to onSaveClick.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt lines 214-244\",\n      \"finding\": \"MessageViewFragment renders AttachmentListModalBottomSheet and implements Save all as attachments.forEach { item -> onSaveAttachment(item.attachment) }.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Save all launches multiple ACTION_CREATE_DOCUMENT flows while fragment stores only one current attachment\",\n      \"finding\": \"The report says filenames are correct but contents repeat. This fits a flow where each picker launch receives the correct title, but all returned URIs later use a shared stale attachment reference for the bytes.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt lines 109-112\",\n      \"finding\": \"A single ActivityResultLauncher<CreateDocumentResultContract.Input> is registered, and every document result calls onCreateDocumentResult(documentUri) without carrying the original AttachmentViewInfo.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt lines 146-151\",\n      \"finding\": \"The fragment has private var currentAttachmentViewInfo: AttachmentViewInfo? = null, a single mutable slot shared by view and save operations.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt lines 1181-1190\",\n      \"finding\": \"onSaveAttachment assigns currentAttachmentViewInfo = attachment, then launches CreateDocumentResultContract.Input with title = attachment.displayName and mimeType = attachment.mimeType.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"read_file\",\n      \"target\": \"core/android/common/src/main/kotlin/app/k9mail/core/android/common/activity/CreateDocumentResultContract.kt\",\n      \"finding\": \"CreateDocumentResultContract creates ACTION_CREATE_DOCUMENT with Intent.EXTRA_TITLE from input.title, explaining why the created files can have correct names even if later data binding is wrong.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"trace_call\",\n      \"target\": \"MessageViewFragment.onSaveAttachment -> createDocumentLauncher.launch -> onCreateDocumentResult\",\n      \"finding\": \"The ActivityResult callback returns only a Uri. It does not include the attachment used to start that document creation request.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt lines 794-817\",\n      \"finding\": \"onCreateDocumentResult validates the returned content Uri, handles EML export if pending, then calls createAttachmentController(currentAttachmentViewInfo).saveAttachmentTo(uri).\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/AttachmentController.java\",\n      \"finding\": \"AttachmentController stores a final AttachmentViewInfo attachment and saveAttachmentTo writes that attachment to the chosen document Uri.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"trace_call\",\n      \"target\": \"AttachmentController.saveAttachmentTo(Uri documentUri)\",\n      \"finding\": \"If content is available, saveAttachmentTo calls saveLocalAttachmentTo(documentUri); otherwise it downloads the attachment then saves it.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/AttachmentController.java lines 114-128\",\n      \"finding\": \"writeAttachment opens input from attachment.internalUri and copies it to the output stream for the document Uri, so repeated content means the same AttachmentViewInfo/internalUri is being supplied.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/mailstore/AttachmentViewInfo.java\",\n      \"finding\": \"AttachmentViewInfo contains displayName, mimeType, internalUri, and part; internalUri is the decoded attachment source used by AttachmentController.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageContainerView.kt\",\n      \"finding\": \"Inline image/context-menu saves also route to AttachmentViewCallback.onSaveAttachment with a concrete AttachmentViewInfo, but this is an individual-save path rather than Save all.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/AttachmentView.java\",\n      \"finding\": \"Individual attachment save button calls callback.onSaveAttachment(attachment), which is safe when only one document result is outstanding.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"AttachmentController.writeAttachment(Uri documentUri)\",\n      \"finding\": \"The copy operation is straightforward and uses the controller's attachment.internalUri. It would save correct bytes if the correct AttachmentViewInfo were passed, so it is not the primary fault.\"\n    },\n    {\n      \"step\": 22,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"CreateDocumentResultContract.createIntent(Context context, Input input)\",\n      \"finding\": \"The contract correctly sets ACTION_CREATE_DOCUMENT, MIME type, and EXTRA_TITLE; this matches the report's correct filenames and does not explain repeated content.\"\n    },\n    {\n      \"step\": 23,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"AttachmentListModalBottomSheet AttachmentListItem onSaveClick\",\n      \"finding\": \"Per-item save passes the correct item. The reported bug is specifically triggered by Save all, where multiple launches share the same fragment state.\"\n    },\n    {\n      \"step\": 24,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"MessageViewFragment.onCreateDocumentResult uses shared currentAttachmentViewInfo\",\n      \"finding\": \"When Save all calls onSaveAttachment repeatedly, currentAttachmentViewInfo is overwritten before all external document picker results return. Each returned Uri is then saved using whatever attachment is currently stored, producing multiple files with different requested names but identical content.\"\n    },\n    {\n      \"step\": 25,\n      \"action\": \"trace_call\",\n      \"target\": \"Save all causal path\",\n      \"finding\": \"AttachmentListHeader click -> MessageViewFragment Save all loop -> onSaveAttachment sets shared currentAttachmentViewInfo and launches create document with per-file title -> result callback onCreateDocumentResult ignores the launch's attachment and uses currentAttachmentViewInfo -> AttachmentController copies that one attachment.internalUri to each selected Uri.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt\",\n      \"class\": \"MessageViewFragment\",\n      \"method\": \"onCreateDocumentResult(Uri? uri)\",\n      \"line\": 816,\n      \"statement\": \"createAttachmentController(currentAttachmentViewInfo).saveAttachmentTo(uri)\",\n      \"suspicion_score\": 0.95,\n      \"reasoning\": \"This statement binds the returned document Uri to a single mutable field instead of the AttachmentViewInfo associated with the specific create-document launch. Save all starts multiple document creation requests and repeatedly overwrites currentAttachmentViewInfo, so every result can save bytes from the same latest/stale attachment while the filenames remain the per-launch titles.\"\n    },\n    {\n      \"rank\": 2,\n      \"file\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt\",\n      \"class\": \"MessageViewFragment\",\n      \"method\": \"onSaveAttachment(AttachmentViewInfo attachment)\",\n      \"line\": 1182,\n      \"statement\": \"currentAttachmentViewInfo = attachment\",\n      \"suspicion_score\": 0.82,\n      \"reasoning\": \"This assignment creates the shared mutable state that gets overwritten during Save all. It is necessary for the bug, but the direct content misbinding happens when onCreateDocumentResult later consumes this shared field.\"\n    },\n    {\n      \"rank\": 3,\n      \"file\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt\",\n      \"class\": \"MessageViewFragment\",\n      \"method\": \"initializeMessageTopView(MessageTopView messageTopView)\",\n      \"line\": 241,\n      \"statement\": \"onSaveAttachment(item.attachment)\",\n      \"suspicion_score\": 0.7,\n      \"reasoning\": \"The Save all implementation launches the individual save flow repeatedly without preserving per-request attachment state. This exposes the bug, but the faulty data selection occurs in the result handler.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt\",\n    \"class\": \"MessageViewFragment\",\n    \"method\": \"onCreateDocumentResult(Uri? uri)\",\n    \"line\": 816,\n    \"statement\": \"createAttachmentController(currentAttachmentViewInfo).saveAttachmentTo(uri)\",\n    \"confidence\": 0.95,\n    \"causal_chain\": \"The user taps Save all in AttachmentListModalBottomSheet. MessageViewFragment loops over all attachments and calls onSaveAttachment for each one. onSaveAttachment stores each attachment into the single field currentAttachmentViewInfo and launches ACTION_CREATE_DOCUMENT with that attachment's displayName, so the file manager creates documents with the correct names. When document picker results return, onCreateDocumentResult receives only the destination Uri and line 816 creates an AttachmentController from the current shared currentAttachmentViewInfo, not from the attachment that initiated that specific request. AttachmentController.writeAttachment then copies from that one attachment.internalUri into each returned Uri. The result is multiple correctly named files containing the same attachment bytes.\",\n    \"fix_hint\": \"Preserve a per-launch mapping or queue from each create-document request/result to its AttachmentViewInfo, or implement Save all through a folder/tree flow that writes each attachment with its own internalUri instead of using the shared currentAttachmentViewInfo field.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "read_file",
+        "target": "README.md",
+        "finding": "Confirmed the repository is Thunderbird for Android, based on K-9 Mail, and includes both Thunderbird and K-9 Mail app variants."
+      },
+      {
+        "step": 2,
+        "action": "read_file",
+        "target": "docs/CONTRIBUTING.md",
+        "finding": "Confirmed contribution context and that source is Kotlin/Android with legacy K-9 areas still present."
+      },
+      {
+        "step": 3,
+        "action": "grep_pattern",
+        "target": "Save all|save all|save_all|saveAll|SaveAll",
+        "finding": "Found the visible Save all UI path in legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/AttachmentListModalBottomSheet.kt and MessageViewFragment.kt."
+      },
+      {
+        "step": 4,
+        "action": "grep_pattern",
+        "target": "ACTION_CREATE_DOCUMENT|openOutputStream|saveAttachment|ActivityResult|CreateDocument",
+        "finding": "Found attachment saving uses CreateDocumentResultContract in MessageViewFragment and writes output in AttachmentController."
+      },
+      {
+        "step": 5,
+        "action": "read_file",
+        "target": "docs/architecture/adr/0009-api-internal-split.md",
+        "finding": "Confirmed legacy modules are outside the newer feature/core API-internal split migration scope, supporting focus on legacy message view implementation."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/AttachmentListModalBottomSheet.kt",
+        "finding": "AttachmentListHeader wires the Save all row to onSaveAllClick, and each item save button passes that item's AttachmentViewInfo to onSaveClick."
+      },
+      {
+        "step": 7,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt lines 214-244",
+        "finding": "MessageViewFragment renders AttachmentListModalBottomSheet and implements Save all as attachments.forEach { item -> onSaveAttachment(item.attachment) }."
+      },
+      {
+        "step": 8,
+        "action": "form_hypothesis",
+        "target": "Save all launches multiple ACTION_CREATE_DOCUMENT flows while fragment stores only one current attachment",
+        "finding": "The report says filenames are correct but contents repeat. This fits a flow where each picker launch receives the correct title, but all returned URIs later use a shared stale attachment reference for the bytes."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt lines 109-112",
+        "finding": "A single ActivityResultLauncher<CreateDocumentResultContract.Input> is registered, and every document result calls onCreateDocumentResult(documentUri) without carrying the original AttachmentViewInfo."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt lines 146-151",
+        "finding": "The fragment has private var currentAttachmentViewInfo: AttachmentViewInfo? = null, a single mutable slot shared by view and save operations."
+      },
+      {
+        "step": 11,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt lines 1181-1190",
+        "finding": "onSaveAttachment assigns currentAttachmentViewInfo = attachment, then launches CreateDocumentResultContract.Input with title = attachment.displayName and mimeType = attachment.mimeType."
+      },
+      {
+        "step": 12,
+        "action": "read_file",
+        "target": "core/android/common/src/main/kotlin/app/k9mail/core/android/common/activity/CreateDocumentResultContract.kt",
+        "finding": "CreateDocumentResultContract creates ACTION_CREATE_DOCUMENT with Intent.EXTRA_TITLE from input.title, explaining why the created files can have correct names even if later data binding is wrong."
+      },
+      {
+        "step": 13,
+        "action": "trace_call",
+        "target": "MessageViewFragment.onSaveAttachment -> createDocumentLauncher.launch -> onCreateDocumentResult",
+        "finding": "The ActivityResult callback returns only a Uri. It does not include the attachment used to start that document creation request."
+      },
+      {
+        "step": 14,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt lines 794-817",
+        "finding": "onCreateDocumentResult validates the returned content Uri, handles EML export if pending, then calls createAttachmentController(currentAttachmentViewInfo).saveAttachmentTo(uri)."
+      },
+      {
+        "step": 15,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/AttachmentController.java",
+        "finding": "AttachmentController stores a final AttachmentViewInfo attachment and saveAttachmentTo writes that attachment to the chosen document Uri."
+      },
+      {
+        "step": 16,
+        "action": "trace_call",
+        "target": "AttachmentController.saveAttachmentTo(Uri documentUri)",
+        "finding": "If content is available, saveAttachmentTo calls saveLocalAttachmentTo(documentUri); otherwise it downloads the attachment then saves it."
+      },
+      {
+        "step": 17,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/AttachmentController.java lines 114-128",
+        "finding": "writeAttachment opens input from attachment.internalUri and copies it to the output stream for the document Uri, so repeated content means the same AttachmentViewInfo/internalUri is being supplied."
+      },
+      {
+        "step": 18,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/mailstore/AttachmentViewInfo.java",
+        "finding": "AttachmentViewInfo contains displayName, mimeType, internalUri, and part; internalUri is the decoded attachment source used by AttachmentController."
+      },
+      {
+        "step": 19,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageContainerView.kt",
+        "finding": "Inline image/context-menu saves also route to AttachmentViewCallback.onSaveAttachment with a concrete AttachmentViewInfo, but this is an individual-save path rather than Save all."
+      },
+      {
+        "step": 20,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/AttachmentView.java",
+        "finding": "Individual attachment save button calls callback.onSaveAttachment(attachment), which is safe when only one document result is outstanding."
+      },
+      {
+        "step": 21,
+        "action": "eliminate_candidate",
+        "target": "AttachmentController.writeAttachment(Uri documentUri)",
+        "finding": "The copy operation is straightforward and uses the controller's attachment.internalUri. It would save correct bytes if the correct AttachmentViewInfo were passed, so it is not the primary fault."
+      },
+      {
+        "step": 22,
+        "action": "eliminate_candidate",
+        "target": "CreateDocumentResultContract.createIntent(Context context, Input input)",
+        "finding": "The contract correctly sets ACTION_CREATE_DOCUMENT, MIME type, and EXTRA_TITLE; this matches the report's correct filenames and does not explain repeated content."
+      },
+      {
+        "step": 23,
+        "action": "eliminate_candidate",
+        "target": "AttachmentListModalBottomSheet AttachmentListItem onSaveClick",
+        "finding": "Per-item save passes the correct item. The reported bug is specifically triggered by Save all, where multiple launches share the same fragment state."
+      },
+      {
+        "step": 24,
+        "action": "form_hypothesis",
+        "target": "MessageViewFragment.onCreateDocumentResult uses shared currentAttachmentViewInfo",
+        "finding": "When Save all calls onSaveAttachment repeatedly, currentAttachmentViewInfo is overwritten before all external document picker results return. Each returned Uri is then saved using whatever attachment is currently stored, producing multiple files with different requested names but identical content."
+      },
+      {
+        "step": 25,
+        "action": "trace_call",
+        "target": "Save all causal path",
+        "finding": "AttachmentListHeader click -> MessageViewFragment Save all loop -> onSaveAttachment sets shared currentAttachmentViewInfo and launches create document with per-file title -> result callback onCreateDocumentResult ignores the launch's attachment and uses currentAttachmentViewInfo -> AttachmentController copies that one attachment.internalUri to each selected Uri."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt",
+        "class": "MessageViewFragment",
+        "method": "onCreateDocumentResult(Uri? uri)",
+        "line": 816,
+        "statement": "createAttachmentController(currentAttachmentViewInfo).saveAttachmentTo(uri)",
+        "suspicion_score": 0.95,
+        "reasoning": "This statement binds the returned document Uri to a single mutable field instead of the AttachmentViewInfo associated with the specific create-document launch. Save all starts multiple document creation requests and repeatedly overwrites currentAttachmentViewInfo, so every result can save bytes from the same latest/stale attachment while the filenames remain the per-launch titles."
+      },
+      {
+        "rank": 2,
+        "file": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt",
+        "class": "MessageViewFragment",
+        "method": "onSaveAttachment(AttachmentViewInfo attachment)",
+        "line": 1182,
+        "statement": "currentAttachmentViewInfo = attachment",
+        "suspicion_score": 0.82,
+        "reasoning": "This assignment creates the shared mutable state that gets overwritten during Save all. It is necessary for the bug, but the direct content misbinding happens when onCreateDocumentResult later consumes this shared field."
+      },
+      {
+        "rank": 3,
+        "file": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt",
+        "class": "MessageViewFragment",
+        "method": "initializeMessageTopView(MessageTopView messageTopView)",
+        "line": 241,
+        "statement": "onSaveAttachment(item.attachment)",
+        "suspicion_score": 0.7,
+        "reasoning": "The Save all implementation launches the individual save flow repeatedly without preserving per-request attachment state. This exposes the bug, but the faulty data selection occurs in the result handler."
+      }
+    ],
+    "final_answer": {
+      "file": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/messageview/MessageViewFragment.kt",
+      "class": "MessageViewFragment",
+      "method": "onCreateDocumentResult(Uri? uri)",
+      "line": 816,
+      "statement": "createAttachmentController(currentAttachmentViewInfo).saveAttachmentTo(uri)",
+      "confidence": 0.95,
+      "causal_chain": "The user taps Save all in AttachmentListModalBottomSheet. MessageViewFragment loops over all attachments and calls onSaveAttachment for each one. onSaveAttachment stores each attachment into the single field currentAttachmentViewInfo and launches ACTION_CREATE_DOCUMENT with that attachment's displayName, so the file manager creates documents with the correct names. When document picker results return, onCreateDocumentResult receives only the destination Uri and line 816 creates an AttachmentController from the current shared currentAttachmentViewInfo, not from the attachment that initiated that specific request. AttachmentController.writeAttachment then copies from that one attachment.internalUri into each returned Uri. The result is multiple correctly named files containing the same attachment bytes.",
+      "fix_hint": "Preserve a per-launch mapping or queue from each create-document request/result to its AttachmentViewInfo, or implement Save all through a folder/tree flow that writes each attachment with its own internalUri instead of using the shared currentAttachmentViewInfo field."
+    }
+  },
+  "error": null
+}

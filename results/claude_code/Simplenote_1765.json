@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "Simplenote",
+  "issue_id": 1765,
+  "issue_url": "https://github.com/Automattic/simplenote-android/issues/1765",
+  "issue_title": "History and Share Bottom Sheets Do Not Appear Manually and Do Reappear Automatically After Dismiss",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\Automattic_simplenote_android",
+  "media_files": [
+    "3ba5f248-67c2-48cf-b614-908875fbfcde",
+    "c60ec46f-19a2-4c15-a5c4-51ec401274d1"
+  ],
+  "started_at": "2026-06-21T13:53:34.942-05:00",
+  "finished_at": "2026-06-21T13:56:43.189-05:00",
+  "duration_seconds": 188.25,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

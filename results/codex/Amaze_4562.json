@@ -1,0 +1,180 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "Amaze",
+  "issue_id": 4562,
+  "issue_url": "https://github.com/TeamAmaze/AmazeFileManager/issues/4562",
+  "issue_title": "Text Editor's Search Feature only highlights results but doesn't jump to them",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\TeamAmaze_AmazeFileManager",
+  "media_files": [],
+  "started_at": "2026-06-21T16:28:26.425-05:00",
+  "finished_at": "2026-06-21T16:31:39.391-05:00",
+  "duration_seconds": 192.97,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"TextEditor|Text Editor|search|Search|magnif|find|arrow|next|previous\",\n      \"finding\": \"The first search attempted to use rg, but rg was unavailable in this environment; I switched to PowerShell Select-String over repo files.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"grep_pattern\",\n      \"target\": \"app/src/**/*.{java,kt,xml} search-related text editor patterns\",\n      \"finding\": \"Found the likely text editor implementation in app/src/main/java/com/amaze/filemanager/ui/activities/texteditor/TextEditorActivity.java, plus search UI layout app/src/main/res/layout/text_editor_search_bar.xml, menu app/src/main/res/menu/text.xml, and search worker app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/SearchTextTask.kt.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/activities/texteditor/TextEditorActivity.java\",\n      \"finding\": \"TextEditorActivity is the concrete Activity. It owns the main edit text, search edit text, up/down arrow buttons, ScrollView, and callbacks for search navigation.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"inspect_layout_xml\",\n      \"target\": \"app/src/main/res/layout/text_editor_search_bar.xml\",\n      \"finding\": \"The search bar contains textEditorSearchBox, textEditorSearchPrevButton, and textEditorSearchNextButton. The arrow buttons are real ImageButtons with the IDs handled by TextEditorActivity.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/res/menu/text.xml\",\n      \"finding\": \"The magnifying glass menu item is R.id.find, which TextEditorActivity handles by revealing or hiding the search bar.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/SearchTextTask.kt\",\n      \"finding\": \"SearchTextTask scans the text, creates SearchResultIndex objects with start/end character offsets and a lineNumber, publishes progress, and returns the full list.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/activities/texteditor/TextEditorActivityViewModel.kt\",\n      \"finding\": \"The ViewModel stores current search index, line, and searchResultIndices. current starts at -1 and is incremented/decremented by arrow clicks.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"grep_pattern\",\n      \"target\": \"class SearchResultIndex|data class SearchResultIndex|SearchResultIndex\",\n      \"finding\": \"Found SearchResultIndex.kt and all usages. SearchResultIndex only stores startCharNumber, endCharNumber, and lineNumber.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/activities/texteditor/SearchResultIndex.kt\",\n      \"finding\": \"SearchResultIndex is a simple value holder; there is no scroll position or pixel coordinate stored, only a line number.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"inspect_layout_xml\",\n      \"target\": \"app/src/main/res/layout/search.xml\",\n      \"finding\": \"The text editor layout places textEditorMainEditText inside textEditorScrollView. Therefore navigation must scroll the containing ScrollView, not only recolor spans.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"trace_call\",\n      \"target\": \"TextEditorActivity.onOptionsItemSelected(MenuItem item)\",\n      \"finding\": \"R.id.find toggles the search view. This matches the reported magnifying-glass entry point.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"trace_call\",\n      \"target\": \"TextEditorActivity.afterTextChanged(Editable editable)\",\n      \"finding\": \"Typing a query starts SearchTextTask. Results are colored as they are found and again after completion. If there are results, both arrow buttons are enabled and downButton is invoked once.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"trace_call\",\n      \"target\": \"TextEditorActivity.onClick(View v)\",\n      \"finding\": \"Prev and next button clicks do change viewModel.current and call highlightCurrentSearchResult. This eliminates a missing listener or dead button callback as the primary fault.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"trace_call\",\n      \"target\": \"TextEditorActivity.highlightCurrentSearchResult(TextEditorActivityViewModel viewModel)\",\n      \"finding\": \"The method recolors the current result with the accent color, then calls scrollView.scrollTo using keyValueNew.getLineNumber() plus roughly one line height and toolbar adjustment.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Search arrows work internally but scroll calculation uses line count as pixels\",\n      \"finding\": \"The y coordinate passed to ScrollView.scrollTo is computed from a text line number directly. A line number like 100 produces about 100 pixels, not the vertical position of line 100. For long files this barely moves the ScrollView, matching the report that highlights appear but arrows do not jump to results.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"Button IDs/listeners in TextEditorActivity.onCreate\",\n      \"finding\": \"upButton and downButton are found from textEditorSearchBar and both receive setOnClickListener(this), so the arrows are not inert because of missing listeners.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"Search result generation in SearchTextTask.kt\",\n      \"finding\": \"Because highlighted results appear, SearchTextTask is finding matches and producing indices. Even if its line counting may be imperfect, the observed total failure to jump is better explained by the Activity converting line number to scroll pixels incorrectly.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"Highlighting in TextEditorActivity.colorSearchResult\",\n      \"finding\": \"colorSearchResult applies BackgroundColorSpan using start/end character offsets. This explains the visible highlighting and is not the missing navigation behavior.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"grep_pattern\",\n      \"target\": \"scrollView.scrollTo|scrollTo\\\\(|getLineNumber\\\\(|getLineForOffset|getLayout\\\\(\\\\)\",\n      \"finding\": \"The only text-editor scroll navigation call is TextEditorActivity.java line 591, and it is the only usage of getLineNumber for scrolling.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/test/java/com/amaze/filemanager/ui/activities/TextEditorActivityTest.java\",\n      \"finding\": \"Existing Robolectric tests only verify opening file/content URIs and do not test search navigation or scroll movement.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/androidTest/java/com/amaze/filemanager/ui/activities/TextEditorActivityEspressoTest.java\",\n      \"finding\": \"The Espresso test only verifies loading a text file and is suppressed; it does not cover search arrows.\"\n    },\n    {\n      \"step\": 22,\n      \"action\": \"inspect_manifest\",\n      \"target\": \"app/src/main/AndroidManifest.xml TextEditorActivity entry\",\n      \"finding\": \"The manifest registers .ui.activities.texteditor.TextEditorActivity for text/* ACTION_VIEW intents, confirming this Activity is the entry point for opening text files.\"\n    },\n    {\n      \"step\": 23,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Fault statement is ScrollView.scrollTo call in highlightCurrentSearchResult\",\n      \"finding\": \"The bad statement is the scrollTo call whose y argument treats a logical line number as an absolute pixel offset. The fix should use the EditText Layout to compute the line top for the matched character offset, or multiply a correct line index by actual line height including padding/spacing.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"app/src/main/java/com/amaze/filemanager/ui/activities/texteditor/TextEditorActivity.java\",\n      \"class\": \"TextEditorActivity\",\n      \"method\": \"highlightCurrentSearchResult(TextEditorActivityViewModel viewModel)\",\n      \"line\": 591,\n      \"statement\": \"scrollView.scrollTo(0, (Integer) keyValueNew.getLineNumber() + mainTextView.getLineHeight() + Math.round(mainTextView.getLineSpacingExtra()) - getSupportActionBar().getHeight());\",\n      \"suspicion_score\": 0.95,\n      \"reasoning\": \"This is the only code path that attempts to move the screen when a search result is selected. It passes SearchResultIndex.lineNumber directly as a ScrollView y pixel coordinate, adding only one line height. Since lineNumber is a count of text lines rather than the rendered top pixel of that line, the scroll distance is far too small for matches deeper in the file, so arrow taps update highlighting but do not visibly jump to the result.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"app/src/main/java/com/amaze/filemanager/ui/activities/texteditor/TextEditorActivity.java\",\n    \"class\": \"TextEditorActivity\",\n    \"method\": \"highlightCurrentSearchResult(TextEditorActivityViewModel viewModel)\",\n    \"line\": 591,\n    \"statement\": \"scrollView.scrollTo(0, (Integer) keyValueNew.getLineNumber() + mainTextView.getLineHeight() + Math.round(mainTextView.getLineSpacingExtra()) - getSupportActionBar().getHeight());\",\n    \"confidence\": 0.95,\n    \"causal_chain\": \"Opening a text file launches TextEditorActivity. Pressing the find menu item reveals text_editor_search_bar.xml. Typing a query starts SearchTextTask, which finds matches and stores SearchResultIndex entries in the ViewModel while colorSearchResult highlights them. Pressing the next/previous arrows enters onClick, updates viewModel.current, and calls highlightCurrentSearchResult. That method recolors the current result, then tries to scroll by passing a y value derived from keyValueNew.getLineNumber(). Because getLineNumber() is a logical line count, not the rendered pixel top of the matching text inside the EditText, ScrollView.scrollTo receives a tiny or wrong y coordinate. The visible result is exactly the report: matches are highlighted, arrow callbacks run, but the screen does not jump through the matches.\",\n    \"fix_hint\": \"Compute the scroll y from the EditText layout, for example using mainTextView.getLayout().getLineTop(mainTextView.getLayout().getLineForOffset(keyValueNew.getStartCharNumber())) adjusted for padding/toolbar, instead of using the raw line number as pixels.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "TextEditor|Text Editor|search|Search|magnif|find|arrow|next|previous",
+        "finding": "The first search attempted to use rg, but rg was unavailable in this environment; I switched to PowerShell Select-String over repo files."
+      },
+      {
+        "step": 2,
+        "action": "grep_pattern",
+        "target": "app/src/**/*.{java,kt,xml} search-related text editor patterns",
+        "finding": "Found the likely text editor implementation in app/src/main/java/com/amaze/filemanager/ui/activities/texteditor/TextEditorActivity.java, plus search UI layout app/src/main/res/layout/text_editor_search_bar.xml, menu app/src/main/res/menu/text.xml, and search worker app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/SearchTextTask.kt."
+      },
+      {
+        "step": 3,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/activities/texteditor/TextEditorActivity.java",
+        "finding": "TextEditorActivity is the concrete Activity. It owns the main edit text, search edit text, up/down arrow buttons, ScrollView, and callbacks for search navigation."
+      },
+      {
+        "step": 4,
+        "action": "inspect_layout_xml",
+        "target": "app/src/main/res/layout/text_editor_search_bar.xml",
+        "finding": "The search bar contains textEditorSearchBox, textEditorSearchPrevButton, and textEditorSearchNextButton. The arrow buttons are real ImageButtons with the IDs handled by TextEditorActivity."
+      },
+      {
+        "step": 5,
+        "action": "read_file",
+        "target": "app/src/main/res/menu/text.xml",
+        "finding": "The magnifying glass menu item is R.id.find, which TextEditorActivity handles by revealing or hiding the search bar."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/SearchTextTask.kt",
+        "finding": "SearchTextTask scans the text, creates SearchResultIndex objects with start/end character offsets and a lineNumber, publishes progress, and returns the full list."
+      },
+      {
+        "step": 7,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/activities/texteditor/TextEditorActivityViewModel.kt",
+        "finding": "The ViewModel stores current search index, line, and searchResultIndices. current starts at -1 and is incremented/decremented by arrow clicks."
+      },
+      {
+        "step": 8,
+        "action": "grep_pattern",
+        "target": "class SearchResultIndex|data class SearchResultIndex|SearchResultIndex",
+        "finding": "Found SearchResultIndex.kt and all usages. SearchResultIndex only stores startCharNumber, endCharNumber, and lineNumber."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/activities/texteditor/SearchResultIndex.kt",
+        "finding": "SearchResultIndex is a simple value holder; there is no scroll position or pixel coordinate stored, only a line number."
+      },
+      {
+        "step": 10,
+        "action": "inspect_layout_xml",
+        "target": "app/src/main/res/layout/search.xml",
+        "finding": "The text editor layout places textEditorMainEditText inside textEditorScrollView. Therefore navigation must scroll the containing ScrollView, not only recolor spans."
+      },
+      {
+        "step": 11,
+        "action": "trace_call",
+        "target": "TextEditorActivity.onOptionsItemSelected(MenuItem item)",
+        "finding": "R.id.find toggles the search view. This matches the reported magnifying-glass entry point."
+      },
+      {
+        "step": 12,
+        "action": "trace_call",
+        "target": "TextEditorActivity.afterTextChanged(Editable editable)",
+        "finding": "Typing a query starts SearchTextTask. Results are colored as they are found and again after completion. If there are results, both arrow buttons are enabled and downButton is invoked once."
+      },
+      {
+        "step": 13,
+        "action": "trace_call",
+        "target": "TextEditorActivity.onClick(View v)",
+        "finding": "Prev and next button clicks do change viewModel.current and call highlightCurrentSearchResult. This eliminates a missing listener or dead button callback as the primary fault."
+      },
+      {
+        "step": 14,
+        "action": "trace_call",
+        "target": "TextEditorActivity.highlightCurrentSearchResult(TextEditorActivityViewModel viewModel)",
+        "finding": "The method recolors the current result with the accent color, then calls scrollView.scrollTo using keyValueNew.getLineNumber() plus roughly one line height and toolbar adjustment."
+      },
+      {
+        "step": 15,
+        "action": "form_hypothesis",
+        "target": "Search arrows work internally but scroll calculation uses line count as pixels",
+        "finding": "The y coordinate passed to ScrollView.scrollTo is computed from a text line number directly. A line number like 100 produces about 100 pixels, not the vertical position of line 100. For long files this barely moves the ScrollView, matching the report that highlights appear but arrows do not jump to results."
+      },
+      {
+        "step": 16,
+        "action": "eliminate_candidate",
+        "target": "Button IDs/listeners in TextEditorActivity.onCreate",
+        "finding": "upButton and downButton are found from textEditorSearchBar and both receive setOnClickListener(this), so the arrows are not inert because of missing listeners."
+      },
+      {
+        "step": 17,
+        "action": "eliminate_candidate",
+        "target": "Search result generation in SearchTextTask.kt",
+        "finding": "Because highlighted results appear, SearchTextTask is finding matches and producing indices. Even if its line counting may be imperfect, the observed total failure to jump is better explained by the Activity converting line number to scroll pixels incorrectly."
+      },
+      {
+        "step": 18,
+        "action": "eliminate_candidate",
+        "target": "Highlighting in TextEditorActivity.colorSearchResult",
+        "finding": "colorSearchResult applies BackgroundColorSpan using start/end character offsets. This explains the visible highlighting and is not the missing navigation behavior."
+      },
+      {
+        "step": 19,
+        "action": "grep_pattern",
+        "target": "scrollView.scrollTo|scrollTo\\(|getLineNumber\\(|getLineForOffset|getLayout\\(\\)",
+        "finding": "The only text-editor scroll navigation call is TextEditorActivity.java line 591, and it is the only usage of getLineNumber for scrolling."
+      },
+      {
+        "step": 20,
+        "action": "read_file",
+        "target": "app/src/test/java/com/amaze/filemanager/ui/activities/TextEditorActivityTest.java",
+        "finding": "Existing Robolectric tests only verify opening file/content URIs and do not test search navigation or scroll movement."
+      },
+      {
+        "step": 21,
+        "action": "read_file",
+        "target": "app/src/androidTest/java/com/amaze/filemanager/ui/activities/TextEditorActivityEspressoTest.java",
+        "finding": "The Espresso test only verifies loading a text file and is suppressed; it does not cover search arrows."
+      },
+      {
+        "step": 22,
+        "action": "inspect_manifest",
+        "target": "app/src/main/AndroidManifest.xml TextEditorActivity entry",
+        "finding": "The manifest registers .ui.activities.texteditor.TextEditorActivity for text/* ACTION_VIEW intents, confirming this Activity is the entry point for opening text files."
+      },
+      {
+        "step": 23,
+        "action": "form_hypothesis",
+        "target": "Fault statement is ScrollView.scrollTo call in highlightCurrentSearchResult",
+        "finding": "The bad statement is the scrollTo call whose y argument treats a logical line number as an absolute pixel offset. The fix should use the EditText Layout to compute the line top for the matched character offset, or multiply a correct line index by actual line height including padding/spacing."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "app/src/main/java/com/amaze/filemanager/ui/activities/texteditor/TextEditorActivity.java",
+        "class": "TextEditorActivity",
+        "method": "highlightCurrentSearchResult(TextEditorActivityViewModel viewModel)",
+        "line": 591,
+        "statement": "scrollView.scrollTo(0, (Integer) keyValueNew.getLineNumber() + mainTextView.getLineHeight() + Math.round(mainTextView.getLineSpacingExtra()) - getSupportActionBar().getHeight());",
+        "suspicion_score": 0.95,
+        "reasoning": "This is the only code path that attempts to move the screen when a search result is selected. It passes SearchResultIndex.lineNumber directly as a ScrollView y pixel coordinate, adding only one line height. Since lineNumber is a count of text lines rather than the rendered top pixel of that line, the scroll distance is far too small for matches deeper in the file, so arrow taps update highlighting but do not visibly jump to the result."
+      }
+    ],
+    "final_answer": {
+      "file": "app/src/main/java/com/amaze/filemanager/ui/activities/texteditor/TextEditorActivity.java",
+      "class": "TextEditorActivity",
+      "method": "highlightCurrentSearchResult(TextEditorActivityViewModel viewModel)",
+      "line": 591,
+      "statement": "scrollView.scrollTo(0, (Integer) keyValueNew.getLineNumber() + mainTextView.getLineHeight() + Math.round(mainTextView.getLineSpacingExtra()) - getSupportActionBar().getHeight());",
+      "confidence": 0.95,
+      "causal_chain": "Opening a text file launches TextEditorActivity. Pressing the find menu item reveals text_editor_search_bar.xml. Typing a query starts SearchTextTask, which finds matches and stores SearchResultIndex entries in the ViewModel while colorSearchResult highlights them. Pressing the next/previous arrows enters onClick, updates viewModel.current, and calls highlightCurrentSearchResult. That method recolors the current result, then tries to scroll by passing a y value derived from keyValueNew.getLineNumber(). Because getLineNumber() is a logical line count, not the rendered pixel top of the matching text inside the EditText, ScrollView.scrollTo receives a tiny or wrong y coordinate. The visible result is exactly the report: matches are highlighted, arrow callbacks run, but the screen does not jump through the matches.",
+      "fix_hint": "Compute the scroll y from the EditText layout, for example using mainTextView.getLayout().getLineTop(mainTextView.getLayout().getLineForOffset(keyValueNew.getStartCharNumber())) adjusted for padding/toolbar, instead of using the raw line number as pixels."
+    }
+  },
+  "error": null
+}

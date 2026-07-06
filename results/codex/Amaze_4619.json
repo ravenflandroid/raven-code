@@ -1,0 +1,196 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "Amaze",
+  "issue_id": 4619,
+  "issue_url": "https://github.com/TeamAmaze/AmazeFileManager/issues/4619",
+  "issue_title": "Can't Delete Files with Same Name to Trash Bin",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\TeamAmaze_AmazeFileManager",
+  "media_files": [],
+  "started_at": "2026-06-21T15:55:20.051-05:00",
+  "finished_at": "2026-06-21T15:59:32.897-05:00",
+  "duration_seconds": 252.84,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"TrashBin|trash|Trash|metadata|.AmazeData\",\n      \"finding\": \"Recursive search found trash-bin integration in AppConfig.java, DeleteTask.java, HybridFile.java, LoadFilesListTask.java, MainActivityViewModel.kt, and a Gradle dependency on com.github.TeamAmaze:AmazeTrashBin:1.0.10.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"read_file\",\n      \"target\": \"app/build.gradle\",\n      \"finding\": \"The app depends on external library implementation 'com.github.TeamAmaze:AmazeTrashBin:1.0.10'; no local source for that library is present in the repo.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/application/AppConfig.java\",\n      \"finding\": \"AppConfig defines TRASH_BIN_BASE_PATH as external storage plus '.AmazeData' and constructs a singleton TrashBin with getTrashBinConfig().\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/application/AppConfig.java\",\n      \"finding\": \"getTrashBinConfig() creates new TrashBinConfig(TRASH_BIN_BASE_PATH, days, bytes, numOfFiles, intervalHours, false, true), globally configuring one shared trash root under .AmazeData.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/DeleteTask.java\",\n      \"finding\": \"DeleteTask.doDeleteFile() routes non-permanent local deletes to file.moveToBin(applicationContext), so normal UI deletion uses the configured TrashBin instead of permanent deletion.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"trace_call\",\n      \"target\": \"DeleteTask.doDeleteFile -> HybridFile.moveToBin\",\n      \"finding\": \"For local files and folders, the delete operation reaches HybridFile.moveToBin(), which delegates destination selection to AppConfig.getInstance().getTrashBinInstance().moveToBin(...).\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/HybridFile.java\",\n      \"finding\": \"HybridFile.moveToBin() builds a singleton list from this.toTrashBinFile(context), then calls trashBin.moveToBin(..., true, callback) where the callback simply renames source to the library-provided trashBinDestination.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/HybridFile.java\",\n      \"finding\": \"The rename callback in moveToBin() does not resolve destination conflicts; if the library supplies an already-existing destination, source.renameTo(dest) returns false.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/HybridFile.java\",\n      \"finding\": \"HybridFile.toTrashBinFile() constructs TrashBinFile from simple name, directory flag, original path, size, and null delete time: new TrashBinFile(getName(context), isDirectory(context), path, length(context), null).\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/activities/MainActivityViewModel.kt\",\n      \"finding\": \"moveToBinLightWeight() uses the same generateBaseFile().toTrashBinFile(applicationContext) and the same TrashBin.moveToBin() pattern, so the same metadata/config issue affects lightweight trash movement too.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/LoadFilesListTask.java\",\n      \"finding\": \"Trash listing calls trashBin.listFilesInBin() and displays each item using trashBinFile.getDeletedPath(config), confirming the library derives a deleted-path location from the shared config.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/utils/MainActivityHelper.java\",\n      \"finding\": \"MainActivityHelper.deleteFiles() starts DeleteTask for allowed file deletions, confirming the main delete UI reaches the same DeleteTask path.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/dialogs/GeneralDialogCreation.java\",\n      \"finding\": \"The delete confirmation dialog passes deletePermanentlyCheckbox state to mainActivityHelper.deleteFiles(); unchecked local deletion therefore goes to trash.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/test/java/com/amaze/filemanager/asynchronous/asynctasks/AbstractDeleteTaskTestBase.kt\",\n      \"finding\": \"Existing delete task tests exercise DeleteTask(ctx, false) but do not cover duplicate-name trash-bin collisions.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"grep_pattern\",\n      \"target\": \"TrashBinConfig|TrashBinFile|AmazeTrashBin|metadata.json|TrashBinFiles\",\n      \"finding\": \"No local implementation of TrashBinConfig or TrashBinFile exists; app code only imports the dependency and passes configuration/metadata into it.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"grep_pattern\",\n      \"target\": \"moveToBin\\\\(|toTrashBinFile|getDeletedPath|listFilesInBin|deletePermanently|restoreFromBin\",\n      \"finding\": \"Only HybridFile and MainActivityViewModel create TrashBinFile instances for moving to the bin; both share HybridFile.toTrashBinFile().\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/drag/DragToTrashListener.kt\",\n      \"finding\": \"DragToTrashListener only dispatches ACTION_DROP to a callback; it does not affect trash destination naming.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/fragments/TabFragment.java\",\n      \"finding\": \"The drag-to-trash target opens the same deleteFilesDialog, so drag deletion also reaches the normal DeleteTask path rather than a separate collision-handling implementation.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/adapters/data/LayoutElementParcelable.java\",\n      \"finding\": \"generateBaseFile() preserves title, desc path, size, directory flag, and mode before toTrashBinFile() creates the TrashBinFile.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"AppConfig constructs a flat trash-bin configuration rooted at .AmazeData, causing same-name files/folders to map to the same TrashBinFiles destination.\",\n      \"finding\": \"The bug report's concrete path '/storage/emulated/0/.AmazeData/TrashBinFiles' follows directly from TRASH_BIN_BASE_PATH plus the trash library's fixed TrashBinFiles area; no per-deletion timestamp or unique subdirectory is configured by app code.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"DeleteTask.doDeleteFile()\",\n      \"finding\": \"DeleteTask only chooses between trash and permanent deletion; it does not compute or configure the trash destination, so it explains entry into the failing path but not the name collision.\"\n    },\n    {\n      \"step\": 22,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"HybridFile.moveToBin() rename callback\",\n      \"finding\": \"The callback fails when destination already exists, but it receives trashBinDestination from the TrashBin library; it is not the source of the flat shared destination namespace.\"\n    },\n    {\n      \"step\": 23,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"HybridFile.toTrashBinFile()\",\n      \"finding\": \"This supplies the simple name and original path for metadata, but the collision described by the report is specifically caused by all trash files being stored under one configured TrashBinFiles directory; the global TrashBinConfig construction is the root app-side cause.\"\n    },\n    {\n      \"step\": 24,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Fault statement is AppConfig.java line 319: TRASH_BIN_BASE_PATH, days, bytes, numOfFiles, intervalHours, false, true\",\n      \"finding\": \"This statement configures one shared trash-bin base for all deletions and provides no timestamp-scoped destination, making two deleted folders with the same name collide in the trash root.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"app/src/main/java/com/amaze/filemanager/application/AppConfig.java\",\n      \"class\": \"AppConfig\",\n      \"method\": \"getTrashBinConfig()\",\n      \"line\": 319,\n      \"statement\": \"              TRASH_BIN_BASE_PATH, days, bytes, numOfFiles, intervalHours, false, true);\",\n      \"suspicion_score\": 0.92,\n      \"reasoning\": \"This is the app-side statement that globally configures the trash bin storage root. All local deletes eventually call AppConfig.getInstance().getTrashBinInstance().moveToBin(), and the library derives deleted paths from this config. Because the config uses one shared .AmazeData trash area rather than a per-deletion unique subdirectory, deleting a recreated folder with the same name maps to an already-existing trash destination and the rename fails.\"\n    },\n    {\n      \"rank\": 2,\n      \"file\": \"app/src/main/java/com/amaze/filemanager/filesystem/HybridFile.java\",\n      \"class\": \"HybridFile\",\n      \"method\": \"toTrashBinFile(Context context)\",\n      \"line\": 1841,\n      \"statement\": \"    return new TrashBinFile(getName(context), isDirectory(context), path, length(context), null);\",\n      \"suspicion_score\": 0.76,\n      \"reasoning\": \"This creates the trash metadata using the simple file/folder name and a null delete time, so it does not itself provide a unique timestamp component. However, destination layout is determined by the TrashBin configuration and library, making AppConfig's flat config the more direct fault.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"app/src/main/java/com/amaze/filemanager/application/AppConfig.java\",\n    \"class\": \"AppConfig\",\n    \"method\": \"getTrashBinConfig()\",\n    \"line\": 319,\n    \"statement\": \"              TRASH_BIN_BASE_PATH, days, bytes, numOfFiles, intervalHours, false, true);\",\n    \"confidence\": 0.92,\n    \"causal_chain\": \"The delete UI calls GeneralDialogCreation.deleteFilesDialog(), which calls MainActivityHelper.deleteFiles(), which starts DeleteTask with doDeletePermanently=false. DeleteTask.doDeleteFile() calls HybridFile.moveToBin() for local files. HybridFile.moveToBin() obtains AppConfig.getTrashBinInstance(), whose TrashBin was constructed with getTrashBinConfig(). That config is built from the single TRASH_BIN_BASE_PATH '.AmazeData', so the trash library stores deleted entries in one shared TrashBinFiles namespace. When folder '/Download/a' is deleted once, it occupies the trash destination for name 'a'; when a new '/Download/a' is deleted later, the same configured namespace yields the same destination, source.renameTo(dest) fails because the destination already exists, and the folder is not moved to trash.\",\n    \"fix_hint\": \"Configure or generate trash destinations with a unique per-deletion component such as a Unix timestamp subdirectory under TrashBinFiles, and ensure TrashBinFile metadata/listing uses that unique path.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "TrashBin|trash|Trash|metadata|.AmazeData",
+        "finding": "Recursive search found trash-bin integration in AppConfig.java, DeleteTask.java, HybridFile.java, LoadFilesListTask.java, MainActivityViewModel.kt, and a Gradle dependency on com.github.TeamAmaze:AmazeTrashBin:1.0.10."
+      },
+      {
+        "step": 2,
+        "action": "read_file",
+        "target": "app/build.gradle",
+        "finding": "The app depends on external library implementation 'com.github.TeamAmaze:AmazeTrashBin:1.0.10'; no local source for that library is present in the repo."
+      },
+      {
+        "step": 3,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/application/AppConfig.java",
+        "finding": "AppConfig defines TRASH_BIN_BASE_PATH as external storage plus '.AmazeData' and constructs a singleton TrashBin with getTrashBinConfig()."
+      },
+      {
+        "step": 4,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/application/AppConfig.java",
+        "finding": "getTrashBinConfig() creates new TrashBinConfig(TRASH_BIN_BASE_PATH, days, bytes, numOfFiles, intervalHours, false, true), globally configuring one shared trash root under .AmazeData."
+      },
+      {
+        "step": 5,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/DeleteTask.java",
+        "finding": "DeleteTask.doDeleteFile() routes non-permanent local deletes to file.moveToBin(applicationContext), so normal UI deletion uses the configured TrashBin instead of permanent deletion."
+      },
+      {
+        "step": 6,
+        "action": "trace_call",
+        "target": "DeleteTask.doDeleteFile -> HybridFile.moveToBin",
+        "finding": "For local files and folders, the delete operation reaches HybridFile.moveToBin(), which delegates destination selection to AppConfig.getInstance().getTrashBinInstance().moveToBin(...)."
+      },
+      {
+        "step": 7,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/HybridFile.java",
+        "finding": "HybridFile.moveToBin() builds a singleton list from this.toTrashBinFile(context), then calls trashBin.moveToBin(..., true, callback) where the callback simply renames source to the library-provided trashBinDestination."
+      },
+      {
+        "step": 8,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/HybridFile.java",
+        "finding": "The rename callback in moveToBin() does not resolve destination conflicts; if the library supplies an already-existing destination, source.renameTo(dest) returns false."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/HybridFile.java",
+        "finding": "HybridFile.toTrashBinFile() constructs TrashBinFile from simple name, directory flag, original path, size, and null delete time: new TrashBinFile(getName(context), isDirectory(context), path, length(context), null)."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/activities/MainActivityViewModel.kt",
+        "finding": "moveToBinLightWeight() uses the same generateBaseFile().toTrashBinFile(applicationContext) and the same TrashBin.moveToBin() pattern, so the same metadata/config issue affects lightweight trash movement too."
+      },
+      {
+        "step": 11,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/LoadFilesListTask.java",
+        "finding": "Trash listing calls trashBin.listFilesInBin() and displays each item using trashBinFile.getDeletedPath(config), confirming the library derives a deleted-path location from the shared config."
+      },
+      {
+        "step": 12,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/utils/MainActivityHelper.java",
+        "finding": "MainActivityHelper.deleteFiles() starts DeleteTask for allowed file deletions, confirming the main delete UI reaches the same DeleteTask path."
+      },
+      {
+        "step": 13,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/dialogs/GeneralDialogCreation.java",
+        "finding": "The delete confirmation dialog passes deletePermanentlyCheckbox state to mainActivityHelper.deleteFiles(); unchecked local deletion therefore goes to trash."
+      },
+      {
+        "step": 14,
+        "action": "read_file",
+        "target": "app/src/test/java/com/amaze/filemanager/asynchronous/asynctasks/AbstractDeleteTaskTestBase.kt",
+        "finding": "Existing delete task tests exercise DeleteTask(ctx, false) but do not cover duplicate-name trash-bin collisions."
+      },
+      {
+        "step": 15,
+        "action": "grep_pattern",
+        "target": "TrashBinConfig|TrashBinFile|AmazeTrashBin|metadata.json|TrashBinFiles",
+        "finding": "No local implementation of TrashBinConfig or TrashBinFile exists; app code only imports the dependency and passes configuration/metadata into it."
+      },
+      {
+        "step": 16,
+        "action": "grep_pattern",
+        "target": "moveToBin\\(|toTrashBinFile|getDeletedPath|listFilesInBin|deletePermanently|restoreFromBin",
+        "finding": "Only HybridFile and MainActivityViewModel create TrashBinFile instances for moving to the bin; both share HybridFile.toTrashBinFile()."
+      },
+      {
+        "step": 17,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/drag/DragToTrashListener.kt",
+        "finding": "DragToTrashListener only dispatches ACTION_DROP to a callback; it does not affect trash destination naming."
+      },
+      {
+        "step": 18,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/fragments/TabFragment.java",
+        "finding": "The drag-to-trash target opens the same deleteFilesDialog, so drag deletion also reaches the normal DeleteTask path rather than a separate collision-handling implementation."
+      },
+      {
+        "step": 19,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/adapters/data/LayoutElementParcelable.java",
+        "finding": "generateBaseFile() preserves title, desc path, size, directory flag, and mode before toTrashBinFile() creates the TrashBinFile."
+      },
+      {
+        "step": 20,
+        "action": "form_hypothesis",
+        "target": "AppConfig constructs a flat trash-bin configuration rooted at .AmazeData, causing same-name files/folders to map to the same TrashBinFiles destination.",
+        "finding": "The bug report's concrete path '/storage/emulated/0/.AmazeData/TrashBinFiles' follows directly from TRASH_BIN_BASE_PATH plus the trash library's fixed TrashBinFiles area; no per-deletion timestamp or unique subdirectory is configured by app code."
+      },
+      {
+        "step": 21,
+        "action": "eliminate_candidate",
+        "target": "DeleteTask.doDeleteFile()",
+        "finding": "DeleteTask only chooses between trash and permanent deletion; it does not compute or configure the trash destination, so it explains entry into the failing path but not the name collision."
+      },
+      {
+        "step": 22,
+        "action": "eliminate_candidate",
+        "target": "HybridFile.moveToBin() rename callback",
+        "finding": "The callback fails when destination already exists, but it receives trashBinDestination from the TrashBin library; it is not the source of the flat shared destination namespace."
+      },
+      {
+        "step": 23,
+        "action": "eliminate_candidate",
+        "target": "HybridFile.toTrashBinFile()",
+        "finding": "This supplies the simple name and original path for metadata, but the collision described by the report is specifically caused by all trash files being stored under one configured TrashBinFiles directory; the global TrashBinConfig construction is the root app-side cause."
+      },
+      {
+        "step": 24,
+        "action": "form_hypothesis",
+        "target": "Fault statement is AppConfig.java line 319: TRASH_BIN_BASE_PATH, days, bytes, numOfFiles, intervalHours, false, true",
+        "finding": "This statement configures one shared trash-bin base for all deletions and provides no timestamp-scoped destination, making two deleted folders with the same name collide in the trash root."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "app/src/main/java/com/amaze/filemanager/application/AppConfig.java",
+        "class": "AppConfig",
+        "method": "getTrashBinConfig()",
+        "line": 319,
+        "statement": "              TRASH_BIN_BASE_PATH, days, bytes, numOfFiles, intervalHours, false, true);",
+        "suspicion_score": 0.92,
+        "reasoning": "This is the app-side statement that globally configures the trash bin storage root. All local deletes eventually call AppConfig.getInstance().getTrashBinInstance().moveToBin(), and the library derives deleted paths from this config. Because the config uses one shared .AmazeData trash area rather than a per-deletion unique subdirectory, deleting a recreated folder with the same name maps to an already-existing trash destination and the rename fails."
+      },
+      {
+        "rank": 2,
+        "file": "app/src/main/java/com/amaze/filemanager/filesystem/HybridFile.java",
+        "class": "HybridFile",
+        "method": "toTrashBinFile(Context context)",
+        "line": 1841,
+        "statement": "    return new TrashBinFile(getName(context), isDirectory(context), path, length(context), null);",
+        "suspicion_score": 0.76,
+        "reasoning": "This creates the trash metadata using the simple file/folder name and a null delete time, so it does not itself provide a unique timestamp component. However, destination layout is determined by the TrashBin configuration and library, making AppConfig's flat config the more direct fault."
+      }
+    ],
+    "final_answer": {
+      "file": "app/src/main/java/com/amaze/filemanager/application/AppConfig.java",
+      "class": "AppConfig",
+      "method": "getTrashBinConfig()",
+      "line": 319,
+      "statement": "              TRASH_BIN_BASE_PATH, days, bytes, numOfFiles, intervalHours, false, true);",
+      "confidence": 0.92,
+      "causal_chain": "The delete UI calls GeneralDialogCreation.deleteFilesDialog(), which calls MainActivityHelper.deleteFiles(), which starts DeleteTask with doDeletePermanently=false. DeleteTask.doDeleteFile() calls HybridFile.moveToBin() for local files. HybridFile.moveToBin() obtains AppConfig.getTrashBinInstance(), whose TrashBin was constructed with getTrashBinConfig(). That config is built from the single TRASH_BIN_BASE_PATH '.AmazeData', so the trash library stores deleted entries in one shared TrashBinFiles namespace. When folder '/Download/a' is deleted once, it occupies the trash destination for name 'a'; when a new '/Download/a' is deleted later, the same configured namespace yields the same destination, source.renameTo(dest) fails because the destination already exists, and the folder is not moved to trash.",
+      "fix_hint": "Configure or generate trash destinations with a unique per-deletion component such as a Unix timestamp subdirectory under TrashBinFiles, and ensure TrashBinFile metadata/listing uses that unique path."
+    }
+  },
+  "error": null
+}

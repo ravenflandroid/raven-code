@@ -1,0 +1,185 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "Simplenote",
+  "issue_id": 1765,
+  "issue_url": "https://github.com/Automattic/simplenote-android/issues/1765",
+  "issue_title": "History and Share Bottom Sheets Do Not Appear Manually and Do Reappear Automatically After Dismiss",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\Automattic_simplenote_android",
+  "media_files": [
+    "3ba5f248-67c2-48cf-b614-908875fbfcde",
+    "c60ec46f-19a2-4c15-a5c4-51ec401274d1"
+  ],
+  "started_at": "2026-06-21T13:56:43.195-05:00",
+  "finished_at": "2026-06-21T14:00:44.731-05:00",
+  "duration_seconds": 241.53,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"History|Share|Collaborators|BottomSheet|menu_history|menu_share\",\n      \"finding\": \"The affected UI is implemented in the note editor flow. Relevant hits included NoteEditorFragment.java, NotesActivity.java, HistoryBottomSheetDialog.java, ShareBottomSheetDialog.java, BottomSheetDialogBase.java, and res/menu/note_editor.xml.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"inspect_layout_xml\",\n      \"target\": \"Simplenote/src/main/res/menu/note_editor.xml\",\n      \"finding\": \"The overflow menu declares menu_share, menu_history, and menu_collaborators. These match the report's manual trigger sequence.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"inspect_manifest\",\n      \"target\": \"Simplenote/src/main/AndroidManifest.xml\",\n      \"finding\": \"The main editor/list entry points are NotesActivity and NoteEditorActivity, and CollaboratorsActivity is a separate activity launched from the editor menu.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"read_file\",\n      \"target\": \"Simplenote/src/main/java/com/automattic/simplenote/NotesActivity.java\",\n      \"finding\": \"NotesActivity participates in the editor menu on large landscape screens and forwards keyboard/menu actions to NoteEditorFragment.showHistory() and NoteEditorFragment.shareNote(). It also dismisses existing History, Info, and Share bottom sheets when returning to list view.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"read_file\",\n      \"target\": \"Simplenote/src/main/java/com/automattic/simplenote/NoteEditorActivity.java\",\n      \"finding\": \"Portrait editor shortcuts also route to the same NoteEditorFragment.showHistory() and NoteEditorFragment.shareNote() methods, so the concrete faulty path is inside NoteEditorFragment and the dialog fragments, not an activity-specific menu handler.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"Simplenote/src/main/java/com/automattic/simplenote/NoteEditorFragment.java\",\n      \"finding\": \"NoteEditorFragment constructs one InfoBottomSheetDialog, one ShareBottomSheetDialog, and one HistoryBottomSheetDialog in onCreate(). The overflow menu cases call showHistory(), shareNote(), and navigateToCollaborators().\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"trace_call\",\n      \"target\": \"NoteEditorFragment.onOptionsItemSelected(MenuItem item)\",\n      \"finding\": \"menu_history calls showHistory() at line 761; menu_share calls shareNote() at line 782; menu_collaborators calls navigateToCollaborators() at line 758 and starts CollaboratorsActivity.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"trace_call\",\n      \"target\": \"NoteEditorFragment.shareNote() -> showShareSheet()\",\n      \"finding\": \"shareNote() clears editor focus and calls showShareSheet(). showShareSheet() only calls mShareBottomSheet.show(...) if mShareBottomSheet is not null and !mShareBottomSheet.isAdded().\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"trace_call\",\n      \"target\": \"NoteEditorFragment.showHistory() -> showHistorySheet()\",\n      \"finding\": \"showHistory() clears editor focus, starts a timeout, and calls showHistorySheet(). showHistorySheet() only requests revisions and calls mHistoryBottomSheet.show(...) if !mHistoryBottomSheet.isAdded().\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"Simplenote/src/main/java/com/automattic/simplenote/ShareBottomSheetDialog.java\",\n      \"finding\": \"ShareBottomSheetDialog extends BottomSheetDialogBase. Its show(FragmentManager, Note) method calls showNow(manager, TAG), configures publish/unpublish controls, sets the share text, and installs the share-button adapter. Its dismiss listener only invokes onShareDismissed(), which is empty in NoteEditorFragment.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"read_file\",\n      \"target\": \"Simplenote/src/main/java/com/automattic/simplenote/HistoryBottomSheetDialog.java\",\n      \"finding\": \"HistoryBottomSheetDialog extends BottomSheetDialogBase. Its show(FragmentManager, Note) method calls showNow(manager, TAG), stores mNote, resets mDidTapButton, and updates loading/progress UI. Its dismiss listener calls onHistoryDismissed() and clears mNote.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"read_file\",\n      \"target\": \"Simplenote/src/main/java/com/automattic/simplenote/BottomSheetDialogBase.java\",\n      \"finding\": \"All app bottom sheets extend BottomSheetDialogBase. Its onCreateDialog(Bundle) calls setRetainInstance(true) before returning a new BottomSheetDialog.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Retained DialogFragment remains added after outside dismiss\",\n      \"finding\": \"If the BottomSheetDialogFragment is retained, dismissing the dialog by tapping outside can leave the retained fragment instance in an added/stale state. The next manual trigger is skipped by the !isAdded() guard, matching the report's 'does not appear when triggered manually after dismiss'.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Retained bottom sheet reappears on activity pause/resume\",\n      \"finding\": \"Starting CollaboratorsActivity pauses/stops the editor, then returning resumes it. A retained dialog fragment that was dismissed but not fully removed can recreate/reattach its dialog during this lifecycle transition, matching the report's 'reappears automatically after Collaborators back arrow'.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"read_file\",\n      \"target\": \"Simplenote/src/main/java/com/automattic/simplenote/InfoBottomSheetDialog.java\",\n      \"finding\": \"InfoBottomSheetDialog shares the same BottomSheetDialogBase retention behavior, but it is not one of the reported menu items. This supports the base class as the shared mechanism while keeping the observed fault on History and Share.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"read_file\",\n      \"target\": \"Simplenote/src/main/java/com/automattic/simplenote/CollaboratorsActivity.kt\",\n      \"finding\": \"CollaboratorsActivity is a normal separate activity with a toolbar back action that finishes the activity. It does not directly show History or Share, so its role is lifecycle pause/resume of the editor, not direct bottom-sheet invocation.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"NoteEditorFragment.onOptionsItemSelected menu cases\",\n      \"finding\": \"The menu cases call the correct methods for History and Share, and Collaborators only starts CollaboratorsActivity. There is no wrong item ID dispatch that would directly explain the stale reappearance.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"ShareBottomSheetDialog.show(FragmentManager manager, Note note)\",\n      \"finding\": \"The share dialog show implementation configures UI after showNow(), but the method is never reached on the failed second manual trigger if isAdded() remains true in NoteEditorFragment.showShareSheet().\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"HistoryBottomSheetDialog.show(FragmentManager manager, Note note)\",\n      \"finding\": \"The history dialog show implementation resets mDidTapButton and sets mNote, but the method is never reached on the failed second manual trigger if isAdded() remains true in NoteEditorFragment.showHistorySheet().\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"BottomSheetDialogBase.onCreateDialog setRetainInstance(true)\",\n      \"finding\": \"This single shared statement affects both History and Share bottom sheets, explains stale isAdded() after dismiss, and explains automatic reappearance after leaving and returning from CollaboratorsActivity.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"Simplenote/src/main/java/com/automattic/simplenote/BottomSheetDialogBase.java\",\n      \"class\": \"BottomSheetDialogBase\",\n      \"method\": \"onCreateDialog(Bundle savedInstanceState)\",\n      \"line\": 25,\n      \"statement\": \"setRetainInstance(true);\",\n      \"suspicion_score\": 0.95,\n      \"reasoning\": \"HistoryBottomSheetDialog and ShareBottomSheetDialog both inherit this retained DialogFragment behavior. Retaining a BottomSheetDialogFragment across dismiss/activity lifecycle leaves the fragment instance stale/added after an outside dismiss, so later manual show attempts are skipped by !isAdded(), and the retained dialog can be recreated when the editor resumes after CollaboratorsActivity.\"\n    },\n    {\n      \"rank\": 2,\n      \"file\": \"Simplenote/src/main/java/com/automattic/simplenote/NoteEditorFragment.java\",\n      \"class\": \"NoteEditorFragment\",\n      \"method\": \"showShareSheet()\",\n      \"line\": 1614,\n      \"statement\": \"if (isAdded() && mShareBottomSheet != null && !mShareBottomSheet.isAdded()) {\",\n      \"suspicion_score\": 0.72,\n      \"reasoning\": \"This guard directly blocks the second manual Share show when the retained ShareBottomSheetDialog still reports isAdded() after being dismissed, but it is a symptom amplifier rather than the shared root cause.\"\n    },\n    {\n      \"rank\": 3,\n      \"file\": \"Simplenote/src/main/java/com/automattic/simplenote/NoteEditorFragment.java\",\n      \"class\": \"NoteEditorFragment\",\n      \"method\": \"showHistorySheet()\",\n      \"line\": 1626,\n      \"statement\": \"if (isAdded() && mHistoryBottomSheet != null && !mHistoryBottomSheet.isAdded()) {\",\n      \"suspicion_score\": 0.72,\n      \"reasoning\": \"This guard directly blocks the second manual History show when the retained HistoryBottomSheetDialog still reports isAdded() after being dismissed, but it does not by itself explain why both affected dialogs automatically reappear after an activity lifecycle transition.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"Simplenote/src/main/java/com/automattic/simplenote/BottomSheetDialogBase.java\",\n    \"class\": \"BottomSheetDialogBase\",\n    \"method\": \"onCreateDialog(Bundle savedInstanceState)\",\n    \"line\": 25,\n    \"statement\": \"setRetainInstance(true);\",\n    \"confidence\": 0.95,\n    \"causal_chain\": \"The editor overflow menu calls NoteEditorFragment.shareNote() or showHistory(). Those call showShareSheet() or showHistorySheet(), which show one long-lived dialog instance only when !dialog.isAdded(). The first manual trigger succeeds and the user dismisses the bottom sheet by tapping outside. Because BottomSheetDialogBase makes every bottom sheet retained with setRetainInstance(true), the dismissed DialogFragment can remain in a stale added state. On the next manual trigger, the !isAdded() guard evaluates false, so no showNow() call occurs and the sheet does not appear. When the user opens CollaboratorsActivity and returns, the editor lifecycle resumes and the retained stale dialog fragment recreates/reattaches its dialog, so the previously dismissed History or Share sheet appears automatically.\",\n    \"fix_hint\": \"Remove the retained DialogFragment behavior from BottomSheetDialogBase and let dismissed bottom sheets be removed normally, or recreate/clear the dialog fragment instance after dismiss before checking isAdded().\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "History|Share|Collaborators|BottomSheet|menu_history|menu_share",
+        "finding": "The affected UI is implemented in the note editor flow. Relevant hits included NoteEditorFragment.java, NotesActivity.java, HistoryBottomSheetDialog.java, ShareBottomSheetDialog.java, BottomSheetDialogBase.java, and res/menu/note_editor.xml."
+      },
+      {
+        "step": 2,
+        "action": "inspect_layout_xml",
+        "target": "Simplenote/src/main/res/menu/note_editor.xml",
+        "finding": "The overflow menu declares menu_share, menu_history, and menu_collaborators. These match the report's manual trigger sequence."
+      },
+      {
+        "step": 3,
+        "action": "inspect_manifest",
+        "target": "Simplenote/src/main/AndroidManifest.xml",
+        "finding": "The main editor/list entry points are NotesActivity and NoteEditorActivity, and CollaboratorsActivity is a separate activity launched from the editor menu."
+      },
+      {
+        "step": 4,
+        "action": "read_file",
+        "target": "Simplenote/src/main/java/com/automattic/simplenote/NotesActivity.java",
+        "finding": "NotesActivity participates in the editor menu on large landscape screens and forwards keyboard/menu actions to NoteEditorFragment.showHistory() and NoteEditorFragment.shareNote(). It also dismisses existing History, Info, and Share bottom sheets when returning to list view."
+      },
+      {
+        "step": 5,
+        "action": "read_file",
+        "target": "Simplenote/src/main/java/com/automattic/simplenote/NoteEditorActivity.java",
+        "finding": "Portrait editor shortcuts also route to the same NoteEditorFragment.showHistory() and NoteEditorFragment.shareNote() methods, so the concrete faulty path is inside NoteEditorFragment and the dialog fragments, not an activity-specific menu handler."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "Simplenote/src/main/java/com/automattic/simplenote/NoteEditorFragment.java",
+        "finding": "NoteEditorFragment constructs one InfoBottomSheetDialog, one ShareBottomSheetDialog, and one HistoryBottomSheetDialog in onCreate(). The overflow menu cases call showHistory(), shareNote(), and navigateToCollaborators()."
+      },
+      {
+        "step": 7,
+        "action": "trace_call",
+        "target": "NoteEditorFragment.onOptionsItemSelected(MenuItem item)",
+        "finding": "menu_history calls showHistory() at line 761; menu_share calls shareNote() at line 782; menu_collaborators calls navigateToCollaborators() at line 758 and starts CollaboratorsActivity."
+      },
+      {
+        "step": 8,
+        "action": "trace_call",
+        "target": "NoteEditorFragment.shareNote() -> showShareSheet()",
+        "finding": "shareNote() clears editor focus and calls showShareSheet(). showShareSheet() only calls mShareBottomSheet.show(...) if mShareBottomSheet is not null and !mShareBottomSheet.isAdded()."
+      },
+      {
+        "step": 9,
+        "action": "trace_call",
+        "target": "NoteEditorFragment.showHistory() -> showHistorySheet()",
+        "finding": "showHistory() clears editor focus, starts a timeout, and calls showHistorySheet(). showHistorySheet() only requests revisions and calls mHistoryBottomSheet.show(...) if !mHistoryBottomSheet.isAdded()."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "Simplenote/src/main/java/com/automattic/simplenote/ShareBottomSheetDialog.java",
+        "finding": "ShareBottomSheetDialog extends BottomSheetDialogBase. Its show(FragmentManager, Note) method calls showNow(manager, TAG), configures publish/unpublish controls, sets the share text, and installs the share-button adapter. Its dismiss listener only invokes onShareDismissed(), which is empty in NoteEditorFragment."
+      },
+      {
+        "step": 11,
+        "action": "read_file",
+        "target": "Simplenote/src/main/java/com/automattic/simplenote/HistoryBottomSheetDialog.java",
+        "finding": "HistoryBottomSheetDialog extends BottomSheetDialogBase. Its show(FragmentManager, Note) method calls showNow(manager, TAG), stores mNote, resets mDidTapButton, and updates loading/progress UI. Its dismiss listener calls onHistoryDismissed() and clears mNote."
+      },
+      {
+        "step": 12,
+        "action": "read_file",
+        "target": "Simplenote/src/main/java/com/automattic/simplenote/BottomSheetDialogBase.java",
+        "finding": "All app bottom sheets extend BottomSheetDialogBase. Its onCreateDialog(Bundle) calls setRetainInstance(true) before returning a new BottomSheetDialog."
+      },
+      {
+        "step": 13,
+        "action": "form_hypothesis",
+        "target": "Retained DialogFragment remains added after outside dismiss",
+        "finding": "If the BottomSheetDialogFragment is retained, dismissing the dialog by tapping outside can leave the retained fragment instance in an added/stale state. The next manual trigger is skipped by the !isAdded() guard, matching the report's 'does not appear when triggered manually after dismiss'."
+      },
+      {
+        "step": 14,
+        "action": "form_hypothesis",
+        "target": "Retained bottom sheet reappears on activity pause/resume",
+        "finding": "Starting CollaboratorsActivity pauses/stops the editor, then returning resumes it. A retained dialog fragment that was dismissed but not fully removed can recreate/reattach its dialog during this lifecycle transition, matching the report's 'reappears automatically after Collaborators back arrow'."
+      },
+      {
+        "step": 15,
+        "action": "read_file",
+        "target": "Simplenote/src/main/java/com/automattic/simplenote/InfoBottomSheetDialog.java",
+        "finding": "InfoBottomSheetDialog shares the same BottomSheetDialogBase retention behavior, but it is not one of the reported menu items. This supports the base class as the shared mechanism while keeping the observed fault on History and Share."
+      },
+      {
+        "step": 16,
+        "action": "read_file",
+        "target": "Simplenote/src/main/java/com/automattic/simplenote/CollaboratorsActivity.kt",
+        "finding": "CollaboratorsActivity is a normal separate activity with a toolbar back action that finishes the activity. It does not directly show History or Share, so its role is lifecycle pause/resume of the editor, not direct bottom-sheet invocation."
+      },
+      {
+        "step": 17,
+        "action": "eliminate_candidate",
+        "target": "NoteEditorFragment.onOptionsItemSelected menu cases",
+        "finding": "The menu cases call the correct methods for History and Share, and Collaborators only starts CollaboratorsActivity. There is no wrong item ID dispatch that would directly explain the stale reappearance."
+      },
+      {
+        "step": 18,
+        "action": "eliminate_candidate",
+        "target": "ShareBottomSheetDialog.show(FragmentManager manager, Note note)",
+        "finding": "The share dialog show implementation configures UI after showNow(), but the method is never reached on the failed second manual trigger if isAdded() remains true in NoteEditorFragment.showShareSheet()."
+      },
+      {
+        "step": 19,
+        "action": "eliminate_candidate",
+        "target": "HistoryBottomSheetDialog.show(FragmentManager manager, Note note)",
+        "finding": "The history dialog show implementation resets mDidTapButton and sets mNote, but the method is never reached on the failed second manual trigger if isAdded() remains true in NoteEditorFragment.showHistorySheet()."
+      },
+      {
+        "step": 20,
+        "action": "form_hypothesis",
+        "target": "BottomSheetDialogBase.onCreateDialog setRetainInstance(true)",
+        "finding": "This single shared statement affects both History and Share bottom sheets, explains stale isAdded() after dismiss, and explains automatic reappearance after leaving and returning from CollaboratorsActivity."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "Simplenote/src/main/java/com/automattic/simplenote/BottomSheetDialogBase.java",
+        "class": "BottomSheetDialogBase",
+        "method": "onCreateDialog(Bundle savedInstanceState)",
+        "line": 25,
+        "statement": "setRetainInstance(true);",
+        "suspicion_score": 0.95,
+        "reasoning": "HistoryBottomSheetDialog and ShareBottomSheetDialog both inherit this retained DialogFragment behavior. Retaining a BottomSheetDialogFragment across dismiss/activity lifecycle leaves the fragment instance stale/added after an outside dismiss, so later manual show attempts are skipped by !isAdded(), and the retained dialog can be recreated when the editor resumes after CollaboratorsActivity."
+      },
+      {
+        "rank": 2,
+        "file": "Simplenote/src/main/java/com/automattic/simplenote/NoteEditorFragment.java",
+        "class": "NoteEditorFragment",
+        "method": "showShareSheet()",
+        "line": 1614,
+        "statement": "if (isAdded() && mShareBottomSheet != null && !mShareBottomSheet.isAdded()) {",
+        "suspicion_score": 0.72,
+        "reasoning": "This guard directly blocks the second manual Share show when the retained ShareBottomSheetDialog still reports isAdded() after being dismissed, but it is a symptom amplifier rather than the shared root cause."
+      },
+      {
+        "rank": 3,
+        "file": "Simplenote/src/main/java/com/automattic/simplenote/NoteEditorFragment.java",
+        "class": "NoteEditorFragment",
+        "method": "showHistorySheet()",
+        "line": 1626,
+        "statement": "if (isAdded() && mHistoryBottomSheet != null && !mHistoryBottomSheet.isAdded()) {",
+        "suspicion_score": 0.72,
+        "reasoning": "This guard directly blocks the second manual History show when the retained HistoryBottomSheetDialog still reports isAdded() after being dismissed, but it does not by itself explain why both affected dialogs automatically reappear after an activity lifecycle transition."
+      }
+    ],
+    "final_answer": {
+      "file": "Simplenote/src/main/java/com/automattic/simplenote/BottomSheetDialogBase.java",
+      "class": "BottomSheetDialogBase",
+      "method": "onCreateDialog(Bundle savedInstanceState)",
+      "line": 25,
+      "statement": "setRetainInstance(true);",
+      "confidence": 0.95,
+      "causal_chain": "The editor overflow menu calls NoteEditorFragment.shareNote() or showHistory(). Those call showShareSheet() or showHistorySheet(), which show one long-lived dialog instance only when !dialog.isAdded(). The first manual trigger succeeds and the user dismisses the bottom sheet by tapping outside. Because BottomSheetDialogBase makes every bottom sheet retained with setRetainInstance(true), the dismissed DialogFragment can remain in a stale added state. On the next manual trigger, the !isAdded() guard evaluates false, so no showNow() call occurs and the sheet does not appear. When the user opens CollaboratorsActivity and returns, the editor lifecycle resumes and the retained stale dialog fragment recreates/reattaches its dialog, so the previously dismissed History or Share sheet appears automatically.",
+      "fix_hint": "Remove the retained DialogFragment behavior from BottomSheetDialogBase and let dismissed bottom sheets be removed normally, or recreate/clear the dialog fragment instance after dismiss before checking isAdded()."
+    }
+  },
+  "error": null
+}

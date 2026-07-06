@@ -1,0 +1,164 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "Amaze",
+  "issue_id": 4560,
+  "issue_url": "https://github.com/TeamAmaze/AmazeFileManager/issues/4560",
+  "issue_title": "Rename not work in \"Audios\", \"APKs\", etc.",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\TeamAmaze_AmazeFileManager",
+  "media_files": [
+    "3ae26fe7-4e34-4ba1-815d-49d9a5af7c0c"
+  ],
+  "started_at": "2026-06-21T16:34:44.693-05:00",
+  "finished_at": "2026-06-21T16:39:55.130-05:00",
+  "duration_seconds": 310.44,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"Audios|APKs|rename|Rename|apk|audio\",\n      \"finding\": \"Located rename-related UI and filesystem code, plus media category code. `rg` was unavailable, so PowerShell recursive `Select-String` was used.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"grep_pattern\",\n      \"target\": \"OpenMode.CUSTOM|CUSTOM|listApks|listVideos|listImages|listAudio|rename\\\\(\",\n      \"finding\": \"Found media categories implemented as `OpenMode.CUSTOM` in `LoadFilesListTask.java`, with `listaudio()` for path `2` and `listApks()` for path `4`.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/LoadFilesListTask.java\",\n      \"finding\": \"For `OpenMode.CUSTOM`, `getCachedMediaList()` parses the numeric path. Path `2` loads audio, path `4` loads APKs. Rows are created from real filesystem paths returned by MediaStore.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/views/drawer/Drawer.java\",\n      \"finding\": \"Drawer quick access entries map `Audios` to `new MenuMetadata(\\\"2\\\", true)` and `APKs` to `new MenuMetadata(\\\"4\\\", true)`, confirming the current path in these screens is a virtual category id, not a directory path.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/ItemPopupMenu.java\",\n      \"finding\": \"The popup rename menu calls `mainFragment.rename(rowItem.generateBaseFile());`, so item rename enters `MainFragment.rename(...)` with a file object generated from the selected row.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/utils/MainActivityActionMode.kt\",\n      \"finding\": \"Selection-mode rename also calls `mainActivity.currentMainFragment?.rename(f)`, so both UI rename paths converge on `MainFragment.rename(...)`.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/adapters/data/LayoutElementParcelable.java\",\n      \"finding\": \"`generateBaseFile()` builds a `HybridFileParcelable` from the row's real path (`desc`) and applies the row's stored file mode. Media rows therefore carry the real selected file path.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/HybridFileParcelable.java\",\n      \"finding\": \"The constructor used by `LayoutElementParcelable.generateBaseFile()` defaults to `OpenMode.FILE`; `setMode(mode)` then preserves the row mode. Media list rows generated from real files should therefore represent local filesystem files.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java\",\n      \"finding\": \"`MainFragment.rename(HybridFileParcelable f)` opens the rename dialog, then calls `mainActivityHelper.rename(...)` with `mainFragmentViewModel.getOpenMode()` and `mainFragmentViewModel.getCurrentPath()` rather than the selected file's own mode and parent path.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/utils/MainActivityHelper.java\",\n      \"finding\": \"`MainActivityHelper.rename(...)` constructs `oldFile = new HybridFile(mode, oldPath)` and `newFile = new HybridFile(mode, newPath, newName, isDirectory)`. If mode is `CUSTOM` and newPath is `\\\"4\\\"`, the rename operation receives a custom-mode old file and a virtual destination path like `4/name.apk`.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/HybridFile.java\",\n      \"finding\": \"The `HybridFile(OpenMode mode, String path, String name, boolean isDirectory)` constructor appends `\\\"/\\\" + name` for non-SMB/non-SFTP/non-root paths, so passing custom category path `\\\"4\\\"` creates a destination path under `4`, not under the original APK's parent directory.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/Operations.java\",\n      \"finding\": \"`Operations.rename(...)` eventually calls `localRename(oldFile, newFile)`. `localRename` only handles `OpenMode.FILE` and `OpenMode.ROOT`; an `OpenMode.CUSTOM` old file falls through and returns false.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/RenameOperation.kt\",\n      \"finding\": \"The actual local rename requires a valid target parent path and calls `f.renameTo(File(newPath))`. A virtual category path cannot be used as the rename destination parent.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/RootHelper.java\",\n      \"finding\": \"`RootHelper.generateBaseFile(new File(path), showHiddenFiles)` is used by media list loading to convert MediaStore real paths into file parcelables, supporting that the selected item has enough information to use its real path.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/activities/MainActivity.java\",\n      \"finding\": \"The SAF retry path also reuses `mainFragment.getMainFragmentViewModel().getOpenMode()`, but this is downstream from the initial rename failure path and not the primary trigger for the reported normal rename failure.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/utils/MainActivityHelper.java\",\n      \"finding\": \"`getIntegralNames()` maps numeric custom paths to display names only; it does not provide a real filesystem parent. This reinforces that numeric current paths are presentation/category identifiers.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"MainFragment.rename passes fragment current mode/path instead of selected file mode/parent\",\n      \"finding\": \"In normal folders, current mode/path equal the selected file's parent context, so rename works. In virtual media categories, current mode/path are `CUSTOM` and numeric ids, so the same call builds invalid rename inputs.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"MediaStore list query in LoadFilesListTask.java\",\n      \"finding\": \"The media query successfully produces real file paths and visible rows. The bug occurs after selecting Rename, not while listing files, so the query itself is not the rename failure trigger.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"Operations.localRename implementation\",\n      \"finding\": \"`localRename` correctly handles local files when mode is `FILE`; its failure in this scenario is caused by receiving `OpenMode.CUSTOM` and a virtual destination path from the caller.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"trace_call\",\n      \"target\": \"Drawer APKs/Audios -> LoadFilesListTask -> ItemPopupMenu/MainActivityActionMode -> MainFragment.rename -> MainActivityHelper.rename -> Operations.rename\",\n      \"finding\": \"The causal path consistently points to the `MainFragment.rename(...)` call into `mainActivityHelper.rename(...)`, where selected-file metadata is discarded and replaced by virtual screen state.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java\",\n      \"class\": \"MainFragment\",\n      \"method\": \"rename(HybridFileParcelable f)\",\n      \"line\": 1030,\n      \"statement\": \"getMainActivity().mainActivityHelper.rename(mainFragmentViewModel.getOpenMode(), f.getPath(), mainFragmentViewModel.getCurrentPath(), name1, f.isDirectory(), getActivity(), getMainActivity().isRootExplorer());\",\n      \"suspicion_score\": 0.95,\n      \"reasoning\": \"This call uses the fragment's current open mode and current path as rename inputs. In APKs/Audios these are virtual category values (`OpenMode.CUSTOM`, `\\\"4\\\"`, `\\\"2\\\"`) rather than the selected file's real mode and parent directory. The downstream rename code cannot handle `CUSTOM` in localRename and also constructs the target path under the virtual category id, so rename fails only in these virtual media screens.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java\",\n    \"class\": \"MainFragment\",\n    \"method\": \"rename(HybridFileParcelable f)\",\n    \"line\": 1030,\n    \"statement\": \"getMainActivity().mainActivityHelper.rename(mainFragmentViewModel.getOpenMode(), f.getPath(), mainFragmentViewModel.getCurrentPath(), name1, f.isDirectory(), getActivity(), getMainActivity().isRootExplorer());\",\n    \"confidence\": 0.95,\n    \"causal_chain\": \"The drawer opens APKs with virtual path `\\\"4\\\"` and Audios with virtual path `\\\"2\\\"`, loaded as `OpenMode.CUSTOM`. `LoadFilesListTask` lists real MediaStore file paths and creates row items for those files. When the user chooses Rename, both popup and selection-mode paths call `MainFragment.rename(f)`. That method calls `mainActivityHelper.rename(...)` using `mainFragmentViewModel.getOpenMode()` and `mainFragmentViewModel.getCurrentPath()` instead of the selected file's own mode and real parent. `MainActivityHelper` then creates `oldFile` with mode `CUSTOM` and `newFile` under path `\\\"4\\\"` or `\\\"2\\\"`. `Operations.localRename()` only handles `FILE` and `ROOT`, so `CUSTOM` falls through and returns false; the virtual destination path would also be invalid. The callback shows unsuccessful rename, matching the report.\",\n    \"fix_hint\": \"Build rename inputs from the selected file, e.g. use `f.getMode()` and `f.getParent(context)` or derive the target parent from `f.getPath()` instead of using the fragment's virtual custom category mode/path.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "Audios|APKs|rename|Rename|apk|audio",
+        "finding": "Located rename-related UI and filesystem code, plus media category code. `rg` was unavailable, so PowerShell recursive `Select-String` was used."
+      },
+      {
+        "step": 2,
+        "action": "grep_pattern",
+        "target": "OpenMode.CUSTOM|CUSTOM|listApks|listVideos|listImages|listAudio|rename\\(",
+        "finding": "Found media categories implemented as `OpenMode.CUSTOM` in `LoadFilesListTask.java`, with `listaudio()` for path `2` and `listApks()` for path `4`."
+      },
+      {
+        "step": 3,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/LoadFilesListTask.java",
+        "finding": "For `OpenMode.CUSTOM`, `getCachedMediaList()` parses the numeric path. Path `2` loads audio, path `4` loads APKs. Rows are created from real filesystem paths returned by MediaStore."
+      },
+      {
+        "step": 4,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/views/drawer/Drawer.java",
+        "finding": "Drawer quick access entries map `Audios` to `new MenuMetadata(\"2\", true)` and `APKs` to `new MenuMetadata(\"4\", true)`, confirming the current path in these screens is a virtual category id, not a directory path."
+      },
+      {
+        "step": 5,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/ItemPopupMenu.java",
+        "finding": "The popup rename menu calls `mainFragment.rename(rowItem.generateBaseFile());`, so item rename enters `MainFragment.rename(...)` with a file object generated from the selected row."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/utils/MainActivityActionMode.kt",
+        "finding": "Selection-mode rename also calls `mainActivity.currentMainFragment?.rename(f)`, so both UI rename paths converge on `MainFragment.rename(...)`."
+      },
+      {
+        "step": 7,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/adapters/data/LayoutElementParcelable.java",
+        "finding": "`generateBaseFile()` builds a `HybridFileParcelable` from the row's real path (`desc`) and applies the row's stored file mode. Media rows therefore carry the real selected file path."
+      },
+      {
+        "step": 8,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/HybridFileParcelable.java",
+        "finding": "The constructor used by `LayoutElementParcelable.generateBaseFile()` defaults to `OpenMode.FILE`; `setMode(mode)` then preserves the row mode. Media list rows generated from real files should therefore represent local filesystem files."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java",
+        "finding": "`MainFragment.rename(HybridFileParcelable f)` opens the rename dialog, then calls `mainActivityHelper.rename(...)` with `mainFragmentViewModel.getOpenMode()` and `mainFragmentViewModel.getCurrentPath()` rather than the selected file's own mode and parent path."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/utils/MainActivityHelper.java",
+        "finding": "`MainActivityHelper.rename(...)` constructs `oldFile = new HybridFile(mode, oldPath)` and `newFile = new HybridFile(mode, newPath, newName, isDirectory)`. If mode is `CUSTOM` and newPath is `\"4\"`, the rename operation receives a custom-mode old file and a virtual destination path like `4/name.apk`."
+      },
+      {
+        "step": 11,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/HybridFile.java",
+        "finding": "The `HybridFile(OpenMode mode, String path, String name, boolean isDirectory)` constructor appends `\"/\" + name` for non-SMB/non-SFTP/non-root paths, so passing custom category path `\"4\"` creates a destination path under `4`, not under the original APK's parent directory."
+      },
+      {
+        "step": 12,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/Operations.java",
+        "finding": "`Operations.rename(...)` eventually calls `localRename(oldFile, newFile)`. `localRename` only handles `OpenMode.FILE` and `OpenMode.ROOT`; an `OpenMode.CUSTOM` old file falls through and returns false."
+      },
+      {
+        "step": 13,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/RenameOperation.kt",
+        "finding": "The actual local rename requires a valid target parent path and calls `f.renameTo(File(newPath))`. A virtual category path cannot be used as the rename destination parent."
+      },
+      {
+        "step": 14,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/RootHelper.java",
+        "finding": "`RootHelper.generateBaseFile(new File(path), showHiddenFiles)` is used by media list loading to convert MediaStore real paths into file parcelables, supporting that the selected item has enough information to use its real path."
+      },
+      {
+        "step": 15,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/activities/MainActivity.java",
+        "finding": "The SAF retry path also reuses `mainFragment.getMainFragmentViewModel().getOpenMode()`, but this is downstream from the initial rename failure path and not the primary trigger for the reported normal rename failure."
+      },
+      {
+        "step": 16,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/utils/MainActivityHelper.java",
+        "finding": "`getIntegralNames()` maps numeric custom paths to display names only; it does not provide a real filesystem parent. This reinforces that numeric current paths are presentation/category identifiers."
+      },
+      {
+        "step": 17,
+        "action": "form_hypothesis",
+        "target": "MainFragment.rename passes fragment current mode/path instead of selected file mode/parent",
+        "finding": "In normal folders, current mode/path equal the selected file's parent context, so rename works. In virtual media categories, current mode/path are `CUSTOM` and numeric ids, so the same call builds invalid rename inputs."
+      },
+      {
+        "step": 18,
+        "action": "eliminate_candidate",
+        "target": "MediaStore list query in LoadFilesListTask.java",
+        "finding": "The media query successfully produces real file paths and visible rows. The bug occurs after selecting Rename, not while listing files, so the query itself is not the rename failure trigger."
+      },
+      {
+        "step": 19,
+        "action": "eliminate_candidate",
+        "target": "Operations.localRename implementation",
+        "finding": "`localRename` correctly handles local files when mode is `FILE`; its failure in this scenario is caused by receiving `OpenMode.CUSTOM` and a virtual destination path from the caller."
+      },
+      {
+        "step": 20,
+        "action": "trace_call",
+        "target": "Drawer APKs/Audios -> LoadFilesListTask -> ItemPopupMenu/MainActivityActionMode -> MainFragment.rename -> MainActivityHelper.rename -> Operations.rename",
+        "finding": "The causal path consistently points to the `MainFragment.rename(...)` call into `mainActivityHelper.rename(...)`, where selected-file metadata is discarded and replaced by virtual screen state."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java",
+        "class": "MainFragment",
+        "method": "rename(HybridFileParcelable f)",
+        "line": 1030,
+        "statement": "getMainActivity().mainActivityHelper.rename(mainFragmentViewModel.getOpenMode(), f.getPath(), mainFragmentViewModel.getCurrentPath(), name1, f.isDirectory(), getActivity(), getMainActivity().isRootExplorer());",
+        "suspicion_score": 0.95,
+        "reasoning": "This call uses the fragment's current open mode and current path as rename inputs. In APKs/Audios these are virtual category values (`OpenMode.CUSTOM`, `\"4\"`, `\"2\"`) rather than the selected file's real mode and parent directory. The downstream rename code cannot handle `CUSTOM` in localRename and also constructs the target path under the virtual category id, so rename fails only in these virtual media screens."
+      }
+    ],
+    "final_answer": {
+      "file": "app/src/main/java/com/amaze/filemanager/ui/fragments/MainFragment.java",
+      "class": "MainFragment",
+      "method": "rename(HybridFileParcelable f)",
+      "line": 1030,
+      "statement": "getMainActivity().mainActivityHelper.rename(mainFragmentViewModel.getOpenMode(), f.getPath(), mainFragmentViewModel.getCurrentPath(), name1, f.isDirectory(), getActivity(), getMainActivity().isRootExplorer());",
+      "confidence": 0.95,
+      "causal_chain": "The drawer opens APKs with virtual path `\"4\"` and Audios with virtual path `\"2\"`, loaded as `OpenMode.CUSTOM`. `LoadFilesListTask` lists real MediaStore file paths and creates row items for those files. When the user chooses Rename, both popup and selection-mode paths call `MainFragment.rename(f)`. That method calls `mainActivityHelper.rename(...)` using `mainFragmentViewModel.getOpenMode()` and `mainFragmentViewModel.getCurrentPath()` instead of the selected file's own mode and real parent. `MainActivityHelper` then creates `oldFile` with mode `CUSTOM` and `newFile` under path `\"4\"` or `\"2\"`. `Operations.localRename()` only handles `FILE` and `ROOT`, so `CUSTOM` falls through and returns false; the virtual destination path would also be invalid. The callback shows unsuccessful rename, matching the report.",
+      "fix_hint": "Build rename inputs from the selected file, e.g. use `f.getMode()` and `f.getParent(context)` or derive the target parent from `f.getPath()` instead of using the fragment's virtual custom category mode/path."
+    }
+  },
+  "error": null
+}

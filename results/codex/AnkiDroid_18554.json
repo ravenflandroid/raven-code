@@ -1,0 +1,172 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "AnkiDroid",
+  "issue_id": 18554,
+  "issue_url": "https://github.com/ankidroid/Anki-Android/issues/18554",
+  "issue_title": "Visual bug when having more than 2 card types",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\ankidroid_Anki_Android",
+  "media_files": [
+    "3de30f08-92b5-4a03-a2cc-d9b4aae4967c"
+  ],
+  "started_at": "2026-06-21T14:39:35.045-05:00",
+  "finished_at": "2026-06-21T14:43:49.593-05:00",
+  "duration_seconds": 254.55,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"Edit Cards|edit cards|Card 2|rename|Rename|CardTemplate|Card Type|card type|template\",\n      \"finding\": \"Initial ripgrep attempt failed because rg is not installed; switched to PowerShell Select-String. Broad search showed the relevant feature strings are card_template_editor, model_browser_template, and rename_card_type.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"grep_pattern\",\n      \"target\": \"automation_new_bugs/baselines_context/3de30f08-92b5-4a03-a2cc-d9b4aae4967c\",\n      \"finding\": \"The referenced media directory/file was not present under the repository, so analysis proceeded from the textual reproduction and source code only.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"grep_pattern\",\n      \"target\": \"rename_card_type|card_template_editor|title_activity_template_editor|model_browser_template\",\n      \"finding\": \"Found the concrete implementation files: AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt and AnkiDroid/src/main/java/com/ichi2/anki/notetype/RenameCardTypeDialog.kt, plus layouts and menu resources for the card template editor.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt\",\n      \"finding\": \"CardTemplateEditor is the Activity for editing card types. onCollectionLoaded installs a ViewPager2 adapter for one fragment per card template and attaches a TabLayoutMediator to the top tabs.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/notetype/RenameCardTypeDialog.kt\",\n      \"finding\": \"RenameCardTypeDialog.showInstance builds an AlertDialog with dialog_generic_text_input and calls the generic input helper with displayKeyboard = true, causing the soft keyboard to open immediately on rename.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"inspect_layout_xml\",\n      \"target\": \"AnkiDroid/src/main/res/layout/activity_card_template_editor.xml\",\n      \"finding\": \"The phone layout root is a CoordinatorLayout containing a vertical LinearLayout with toolbar/tabs and the editor ViewPager2 include. The root and parent LinearLayout do not declare a stable editor background color.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"inspect_layout_xml\",\n      \"target\": \"AnkiDroid/src/main/res/layout/include_card_template_editor_main.xml\",\n      \"finding\": \"The main editor area is a full-height ViewPager2. It does not provide its own background, so visual coverage depends on the currently laid-out fragment page.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"inspect_layout_xml\",\n      \"target\": \"AnkiDroid/src/main/res/layout/fragment_card_template_editor_template.xml\",\n      \"finding\": \"The fragment's bottom navigation has alternativeBackgroundColor, but the fragment root main_layout itself has no background in the XML. During resize/layout changes, uncovered parent areas can show through.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"inspect_layout_xml\",\n      \"target\": \"AnkiDroid/src/main/res/menu/card_template_editor.xml\",\n      \"finding\": \"The overflow menu contains action_rename with title rename_card_type. This is the menu item selected in the reproduction.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"trace_call\",\n      \"target\": \"CardTemplateEditor.CardTemplateFragment.handleCommonMenuItemSelected(MenuItem)\",\n      \"finding\": \"Selecting R.id.action_rename logs the rename action and calls showRenameDialog().\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"trace_call\",\n      \"target\": \"CardTemplateEditor.CardTemplateFragment.showRenameDialog()\",\n      \"finding\": \"showRenameDialog resolves the currently selected ordinal from templateEditor.ord, gathers existing template names, then invokes RenameCardTypeDialog.showInstance.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"inspect_manifest\",\n      \"target\": \"AnkiDroid/src/main/AndroidManifest.xml\",\n      \"finding\": \"CardTemplateEditor is declared with android:windowSoftInputMode=\\\"stateAlwaysHidden|adjustResize\\\". When the rename dialog opens the keyboard, the Activity content behind the dialog is resized.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/utils/AlertDialogFacade.kt\",\n      \"finding\": \"AlertDialog.input() calls AndroidUiUtils.setFocusAndOpenKeyboard(this, window!!) when displayKeyboard is true, then requestFocus() and setText(prefill). This confirms the rename dialog actively opens IME.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"trace_call\",\n      \"target\": \"CardTemplateEditor.CardTemplateFragment.onViewCreated(View, Bundle?)\",\n      \"finding\": \"The fragment registers an OnApplyWindowInsetsListener that hides bottomNavigation when IME is visible. The same keyboard event that opens the rename dialog therefore changes editor layout behind the dialog.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"CardTemplateEditor.kt line 342: mainBinding.cardTemplateEditorPager.offscreenPageLimit = 7\",\n      \"finding\": \"This keeps more pages alive to reduce menu flicker. It explains why multiple card pages may be present, but it does not itself trigger the rename-time shift; the shift begins only when the rename dialog opens the keyboard.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"CardTemplateEditor.kt line 868: notifyDataSetChanged() after rename callback\",\n      \"finding\": \"This runs only after the user confirms a new name. The reported visual shift happens when tapping Rename from the overflow menu, before the rename result is applied, so this is not the triggering statement.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"RenameCardTypeDialog.kt validation block\",\n      \"finding\": \"The validation checks duplicate/current card type names and only affects positive-button state. It does not alter layout, background, pager position, or keyboard behavior.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Rename dialog auto-opens IME in an adjustResize Activity whose editor/page roots lack stable background coverage\",\n      \"finding\": \"The immediate keyboard display causes the CardTemplateEditor window to resize and dispatch IME insets. That hides bottom navigation and re-lays out ViewPager2/TabLayout behind the dialog. With more than two card types, Card 2 is a middle ViewPager page/tab, so the resize exposes/repositions neighbouring page/background areas, matching the reported background shift.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"AnkiDroid/src/main/java/com/ichi2/anki/notetype/RenameCardTypeDialog.kt\",\n      \"class\": \"RenameCardTypeDialog\",\n      \"method\": \"showInstance(Context context, String prefill, CardTypeName currentName, List<CardTypeName> existingNames, Function1 block)\",\n      \"line\": 54,\n      \"statement\": \"displayKeyboard = true,\",\n      \"suspicion_score\": 0.82,\n      \"reasoning\": \"This is the statement that makes the rename dialog immediately open the soft keyboard. CardTemplateEditor is configured with adjustResize and its fragment reacts to IME insets by hiding the bottom navigation, while the editor/ViewPager roots do not provide stable background coverage. The resulting resize/re-layout happens exactly when the user taps Rename, causing the visible background shift behind the dialog, especially on the middle page when there are more than two card types.\"\n    },\n    {\n      \"rank\": 2,\n      \"file\": \"AnkiDroid/src/main/AndroidManifest.xml\",\n      \"class\": \"CardTemplateEditor\",\n      \"method\": \"Android activity declaration\",\n      \"line\": 486,\n      \"statement\": \"android:windowSoftInputMode=\\\"stateAlwaysHidden|adjustResize\\\"\",\n      \"suspicion_score\": 0.68,\n      \"reasoning\": \"This setting makes the Activity resize when the rename dialog opens the keyboard. It is a necessary part of the visual shift, but it is broader Activity configuration; the rename-specific trigger is the dialog's displayKeyboard = true statement.\"\n    },\n    {\n      \"rank\": 3,\n      \"file\": \"AnkiDroid/src/main/res/layout/activity_card_template_editor.xml\",\n      \"class\": \"CardTemplateEditor\",\n      \"method\": \"activity layout inflation\",\n      \"line\": 2,\n      \"statement\": \"<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android=\\\"http://schemas.android.com/apk/res/android\\\"\",\n      \"suspicion_score\": 0.55,\n      \"reasoning\": \"The root layout lacks a stable background color, allowing resized/repositioned child pages to reveal a different background. This worsens the visible artifact, but it is not the rename-specific triggering statement.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"AnkiDroid/src/main/java/com/ichi2/anki/notetype/RenameCardTypeDialog.kt\",\n    \"class\": \"RenameCardTypeDialog\",\n    \"method\": \"showInstance(Context context, String prefill, CardTypeName currentName, List<CardTypeName> existingNames, Function1 block)\",\n    \"line\": 54,\n    \"statement\": \"displayKeyboard = true,\",\n    \"confidence\": 0.82,\n    \"causal_chain\": \"Manage note types launches CardTemplateEditor for the selected note type. Adding extra templates creates multiple ViewPager2 pages and scrollable card-type tabs. Selecting Card 2 makes the current page a middle page. The overflow Rename item calls CardTemplateFragment.showRenameDialog(), which calls RenameCardTypeDialog.showInstance(). At line 54 the dialog asks AlertDialog.input() to open the keyboard immediately. CardTemplateEditor is declared with stateAlwaysHidden|adjustResize, so the keyboard forces the Activity behind the dialog to resize. The editor fragment also handles IME insets by hiding bottomNavigation, causing another layout change. Because the editor/ViewPager/root backgrounds are not consistently applied at the parent level, the resize/re-layout exposes or shifts the underlying page/background, producing the visual background jump reported when Rename is tapped.\",\n    \"fix_hint\": \"Avoid resizing the editor behind the rename dialog by not auto-opening the keyboard for this dialog, using a non-resizing soft-input mode for the dialog/activity, or giving the CardTemplateEditor root/ViewPager container a stable background that remains correct during IME resize.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "Edit Cards|edit cards|Card 2|rename|Rename|CardTemplate|Card Type|card type|template",
+        "finding": "Initial ripgrep attempt failed because rg is not installed; switched to PowerShell Select-String. Broad search showed the relevant feature strings are card_template_editor, model_browser_template, and rename_card_type."
+      },
+      {
+        "step": 2,
+        "action": "grep_pattern",
+        "target": "automation_new_bugs/baselines_context/3de30f08-92b5-4a03-a2cc-d9b4aae4967c",
+        "finding": "The referenced media directory/file was not present under the repository, so analysis proceeded from the textual reproduction and source code only."
+      },
+      {
+        "step": 3,
+        "action": "grep_pattern",
+        "target": "rename_card_type|card_template_editor|title_activity_template_editor|model_browser_template",
+        "finding": "Found the concrete implementation files: AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt and AnkiDroid/src/main/java/com/ichi2/anki/notetype/RenameCardTypeDialog.kt, plus layouts and menu resources for the card template editor."
+      },
+      {
+        "step": 4,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/CardTemplateEditor.kt",
+        "finding": "CardTemplateEditor is the Activity for editing card types. onCollectionLoaded installs a ViewPager2 adapter for one fragment per card template and attaches a TabLayoutMediator to the top tabs."
+      },
+      {
+        "step": 5,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/notetype/RenameCardTypeDialog.kt",
+        "finding": "RenameCardTypeDialog.showInstance builds an AlertDialog with dialog_generic_text_input and calls the generic input helper with displayKeyboard = true, causing the soft keyboard to open immediately on rename."
+      },
+      {
+        "step": 6,
+        "action": "inspect_layout_xml",
+        "target": "AnkiDroid/src/main/res/layout/activity_card_template_editor.xml",
+        "finding": "The phone layout root is a CoordinatorLayout containing a vertical LinearLayout with toolbar/tabs and the editor ViewPager2 include. The root and parent LinearLayout do not declare a stable editor background color."
+      },
+      {
+        "step": 7,
+        "action": "inspect_layout_xml",
+        "target": "AnkiDroid/src/main/res/layout/include_card_template_editor_main.xml",
+        "finding": "The main editor area is a full-height ViewPager2. It does not provide its own background, so visual coverage depends on the currently laid-out fragment page."
+      },
+      {
+        "step": 8,
+        "action": "inspect_layout_xml",
+        "target": "AnkiDroid/src/main/res/layout/fragment_card_template_editor_template.xml",
+        "finding": "The fragment's bottom navigation has alternativeBackgroundColor, but the fragment root main_layout itself has no background in the XML. During resize/layout changes, uncovered parent areas can show through."
+      },
+      {
+        "step": 9,
+        "action": "inspect_layout_xml",
+        "target": "AnkiDroid/src/main/res/menu/card_template_editor.xml",
+        "finding": "The overflow menu contains action_rename with title rename_card_type. This is the menu item selected in the reproduction."
+      },
+      {
+        "step": 10,
+        "action": "trace_call",
+        "target": "CardTemplateEditor.CardTemplateFragment.handleCommonMenuItemSelected(MenuItem)",
+        "finding": "Selecting R.id.action_rename logs the rename action and calls showRenameDialog()."
+      },
+      {
+        "step": 11,
+        "action": "trace_call",
+        "target": "CardTemplateEditor.CardTemplateFragment.showRenameDialog()",
+        "finding": "showRenameDialog resolves the currently selected ordinal from templateEditor.ord, gathers existing template names, then invokes RenameCardTypeDialog.showInstance."
+      },
+      {
+        "step": 12,
+        "action": "inspect_manifest",
+        "target": "AnkiDroid/src/main/AndroidManifest.xml",
+        "finding": "CardTemplateEditor is declared with android:windowSoftInputMode=\"stateAlwaysHidden|adjustResize\". When the rename dialog opens the keyboard, the Activity content behind the dialog is resized."
+      },
+      {
+        "step": 13,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/utils/AlertDialogFacade.kt",
+        "finding": "AlertDialog.input() calls AndroidUiUtils.setFocusAndOpenKeyboard(this, window!!) when displayKeyboard is true, then requestFocus() and setText(prefill). This confirms the rename dialog actively opens IME."
+      },
+      {
+        "step": 14,
+        "action": "trace_call",
+        "target": "CardTemplateEditor.CardTemplateFragment.onViewCreated(View, Bundle?)",
+        "finding": "The fragment registers an OnApplyWindowInsetsListener that hides bottomNavigation when IME is visible. The same keyboard event that opens the rename dialog therefore changes editor layout behind the dialog."
+      },
+      {
+        "step": 15,
+        "action": "eliminate_candidate",
+        "target": "CardTemplateEditor.kt line 342: mainBinding.cardTemplateEditorPager.offscreenPageLimit = 7",
+        "finding": "This keeps more pages alive to reduce menu flicker. It explains why multiple card pages may be present, but it does not itself trigger the rename-time shift; the shift begins only when the rename dialog opens the keyboard."
+      },
+      {
+        "step": 16,
+        "action": "eliminate_candidate",
+        "target": "CardTemplateEditor.kt line 868: notifyDataSetChanged() after rename callback",
+        "finding": "This runs only after the user confirms a new name. The reported visual shift happens when tapping Rename from the overflow menu, before the rename result is applied, so this is not the triggering statement."
+      },
+      {
+        "step": 17,
+        "action": "eliminate_candidate",
+        "target": "RenameCardTypeDialog.kt validation block",
+        "finding": "The validation checks duplicate/current card type names and only affects positive-button state. It does not alter layout, background, pager position, or keyboard behavior."
+      },
+      {
+        "step": 18,
+        "action": "form_hypothesis",
+        "target": "Rename dialog auto-opens IME in an adjustResize Activity whose editor/page roots lack stable background coverage",
+        "finding": "The immediate keyboard display causes the CardTemplateEditor window to resize and dispatch IME insets. That hides bottom navigation and re-lays out ViewPager2/TabLayout behind the dialog. With more than two card types, Card 2 is a middle ViewPager page/tab, so the resize exposes/repositions neighbouring page/background areas, matching the reported background shift."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "AnkiDroid/src/main/java/com/ichi2/anki/notetype/RenameCardTypeDialog.kt",
+        "class": "RenameCardTypeDialog",
+        "method": "showInstance(Context context, String prefill, CardTypeName currentName, List<CardTypeName> existingNames, Function1 block)",
+        "line": 54,
+        "statement": "displayKeyboard = true,",
+        "suspicion_score": 0.82,
+        "reasoning": "This is the statement that makes the rename dialog immediately open the soft keyboard. CardTemplateEditor is configured with adjustResize and its fragment reacts to IME insets by hiding the bottom navigation, while the editor/ViewPager roots do not provide stable background coverage. The resulting resize/re-layout happens exactly when the user taps Rename, causing the visible background shift behind the dialog, especially on the middle page when there are more than two card types."
+      },
+      {
+        "rank": 2,
+        "file": "AnkiDroid/src/main/AndroidManifest.xml",
+        "class": "CardTemplateEditor",
+        "method": "Android activity declaration",
+        "line": 486,
+        "statement": "android:windowSoftInputMode=\"stateAlwaysHidden|adjustResize\"",
+        "suspicion_score": 0.68,
+        "reasoning": "This setting makes the Activity resize when the rename dialog opens the keyboard. It is a necessary part of the visual shift, but it is broader Activity configuration; the rename-specific trigger is the dialog's displayKeyboard = true statement."
+      },
+      {
+        "rank": 3,
+        "file": "AnkiDroid/src/main/res/layout/activity_card_template_editor.xml",
+        "class": "CardTemplateEditor",
+        "method": "activity layout inflation",
+        "line": 2,
+        "statement": "<androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android=\"http://schemas.android.com/apk/res/android\"",
+        "suspicion_score": 0.55,
+        "reasoning": "The root layout lacks a stable background color, allowing resized/repositioned child pages to reveal a different background. This worsens the visible artifact, but it is not the rename-specific triggering statement."
+      }
+    ],
+    "final_answer": {
+      "file": "AnkiDroid/src/main/java/com/ichi2/anki/notetype/RenameCardTypeDialog.kt",
+      "class": "RenameCardTypeDialog",
+      "method": "showInstance(Context context, String prefill, CardTypeName currentName, List<CardTypeName> existingNames, Function1 block)",
+      "line": 54,
+      "statement": "displayKeyboard = true,",
+      "confidence": 0.82,
+      "causal_chain": "Manage note types launches CardTemplateEditor for the selected note type. Adding extra templates creates multiple ViewPager2 pages and scrollable card-type tabs. Selecting Card 2 makes the current page a middle page. The overflow Rename item calls CardTemplateFragment.showRenameDialog(), which calls RenameCardTypeDialog.showInstance(). At line 54 the dialog asks AlertDialog.input() to open the keyboard immediately. CardTemplateEditor is declared with stateAlwaysHidden|adjustResize, so the keyboard forces the Activity behind the dialog to resize. The editor fragment also handles IME insets by hiding bottomNavigation, causing another layout change. Because the editor/ViewPager/root backgrounds are not consistently applied at the parent level, the resize/re-layout exposes or shifts the underlying page/background, producing the visual background jump reported when Rename is tapped.",
+      "fix_hint": "Avoid resizing the editor behind the rename dialog by not auto-opening the keyboard for this dialog, using a non-resizing soft-input mode for the dialog/activity, or giving the CardTemplateEditor root/ViewPager container a stable background that remains correct during IME resize."
+    }
+  },
+  "error": null
+}

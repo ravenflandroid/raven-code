@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "K9Mail",
+  "issue_id": 11076,
+  "issue_url": "https://github.com/thunderbird/thunderbird-android/issues/11076",
+  "issue_title": "Configuration of \"notification actions\" not working",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\thunderbird_thunderbird_android",
+  "media_files": [
+    "252cc005-82a7-4a15-b250-7fb25bbb9290",
+    "fa38709a-e7e6-4382-8b9c-7127377dc89c"
+  ],
+  "started_at": "2026-06-22T14:58:40.060-05:00",
+  "finished_at": "2026-06-22T15:08:41.794-05:00",
+  "duration_seconds": 601.75,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"read_file\",\n      \"target\": \"README.md\",\n      \"finding\": \"Confirmed this repository is Thunderbird for Android/K-9 Mail and uses shared code for both branded apps.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"read_file\",\n      \"target\": \"docs/CONTRIBUTING.md\",\n      \"finding\": \"Confirmed project workflow and that the app still contains legacy K-9 components.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"read_file\",\n      \"target\": \"docs/architecture/README.md\",\n      \"finding\": \"Confirmed modular architecture and legacy module role.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"read_file\",\n      \"target\": \"docs/architecture/adr/0009-api-internal-split.md\",\n      \"finding\": \"Confirmed API/internal split; not directly involved in this legacy notification path.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"grep_pattern\",\n      \"target\": \"NotificationAction, notification action, notification_actions, messageActionsOrder\",\n      \"finding\": \"Found the settings entry point in legacy UI and the new-mail notification implementation in legacy core/common.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"inspect_manifest\",\n      \"target\": \"legacy/common/src/main/AndroidManifest.xml\",\n      \"finding\": \"Found NotificationActionsSettingsActivity declared as the settings screen for notification actions and NotificationActionService as the action handler.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/settings/general/GeneralSettingsFragment.kt\",\n      \"finding\": \"The General Settings screen opens NotificationActionsSettingsActivity when the notification_actions_settings preference is clicked.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/settings/notificationactions/NotificationActionsSettingsActivity.kt\",\n      \"finding\": \"This Activity hosts NotificationActionsSettingsFragment.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/settings/notificationactions/NotificationActionsSettingsFragment.kt\",\n      \"finding\": \"The fragment reads notificationPrefs.messageActionsOrder/messageActionsCutoff and persists reordered tokens into generalSettingsManager.notification.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/settings/notificationactions/MessageNotificationAction.kt\",\n      \"finding\": \"The configurable UI actions map to persisted tokens: reply, mark_as_read, delete, star, archive, spam.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/settings/notificationactions/NotificationActionsSettingsScreen.kt\",\n      \"finding\": \"The Compose screen delegates reorder/cutoff changes to NotificationActionsReorderController and calls onStateChanged.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/ui/legacy/src/main/java/com/fsck/k9/ui/settings/notificationactions/NotificationActionsReorderController.kt\",\n      \"finding\": \"The controller emits the full action order plus cutoff index after drag or arrow moves; this makes the settings UI path plausible.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"read_file\",\n      \"target\": \"core/common/src/commonMain/kotlin/net/thunderbird/core/common/notification/NotificationActionTokens.kt\",\n      \"finding\": \"Token parsing/normalization keeps persisted token order and appends missing supported actions.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"read_file\",\n      \"target\": \"core/preference/api/src/commonMain/kotlin/net/thunderbird/core/preference/notification/NotificationPreference.kt\",\n      \"finding\": \"NotificationPreference stores messageActionsOrder and messageActionsCutoff; default cutoff is 3.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"read_file\",\n      \"target\": \"core/preference/impl/src/commonMain/kotlin/net/thunderbird/core/preference/notification/DefaultNotificationPreferenceManager.kt\",\n      \"finding\": \"The notification preference manager persists messageActionsOrder as a comma-separated string and exposes it through getConfig().\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/preferences/DefaultGeneralSettingsManager.kt\",\n      \"finding\": \"GeneralSettingsManager delegates notification config saves to NotificationPreferenceManager.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/notification/NewMailNotificationManager.kt\",\n      \"finding\": \"New message notifications call SingleMessageNotificationDataCreator each time a new mail notification is added or restored.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/notification/SingleMessageNotificationDataCreator.kt\",\n      \"finding\": \"This is the concrete data-flow point where persisted messageActionsOrder and messageActionsCutoff become the list of notification actions.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"trace_call\",\n      \"target\": \"SingleMessageNotificationDataCreator.createSingleNotificationActions -> resolveActions\",\n      \"finding\": \"The configured order is parsed correctly, but resolveActions applies the cutoff before checking whether actions are available for the account/current settings.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/core/src/main/java/com/fsck/k9/notification/SingleMessageNotificationCreator.kt\",\n      \"finding\": \"The Android notification builder preserves the action list order by iterating notificationData.actions and adding each action in sequence.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"read_file\",\n      \"target\": \"legacy/common/src/main/java/com/fsck/k9/notification/K9NotificationActionCreator.kt\",\n      \"finding\": \"PendingIntent creation affects action behavior, not labels/order; it is not the likely source of the reported fixed visible action set.\"\n    },\n    {\n      \"step\": 22,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"SingleMessageNotificationCreator.setDeviceActions\",\n      \"finding\": \"Eliminated because it simply preserves the supplied action list and has a branch for every configurable action, including Star.\"\n    },\n    {\n      \"step\": 23,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"NotificationActionsSettingsScreen / NotificationActionsReorderController\",\n      \"finding\": \"Eliminated as primary cause because the UI emits full order and cutoff after changes; the more direct mismatch is in notification action resolution.\"\n    },\n    {\n      \"step\": 24,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"resolveActions takes first N configured actions before filtering unavailable actions\",\n      \"finding\": \"If configured actions before the cutoff are unavailable due account folders or quick-delete/spam confirmation settings, they are removed after consuming visible slots, so the resulting notification does not represent the user's selected visible actions.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"legacy/core/src/main/java/com/fsck/k9/notification/SingleMessageNotificationDataCreator.kt\",\n      \"class\": \"SingleMessageNotificationDataCreator\",\n      \"method\": \"resolveActions(List<NotificationAction> order, Int cutoff, Boolean hasArchiveFolder, Boolean isDeleteEnabled, Boolean hasSpamFolder, Boolean isSpamEnabled)\",\n      \"line\": 98,\n      \"statement\": \"return order.take(cutoff).filter { action ->\",\n      \"suspicion_score\": 0.78,\n      \"reasoning\": \"This is the statement that converts the user's persisted notification action order and cutoff into actual notification buttons. It applies the cutoff before filtering actions that are unavailable for the current account/settings. That means unavailable actions still consume one of the maximum three visible slots, so the resulting notification can keep showing the same always-available actions instead of the user's configured visible set.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"legacy/core/src/main/java/com/fsck/k9/notification/SingleMessageNotificationDataCreator.kt\",\n    \"class\": \"SingleMessageNotificationDataCreator\",\n    \"method\": \"resolveActions(List<NotificationAction> order, Int cutoff, Boolean hasArchiveFolder, Boolean isDeleteEnabled, Boolean hasSpamFolder, Boolean isSpamEnabled)\",\n    \"line\": 98,\n    \"statement\": \"return order.take(cutoff).filter { action ->\",\n    \"confidence\": 0.78,\n    \"causal_chain\": \"The settings screen persists an ordered token list and cutoff. New mail notification creation reads those preferences in createSingleNotificationActions(). The parsed order and cutoff are passed to resolveActions(). At line 98, resolveActions first truncates the configured order to the cutoff, then filters unavailable actions. Because unavailable actions can be discarded only after occupying one of the visible slots, the final Android notification action list can ignore the user's intended up-to-three visible actions and fall back to the same remaining always-available actions. SingleMessageNotificationCreator then faithfully renders that faulty list.\",\n    \"fix_hint\": \"Filter actions for availability before applying the cutoff, e.g. `order.filter { it.isAvailable(...) }.take(cutoff)`.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "read_file",
+        "target": "README.md",
+        "finding": "Confirmed this repository is Thunderbird for Android/K-9 Mail and uses shared code for both branded apps."
+      },
+      {
+        "step": 2,
+        "action": "read_file",
+        "target": "docs/CONTRIBUTING.md",
+        "finding": "Confirmed project workflow and that the app still contains legacy K-9 components."
+      },
+      {
+        "step": 3,
+        "action": "read_file",
+        "target": "docs/architecture/README.md",
+        "finding": "Confirmed modular architecture and legacy module role."
+      },
+      {
+        "step": 4,
+        "action": "read_file",
+        "target": "docs/architecture/adr/0009-api-internal-split.md",
+        "finding": "Confirmed API/internal split; not directly involved in this legacy notification path."
+      },
+      {
+        "step": 5,
+        "action": "grep_pattern",
+        "target": "NotificationAction, notification action, notification_actions, messageActionsOrder",
+        "finding": "Found the settings entry point in legacy UI and the new-mail notification implementation in legacy core/common."
+      },
+      {
+        "step": 6,
+        "action": "inspect_manifest",
+        "target": "legacy/common/src/main/AndroidManifest.xml",
+        "finding": "Found NotificationActionsSettingsActivity declared as the settings screen for notification actions and NotificationActionService as the action handler."
+      },
+      {
+        "step": 7,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/settings/general/GeneralSettingsFragment.kt",
+        "finding": "The General Settings screen opens NotificationActionsSettingsActivity when the notification_actions_settings preference is clicked."
+      },
+      {
+        "step": 8,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/settings/notificationactions/NotificationActionsSettingsActivity.kt",
+        "finding": "This Activity hosts NotificationActionsSettingsFragment."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/settings/notificationactions/NotificationActionsSettingsFragment.kt",
+        "finding": "The fragment reads notificationPrefs.messageActionsOrder/messageActionsCutoff and persists reordered tokens into generalSettingsManager.notification."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/settings/notificationactions/MessageNotificationAction.kt",
+        "finding": "The configurable UI actions map to persisted tokens: reply, mark_as_read, delete, star, archive, spam."
+      },
+      {
+        "step": 11,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/settings/notificationactions/NotificationActionsSettingsScreen.kt",
+        "finding": "The Compose screen delegates reorder/cutoff changes to NotificationActionsReorderController and calls onStateChanged."
+      },
+      {
+        "step": 12,
+        "action": "read_file",
+        "target": "legacy/ui/legacy/src/main/java/com/fsck/k9/ui/settings/notificationactions/NotificationActionsReorderController.kt",
+        "finding": "The controller emits the full action order plus cutoff index after drag or arrow moves; this makes the settings UI path plausible."
+      },
+      {
+        "step": 13,
+        "action": "read_file",
+        "target": "core/common/src/commonMain/kotlin/net/thunderbird/core/common/notification/NotificationActionTokens.kt",
+        "finding": "Token parsing/normalization keeps persisted token order and appends missing supported actions."
+      },
+      {
+        "step": 14,
+        "action": "read_file",
+        "target": "core/preference/api/src/commonMain/kotlin/net/thunderbird/core/preference/notification/NotificationPreference.kt",
+        "finding": "NotificationPreference stores messageActionsOrder and messageActionsCutoff; default cutoff is 3."
+      },
+      {
+        "step": 15,
+        "action": "read_file",
+        "target": "core/preference/impl/src/commonMain/kotlin/net/thunderbird/core/preference/notification/DefaultNotificationPreferenceManager.kt",
+        "finding": "The notification preference manager persists messageActionsOrder as a comma-separated string and exposes it through getConfig()."
+      },
+      {
+        "step": 16,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/preferences/DefaultGeneralSettingsManager.kt",
+        "finding": "GeneralSettingsManager delegates notification config saves to NotificationPreferenceManager."
+      },
+      {
+        "step": 17,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/notification/NewMailNotificationManager.kt",
+        "finding": "New message notifications call SingleMessageNotificationDataCreator each time a new mail notification is added or restored."
+      },
+      {
+        "step": 18,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/notification/SingleMessageNotificationDataCreator.kt",
+        "finding": "This is the concrete data-flow point where persisted messageActionsOrder and messageActionsCutoff become the list of notification actions."
+      },
+      {
+        "step": 19,
+        "action": "trace_call",
+        "target": "SingleMessageNotificationDataCreator.createSingleNotificationActions -> resolveActions",
+        "finding": "The configured order is parsed correctly, but resolveActions applies the cutoff before checking whether actions are available for the account/current settings."
+      },
+      {
+        "step": 20,
+        "action": "read_file",
+        "target": "legacy/core/src/main/java/com/fsck/k9/notification/SingleMessageNotificationCreator.kt",
+        "finding": "The Android notification builder preserves the action list order by iterating notificationData.actions and adding each action in sequence."
+      },
+      {
+        "step": 21,
+        "action": "read_file",
+        "target": "legacy/common/src/main/java/com/fsck/k9/notification/K9NotificationActionCreator.kt",
+        "finding": "PendingIntent creation affects action behavior, not labels/order; it is not the likely source of the reported fixed visible action set."
+      },
+      {
+        "step": 22,
+        "action": "eliminate_candidate",
+        "target": "SingleMessageNotificationCreator.setDeviceActions",
+        "finding": "Eliminated because it simply preserves the supplied action list and has a branch for every configurable action, including Star."
+      },
+      {
+        "step": 23,
+        "action": "eliminate_candidate",
+        "target": "NotificationActionsSettingsScreen / NotificationActionsReorderController",
+        "finding": "Eliminated as primary cause because the UI emits full order and cutoff after changes; the more direct mismatch is in notification action resolution."
+      },
+      {
+        "step": 24,
+        "action": "form_hypothesis",
+        "target": "resolveActions takes first N configured actions before filtering unavailable actions",
+        "finding": "If configured actions before the cutoff are unavailable due account folders or quick-delete/spam confirmation settings, they are removed after consuming visible slots, so the resulting notification does not represent the user's selected visible actions."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "legacy/core/src/main/java/com/fsck/k9/notification/SingleMessageNotificationDataCreator.kt",
+        "class": "SingleMessageNotificationDataCreator",
+        "method": "resolveActions(List<NotificationAction> order, Int cutoff, Boolean hasArchiveFolder, Boolean isDeleteEnabled, Boolean hasSpamFolder, Boolean isSpamEnabled)",
+        "line": 98,
+        "statement": "return order.take(cutoff).filter { action ->",
+        "suspicion_score": 0.78,
+        "reasoning": "This is the statement that converts the user's persisted notification action order and cutoff into actual notification buttons. It applies the cutoff before filtering actions that are unavailable for the current account/settings. That means unavailable actions still consume one of the maximum three visible slots, so the resulting notification can keep showing the same always-available actions instead of the user's configured visible set."
+      }
+    ],
+    "final_answer": {
+      "file": "legacy/core/src/main/java/com/fsck/k9/notification/SingleMessageNotificationDataCreator.kt",
+      "class": "SingleMessageNotificationDataCreator",
+      "method": "resolveActions(List<NotificationAction> order, Int cutoff, Boolean hasArchiveFolder, Boolean isDeleteEnabled, Boolean hasSpamFolder, Boolean isSpamEnabled)",
+      "line": 98,
+      "statement": "return order.take(cutoff).filter { action ->",
+      "confidence": 0.78,
+      "causal_chain": "The settings screen persists an ordered token list and cutoff. New mail notification creation reads those preferences in createSingleNotificationActions(). The parsed order and cutoff are passed to resolveActions(). At line 98, resolveActions first truncates the configured order to the cutoff, then filters unavailable actions. Because unavailable actions can be discarded only after occupying one of the visible slots, the final Android notification action list can ignore the user's intended up-to-three visible actions and fall back to the same remaining always-available actions. SingleMessageNotificationCreator then faithfully renders that faulty list.",
+      "fix_hint": "Filter actions for availability before applying the cutoff, e.g. `order.filter { it.isAvailable(...) }.take(cutoff)`."
+    }
+  },
+  "error": null
+}

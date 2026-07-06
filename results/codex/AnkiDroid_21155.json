@@ -1,0 +1,210 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "AnkiDroid",
+  "issue_id": 21155,
+  "issue_url": "https://github.com/ankidroid/Anki-Android/issues/21155",
+  "issue_title": "Rotation/unfold during review hides the answer (resets card to question side)",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\ankidroid_Anki_Android",
+  "media_files": [],
+  "started_at": "2026-06-21T15:01:14.272-05:00",
+  "finished_at": "2026-06-21T15:05:46.084-05:00",
+  "duration_seconds": 271.81,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"class Reviewer|ReviewerActivity|android:configChanges|onConfigurationChanged|CardSide|showAnswer\",\n      \"finding\": \"Searched local source only. Found the main reviewer implementation at AnkiDroid/src/main/java/com/ichi2/anki/Reviewer.kt, the superclass AbstractFlashcardViewer.kt, CardSide users, and the manifest configChanges entry.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"inspect_manifest\",\n      \"target\": \"AnkiDroid/src/main/AndroidManifest.xml:373-379\",\n      \"finding\": \"The activity for review is com.ichi2.anki.Reviewer and it declares android:configChanges=\\\"keyboardHidden|orientation|screenSize\\\", so rotation/screen-size changes are handled inside the running Activity instead of a normal recreate path.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/Reviewer.kt:138-243\",\n      \"finding\": \"Reviewer extends AbstractFlashcardViewer and initializes reviewer fields in onCreate. It starts collection loading but does not initialize a separate card-side state in Reviewer itself.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/Reviewer.kt:261-264\",\n      \"finding\": \"Reviewer.onSaveInstanceState only saves KEY_PREVIOUS_CARD_ID. It does not save currentCard.id or whether the answer side is currently displayed.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/Reviewer.kt:363-390\",\n      \"finding\": \"Reviewer.onCollectionLoaded calls updateCardAndRedraw() to start review after collection load. This is the startup path, not the answer flip path.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/Reviewer.kt:1077-1081\",\n      \"finding\": \"Reviewer.performReload() delegates to launchCatchingTask { updateCardAndRedraw() }, so any reload of the current reviewer uses the same redraw routine.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/Reviewer.kt:1207-1217\",\n      \"finding\": \"Reviewer.updateCurrentCard() pulls sched.currentQueueState(), renders the topCard, assigns currentCard = state?.topCard, and assigns queueState = state. It does not preserve or inspect the previous side.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/Reviewer.kt:1279-1301\",\n      \"finding\": \"Reviewer.displayCardQuestion() and displayCardAnswer() delegate to AbstractFlashcardViewer after reviewer-specific timer/state handling. The actual side flag changes happen in the superclass.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:295-306\",\n      \"finding\": \"The Show Answer button listener calls displayCardAnswer(), so the initial answer display path is direct and not suspicious.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:507-529\",\n      \"finding\": \"updateCardAndRedraw() calls updateCurrentCard(), then unconditionally calls displayCardQuestion() at line 525 before refreshing the action bar and focus.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:574-578\",\n      \"finding\": \"AbstractFlashcardViewer.onConfigurationChanged() only calls super.onConfigurationChanged(newConfig) and refreshActionBar(). It does not preserve or restore isDisplayingAnswer.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/NavigationDrawerActivity.kt:265-269\",\n      \"finding\": \"NavigationDrawerActivity.onConfigurationChanged() only delegates to super and drawerToggle.onConfigurationChanged(newConfig). It does not handle card side.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"trace_call\",\n      \"target\": \"AbstractFlashcardViewer.updateCardAndRedraw() -> Reviewer.updateCurrentCard() -> AbstractFlashcardViewer.displayCardQuestion()\",\n      \"finding\": \"The redraw/reload path fetches the current scheduler queue state and then always renders the front/question side, regardless of whether displayAnswer was true before the redraw.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:1320-1348\",\n      \"finding\": \"displayCardQuestion() sets displayAnswer = false, renders SingleCardSide.FRONT, updates the WebView, and hides ease buttons. This directly matches the UI returning to the question side.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:1351-1388\",\n      \"finding\": \"displayCardAnswer() sets displayAnswer = true and renders SingleCardSide.BACK. This path is correct when Show Answer is tapped.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:1441-1449\",\n      \"finding\": \"updateCard(content) stores the rendered side HTML in cardContent and calls fillFlashcard(), so the rendered side depends on which displayCard* method was selected upstream.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:1530-1541\",\n      \"finding\": \"fillFlashcard() loads cardContent into the WebView. It does not choose question versus answer; it only reflects the content produced earlier.\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:1954-1989\",\n      \"finding\": \"reloadWebViewContent() explicitly retains the current side by checking isDisplayingAnswer and calling displayCardAnswer() if true. This is a neighboring correct path and shows the safer behavior updateCardAndRedraw() lacks.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:2678-2746\",\n      \"finding\": \"isDisplayingAnswer returns the companion object backing field displayAnswer, whose default is false. This global flag is the side state used by Reviewer bindings and rendering.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/ViewerRefresh.kt:21-40\",\n      \"finding\": \"ViewerRefresh records queue/note/card changes only. It does not encode card side, so refreshRequired cannot restore ANSWER side after a redraw.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:2710-2717\",\n      \"finding\": \"opExecuted() updates refreshRequired and calls refreshIfRequired(), which can trigger updateCardAndRedraw(). This refresh path also lacks side preservation.\"\n    },\n    {\n      \"step\": 22,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:630-639\",\n      \"finding\": \"refreshIfRequired() launches updateCardAndRedraw() when a refresh is pending and the Activity is resumed. The comment warns that updateCardAndRedraw clears refreshRequired but does not mention preserving side.\"\n    },\n    {\n      \"step\": 23,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerFragment.kt\",\n      \"finding\": \"ReviewerFragment uses ReviewerViewModel.showingAnswer, but the manifest entry for the reported Activity is com.ichi2.anki.Reviewer, so this newer fragment path is not the primary legacy Activity fault.\"\n    },\n    {\n      \"step\": 24,\n      \"action\": \"read_file\",\n      \"target\": \"AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt\",\n      \"finding\": \"The newer ViewModel has a showingAnswer flow and restoration logic after recreation. This reinforces that the legacy Reviewer.kt/AbstractFlashcardViewer path lacks equivalent side preservation.\"\n    },\n    {\n      \"step\": 25,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"updateCardAndRedraw() always resets to question side\",\n      \"finding\": \"If a fold/rotation or related lifecycle refresh reaches updateCardAndRedraw() while the answer is visible, the unconditional displayCardQuestion() call overwrites the side state and renders SingleCardSide.FRONT.\"\n    },\n    {\n      \"step\": 26,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"AndroidCardRenderContext.renderCard()\",\n      \"finding\": \"Rendering is not the likely fault: callers explicitly pass SingleCardSide.FRONT or BACK, and displayCardAnswer() correctly passes BACK.\"\n    },\n    {\n      \"step\": 27,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"fillFlashcard()/loadContentIntoCard()\",\n      \"finding\": \"The WebView loading code only loads the already-rendered cardContent. It does not flip answer to question by itself.\"\n    },\n    {\n      \"step\": 28,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"Reviewer.onSaveInstanceState() as sole fault\",\n      \"finding\": \"It is relevant missing persistence, but the manifest handles orientation/screenSize without normal Activity recreation. The observed immediate question render is more directly caused by updateCardAndRedraw() choosing displayCardQuestion().\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt\",\n      \"class\": \"AbstractFlashcardViewer\",\n      \"method\": \"updateCardAndRedraw()\",\n      \"line\": 525,\n      \"statement\": \"displayCardQuestion()\",\n      \"suspicion_score\": 0.91,\n      \"reasoning\": \"This redraw/reload method is used by Reviewer startup, reload, answer-card progression, and refresh paths. It always calls displayCardQuestion() after updating currentCard, with no check of isDisplayingAnswer/CardSide. displayCardQuestion() sets displayAnswer = false and renders SingleCardSide.FRONT, so a refresh caused during fold/rotation while the answer is visible will hide the answer and show the question side again.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt\",\n    \"class\": \"AbstractFlashcardViewer\",\n    \"method\": \"updateCardAndRedraw()\",\n    \"line\": 525,\n    \"statement\": \"displayCardQuestion()\",\n    \"confidence\": 0.91,\n    \"causal_chain\": \"Reviewer is the manifest Activity for study and handles orientation/screenSize itself. The legacy reviewer stores side state in AbstractFlashcardViewer.displayAnswer/isDisplayingAnswer, but Reviewer.onSaveInstanceState does not persist CardSide and ViewerRefresh also carries no side. When a lifecycle/config-related refresh/reload reaches updateCardAndRedraw(), the method refreshes currentCard from the scheduler and then unconditionally calls displayCardQuestion(). That call sets displayAnswer = false and renders SingleCardSide.FRONT into the WebView. Therefore a card that was showing the answer before fold/rotation is redrawn as the question side, hiding the answer.\",\n    \"fix_hint\": \"Preserve the current card id and current CardSide/isDisplayingAnswer across the config-change refresh path, and have updateCardAndRedraw() restore displayCardAnswer() when the same card was already on the answer side instead of always calling displayCardQuestion().\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "class Reviewer|ReviewerActivity|android:configChanges|onConfigurationChanged|CardSide|showAnswer",
+        "finding": "Searched local source only. Found the main reviewer implementation at AnkiDroid/src/main/java/com/ichi2/anki/Reviewer.kt, the superclass AbstractFlashcardViewer.kt, CardSide users, and the manifest configChanges entry."
+      },
+      {
+        "step": 2,
+        "action": "inspect_manifest",
+        "target": "AnkiDroid/src/main/AndroidManifest.xml:373-379",
+        "finding": "The activity for review is com.ichi2.anki.Reviewer and it declares android:configChanges=\"keyboardHidden|orientation|screenSize\", so rotation/screen-size changes are handled inside the running Activity instead of a normal recreate path."
+      },
+      {
+        "step": 3,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/Reviewer.kt:138-243",
+        "finding": "Reviewer extends AbstractFlashcardViewer and initializes reviewer fields in onCreate. It starts collection loading but does not initialize a separate card-side state in Reviewer itself."
+      },
+      {
+        "step": 4,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/Reviewer.kt:261-264",
+        "finding": "Reviewer.onSaveInstanceState only saves KEY_PREVIOUS_CARD_ID. It does not save currentCard.id or whether the answer side is currently displayed."
+      },
+      {
+        "step": 5,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/Reviewer.kt:363-390",
+        "finding": "Reviewer.onCollectionLoaded calls updateCardAndRedraw() to start review after collection load. This is the startup path, not the answer flip path."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/Reviewer.kt:1077-1081",
+        "finding": "Reviewer.performReload() delegates to launchCatchingTask { updateCardAndRedraw() }, so any reload of the current reviewer uses the same redraw routine."
+      },
+      {
+        "step": 7,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/Reviewer.kt:1207-1217",
+        "finding": "Reviewer.updateCurrentCard() pulls sched.currentQueueState(), renders the topCard, assigns currentCard = state?.topCard, and assigns queueState = state. It does not preserve or inspect the previous side."
+      },
+      {
+        "step": 8,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/Reviewer.kt:1279-1301",
+        "finding": "Reviewer.displayCardQuestion() and displayCardAnswer() delegate to AbstractFlashcardViewer after reviewer-specific timer/state handling. The actual side flag changes happen in the superclass."
+      },
+      {
+        "step": 9,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:295-306",
+        "finding": "The Show Answer button listener calls displayCardAnswer(), so the initial answer display path is direct and not suspicious."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:507-529",
+        "finding": "updateCardAndRedraw() calls updateCurrentCard(), then unconditionally calls displayCardQuestion() at line 525 before refreshing the action bar and focus."
+      },
+      {
+        "step": 11,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:574-578",
+        "finding": "AbstractFlashcardViewer.onConfigurationChanged() only calls super.onConfigurationChanged(newConfig) and refreshActionBar(). It does not preserve or restore isDisplayingAnswer."
+      },
+      {
+        "step": 12,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/NavigationDrawerActivity.kt:265-269",
+        "finding": "NavigationDrawerActivity.onConfigurationChanged() only delegates to super and drawerToggle.onConfigurationChanged(newConfig). It does not handle card side."
+      },
+      {
+        "step": 13,
+        "action": "trace_call",
+        "target": "AbstractFlashcardViewer.updateCardAndRedraw() -> Reviewer.updateCurrentCard() -> AbstractFlashcardViewer.displayCardQuestion()",
+        "finding": "The redraw/reload path fetches the current scheduler queue state and then always renders the front/question side, regardless of whether displayAnswer was true before the redraw."
+      },
+      {
+        "step": 14,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:1320-1348",
+        "finding": "displayCardQuestion() sets displayAnswer = false, renders SingleCardSide.FRONT, updates the WebView, and hides ease buttons. This directly matches the UI returning to the question side."
+      },
+      {
+        "step": 15,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:1351-1388",
+        "finding": "displayCardAnswer() sets displayAnswer = true and renders SingleCardSide.BACK. This path is correct when Show Answer is tapped."
+      },
+      {
+        "step": 16,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:1441-1449",
+        "finding": "updateCard(content) stores the rendered side HTML in cardContent and calls fillFlashcard(), so the rendered side depends on which displayCard* method was selected upstream."
+      },
+      {
+        "step": 17,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:1530-1541",
+        "finding": "fillFlashcard() loads cardContent into the WebView. It does not choose question versus answer; it only reflects the content produced earlier."
+      },
+      {
+        "step": 18,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:1954-1989",
+        "finding": "reloadWebViewContent() explicitly retains the current side by checking isDisplayingAnswer and calling displayCardAnswer() if true. This is a neighboring correct path and shows the safer behavior updateCardAndRedraw() lacks."
+      },
+      {
+        "step": 19,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:2678-2746",
+        "finding": "isDisplayingAnswer returns the companion object backing field displayAnswer, whose default is false. This global flag is the side state used by Reviewer bindings and rendering."
+      },
+      {
+        "step": 20,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/cardviewer/ViewerRefresh.kt:21-40",
+        "finding": "ViewerRefresh records queue/note/card changes only. It does not encode card side, so refreshRequired cannot restore ANSWER side after a redraw."
+      },
+      {
+        "step": 21,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:2710-2717",
+        "finding": "opExecuted() updates refreshRequired and calls refreshIfRequired(), which can trigger updateCardAndRedraw(). This refresh path also lacks side preservation."
+      },
+      {
+        "step": 22,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt:630-639",
+        "finding": "refreshIfRequired() launches updateCardAndRedraw() when a refresh is pending and the Activity is resumed. The comment warns that updateCardAndRedraw clears refreshRequired but does not mention preserving side."
+      },
+      {
+        "step": 23,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerFragment.kt",
+        "finding": "ReviewerFragment uses ReviewerViewModel.showingAnswer, but the manifest entry for the reported Activity is com.ichi2.anki.Reviewer, so this newer fragment path is not the primary legacy Activity fault."
+      },
+      {
+        "step": 24,
+        "action": "read_file",
+        "target": "AnkiDroid/src/main/java/com/ichi2/anki/ui/windows/reviewer/ReviewerViewModel.kt",
+        "finding": "The newer ViewModel has a showingAnswer flow and restoration logic after recreation. This reinforces that the legacy Reviewer.kt/AbstractFlashcardViewer path lacks equivalent side preservation."
+      },
+      {
+        "step": 25,
+        "action": "form_hypothesis",
+        "target": "updateCardAndRedraw() always resets to question side",
+        "finding": "If a fold/rotation or related lifecycle refresh reaches updateCardAndRedraw() while the answer is visible, the unconditional displayCardQuestion() call overwrites the side state and renders SingleCardSide.FRONT."
+      },
+      {
+        "step": 26,
+        "action": "eliminate_candidate",
+        "target": "AndroidCardRenderContext.renderCard()",
+        "finding": "Rendering is not the likely fault: callers explicitly pass SingleCardSide.FRONT or BACK, and displayCardAnswer() correctly passes BACK."
+      },
+      {
+        "step": 27,
+        "action": "eliminate_candidate",
+        "target": "fillFlashcard()/loadContentIntoCard()",
+        "finding": "The WebView loading code only loads the already-rendered cardContent. It does not flip answer to question by itself."
+      },
+      {
+        "step": 28,
+        "action": "eliminate_candidate",
+        "target": "Reviewer.onSaveInstanceState() as sole fault",
+        "finding": "It is relevant missing persistence, but the manifest handles orientation/screenSize without normal Activity recreation. The observed immediate question render is more directly caused by updateCardAndRedraw() choosing displayCardQuestion()."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt",
+        "class": "AbstractFlashcardViewer",
+        "method": "updateCardAndRedraw()",
+        "line": 525,
+        "statement": "displayCardQuestion()",
+        "suspicion_score": 0.91,
+        "reasoning": "This redraw/reload method is used by Reviewer startup, reload, answer-card progression, and refresh paths. It always calls displayCardQuestion() after updating currentCard, with no check of isDisplayingAnswer/CardSide. displayCardQuestion() sets displayAnswer = false and renders SingleCardSide.FRONT, so a refresh caused during fold/rotation while the answer is visible will hide the answer and show the question side again."
+      }
+    ],
+    "final_answer": {
+      "file": "AnkiDroid/src/main/java/com/ichi2/anki/AbstractFlashcardViewer.kt",
+      "class": "AbstractFlashcardViewer",
+      "method": "updateCardAndRedraw()",
+      "line": 525,
+      "statement": "displayCardQuestion()",
+      "confidence": 0.91,
+      "causal_chain": "Reviewer is the manifest Activity for study and handles orientation/screenSize itself. The legacy reviewer stores side state in AbstractFlashcardViewer.displayAnswer/isDisplayingAnswer, but Reviewer.onSaveInstanceState does not persist CardSide and ViewerRefresh also carries no side. When a lifecycle/config-related refresh/reload reaches updateCardAndRedraw(), the method refreshes currentCard from the scheduler and then unconditionally calls displayCardQuestion(). That call sets displayAnswer = false and renders SingleCardSide.FRONT into the WebView. Therefore a card that was showing the answer before fold/rotation is redrawn as the question side, hiding the answer.",
+      "fix_hint": "Preserve the current card id and current CardSide/isDisplayingAnswer across the config-change refresh path, and have updateCardAndRedraw() restore displayCardAnswer() when the same card was already on the answer side instead of always calling displayCardQuestion()."
+    }
+  },
+  "error": null
+}

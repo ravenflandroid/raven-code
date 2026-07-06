@@ -1,0 +1,140 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "Amaze",
+  "issue_id": 4585,
+  "issue_url": "https://github.com/TeamAmaze/AmazeFileManager/issues/4585",
+  "issue_title": "Overwrite button disabled in paste conflict dialog",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\TeamAmaze_AmazeFileManager",
+  "media_files": [
+    "458df8a6-baed-4a45-94c1-c0b05d8f015b"
+  ],
+  "started_at": "2026-06-21T16:02:31.884-05:00",
+  "finished_at": "2026-06-21T16:05:31.875-05:00",
+  "duration_seconds": 180.0,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"Overwrite|overwrite|Skip|Rename|Do for all|conflict|paste conflict|Paste\",\n      \"finding\": \"PowerShell search found paste-conflict strings in app/src/main/res/values/strings.xml and the main implementation in app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/movecopy/PreparePasteTask.kt.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/res/values/strings.xml\",\n      \"finding\": \"Confirmed relevant UI strings: paste, skip, overwrite, rename, doforall, checking_conflicts, same_dir_overwrite_error.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/movecopy/PreparePasteTask.kt\",\n      \"finding\": \"PreparePasteTask checks destination children for same-name conflicts, builds a MaterialDialog with Rename as positive, Skip as neutral, and Overwrite as negative, then waits for the selected DialogAction.\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"inspect_layout_xml\",\n      \"target\": \"app/src/main/res/layout/copy_dialog.xml\",\n      \"finding\": \"The custom dialog layout contains only the conflict text, file name, and 'Do for all items' checkbox. The Skip/Overwrite/Rename buttons are MaterialDialog action buttons configured in PreparePasteTask.kt.\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"trace_call\",\n      \"target\": \"PreparePasteTask.prepareDialog(...) -> showDialog(...)\",\n      \"finding\": \"prepareDialog sets dialogBuilder.negativeText(R.string.overwrite), so DialogAction.NEGATIVE is the Overwrite button.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/PasteHelper.java\",\n      \"finding\": \"The paste snackbar gets the current MainFragment path and passes it as targetPath to new PreparePasteTask(mainActivity).execute(...), with the copied files as source HybridFileParcelable objects.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"trace_call\",\n      \"target\": \"PasteHelper.java lines 164-176\",\n      \"finding\": \"For the reproduction, copying File1.mp3 and pressing Paste while still in the same folder means targetPath equals the copied file's parent directory.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/ui/dialogs/DragAndDropDialog.kt\",\n      \"finding\": \"Drag-and-drop also calls PreparePasteTask.execute with a pasteLocation and file list, confirming PreparePasteTask is the shared concrete paste-conflict entry point.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Overwrite disabled because the source file parent equals targetPath\",\n      \"finding\": \"In showDialog, if hybridFileParcelable.getParent(context.get()) == targetPath, the code disables DialogAction.NEGATIVE. Since negative is Overwrite, same-directory paste conflicts always show Overwrite disabled.\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/movecopy/MoveFiles.java\",\n      \"finding\": \"MoveFiles comments direct callers to use PreparePasteTask; it is not responsible for rendering the paste conflict dialog.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/asynchronous/services/CopyService.java\",\n      \"finding\": \"CopyService receives TAG_COPY_SOURCES and TAG_COPY_TARGET and copies each source into targetPath/name. It has no UI disable logic.\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/files/GenericCopyUtil.java\",\n      \"finding\": \"GenericCopyUtil performs the actual byte copy into the target file. It is downstream of the dialog decision and does not control whether Overwrite is selectable.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/com/amaze/filemanager/filesystem/files/FileUtils.java\",\n      \"finding\": \"FileUtils read was used to inspect related file utility behavior; no paste conflict dialog or Overwrite button enablement exists there.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"CopyNode Action.OVERWRITE handling in PreparePasteTask.kt\",\n      \"finding\": \"CopyNode has explicit RENAME and SKIP branches but no OVERWRITE branch; this is intentional because leaving the file in filesToCopy with the original name causes CopyService to write to the conflicting target name.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"Do for all items checkbox\",\n      \"finding\": \"The checkbox only sets renameAll, overwriteAll, or skipAll after a button is clicked. It cannot enable a disabled Overwrite button, matching the report that checking/unchecking it does not help.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Fault statement is dialog.getActionButton(DialogAction.NEGATIVE).isEnabled = false\",\n      \"finding\": \"This statement directly grays out the Overwrite button for the reproduction path and no neighboring code re-enables it.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/movecopy/PreparePasteTask.kt\",\n      \"class\": \"PreparePasteTask\",\n      \"method\": \"showDialog(MutableList<HybridFileParcelable> conflictingFiles, HashMap<HybridFileParcelable, String> conflictingDirActionMap, CopyDialogBinding copyDialogBinding, MaterialDialog.Builder dialogBuilder, AppCompatCheckBox checkBox)\",\n      \"line\": 247,\n      \"statement\": \".isEnabled = false\",\n      \"suspicion_score\": 0.95,\n      \"reasoning\": \"The dialog labels DialogAction.NEGATIVE as Overwrite, then disables that action whenever the copied file's parent equals the paste target. In the reported reproduction, copying a file and pasting in the same directory makes that condition true, so Overwrite is shown permanently disabled and cannot complete DialogAction.NEGATIVE.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/movecopy/PreparePasteTask.kt\",\n    \"class\": \"PreparePasteTask\",\n    \"method\": \"showDialog(MutableList<HybridFileParcelable> conflictingFiles, HashMap<HybridFileParcelable, String> conflictingDirActionMap, CopyDialogBinding copyDialogBinding, MaterialDialog.Builder dialogBuilder, AppCompatCheckBox checkBox)\",\n    \"line\": 247,\n    \"statement\": \".isEnabled = false\",\n    \"confidence\": 0.95,\n    \"causal_chain\": \"PasteHelper passes the current directory as targetPath to PreparePasteTask.execute. checkConflicts finds a same-name file in that target and calls prepareDialog. prepareDialog assigns Overwrite to DialogAction.NEGATIVE. showDialog then sees hybridFileParcelable.getParent(context.get()) == targetPath for the same-directory paste case and executes .isEnabled = false on DialogAction.NEGATIVE. Since that action is Overwrite and no later code re-enables it, the dialog displays Overwrite grayed out while Skip and Rename remain usable.\",\n    \"fix_hint\": \"Remove or narrow the same-parent disable logic for DialogAction.NEGATIVE so the Overwrite button remains enabled when a paste conflict is presented.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "Overwrite|overwrite|Skip|Rename|Do for all|conflict|paste conflict|Paste",
+        "finding": "PowerShell search found paste-conflict strings in app/src/main/res/values/strings.xml and the main implementation in app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/movecopy/PreparePasteTask.kt."
+      },
+      {
+        "step": 2,
+        "action": "read_file",
+        "target": "app/src/main/res/values/strings.xml",
+        "finding": "Confirmed relevant UI strings: paste, skip, overwrite, rename, doforall, checking_conflicts, same_dir_overwrite_error."
+      },
+      {
+        "step": 3,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/movecopy/PreparePasteTask.kt",
+        "finding": "PreparePasteTask checks destination children for same-name conflicts, builds a MaterialDialog with Rename as positive, Skip as neutral, and Overwrite as negative, then waits for the selected DialogAction."
+      },
+      {
+        "step": 4,
+        "action": "inspect_layout_xml",
+        "target": "app/src/main/res/layout/copy_dialog.xml",
+        "finding": "The custom dialog layout contains only the conflict text, file name, and 'Do for all items' checkbox. The Skip/Overwrite/Rename buttons are MaterialDialog action buttons configured in PreparePasteTask.kt."
+      },
+      {
+        "step": 5,
+        "action": "trace_call",
+        "target": "PreparePasteTask.prepareDialog(...) -> showDialog(...)",
+        "finding": "prepareDialog sets dialogBuilder.negativeText(R.string.overwrite), so DialogAction.NEGATIVE is the Overwrite button."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/PasteHelper.java",
+        "finding": "The paste snackbar gets the current MainFragment path and passes it as targetPath to new PreparePasteTask(mainActivity).execute(...), with the copied files as source HybridFileParcelable objects."
+      },
+      {
+        "step": 7,
+        "action": "trace_call",
+        "target": "PasteHelper.java lines 164-176",
+        "finding": "For the reproduction, copying File1.mp3 and pressing Paste while still in the same folder means targetPath equals the copied file's parent directory."
+      },
+      {
+        "step": 8,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/ui/dialogs/DragAndDropDialog.kt",
+        "finding": "Drag-and-drop also calls PreparePasteTask.execute with a pasteLocation and file list, confirming PreparePasteTask is the shared concrete paste-conflict entry point."
+      },
+      {
+        "step": 9,
+        "action": "form_hypothesis",
+        "target": "Overwrite disabled because the source file parent equals targetPath",
+        "finding": "In showDialog, if hybridFileParcelable.getParent(context.get()) == targetPath, the code disables DialogAction.NEGATIVE. Since negative is Overwrite, same-directory paste conflicts always show Overwrite disabled."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/movecopy/MoveFiles.java",
+        "finding": "MoveFiles comments direct callers to use PreparePasteTask; it is not responsible for rendering the paste conflict dialog."
+      },
+      {
+        "step": 11,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/asynchronous/services/CopyService.java",
+        "finding": "CopyService receives TAG_COPY_SOURCES and TAG_COPY_TARGET and copies each source into targetPath/name. It has no UI disable logic."
+      },
+      {
+        "step": 12,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/files/GenericCopyUtil.java",
+        "finding": "GenericCopyUtil performs the actual byte copy into the target file. It is downstream of the dialog decision and does not control whether Overwrite is selectable."
+      },
+      {
+        "step": 13,
+        "action": "read_file",
+        "target": "app/src/main/java/com/amaze/filemanager/filesystem/files/FileUtils.java",
+        "finding": "FileUtils read was used to inspect related file utility behavior; no paste conflict dialog or Overwrite button enablement exists there."
+      },
+      {
+        "step": 14,
+        "action": "eliminate_candidate",
+        "target": "CopyNode Action.OVERWRITE handling in PreparePasteTask.kt",
+        "finding": "CopyNode has explicit RENAME and SKIP branches but no OVERWRITE branch; this is intentional because leaving the file in filesToCopy with the original name causes CopyService to write to the conflicting target name."
+      },
+      {
+        "step": 15,
+        "action": "eliminate_candidate",
+        "target": "Do for all items checkbox",
+        "finding": "The checkbox only sets renameAll, overwriteAll, or skipAll after a button is clicked. It cannot enable a disabled Overwrite button, matching the report that checking/unchecking it does not help."
+      },
+      {
+        "step": 16,
+        "action": "form_hypothesis",
+        "target": "Fault statement is dialog.getActionButton(DialogAction.NEGATIVE).isEnabled = false",
+        "finding": "This statement directly grays out the Overwrite button for the reproduction path and no neighboring code re-enables it."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/movecopy/PreparePasteTask.kt",
+        "class": "PreparePasteTask",
+        "method": "showDialog(MutableList<HybridFileParcelable> conflictingFiles, HashMap<HybridFileParcelable, String> conflictingDirActionMap, CopyDialogBinding copyDialogBinding, MaterialDialog.Builder dialogBuilder, AppCompatCheckBox checkBox)",
+        "line": 247,
+        "statement": ".isEnabled = false",
+        "suspicion_score": 0.95,
+        "reasoning": "The dialog labels DialogAction.NEGATIVE as Overwrite, then disables that action whenever the copied file's parent equals the paste target. In the reported reproduction, copying a file and pasting in the same directory makes that condition true, so Overwrite is shown permanently disabled and cannot complete DialogAction.NEGATIVE."
+      }
+    ],
+    "final_answer": {
+      "file": "app/src/main/java/com/amaze/filemanager/asynchronous/asynctasks/movecopy/PreparePasteTask.kt",
+      "class": "PreparePasteTask",
+      "method": "showDialog(MutableList<HybridFileParcelable> conflictingFiles, HashMap<HybridFileParcelable, String> conflictingDirActionMap, CopyDialogBinding copyDialogBinding, MaterialDialog.Builder dialogBuilder, AppCompatCheckBox checkBox)",
+      "line": 247,
+      "statement": ".isEnabled = false",
+      "confidence": 0.95,
+      "causal_chain": "PasteHelper passes the current directory as targetPath to PreparePasteTask.execute. checkConflicts finds a same-name file in that target and calls prepareDialog. prepareDialog assigns Overwrite to DialogAction.NEGATIVE. showDialog then sees hybridFileParcelable.getParent(context.get()) == targetPath for the same-directory paste case and executes .isEnabled = false on DialogAction.NEGATIVE. Since that action is Overwrite and no later code re-enables it, the dialog displays Overwrite grayed out while Skip and Rename remain usable.",
+      "fix_hint": "Remove or narrow the same-parent disable logic for DialogAction.NEGATIVE so the Overwrite button remains enabled when a paste conflict is presented."
+    }
+  },
+  "error": null
+}

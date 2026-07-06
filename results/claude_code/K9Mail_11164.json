@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "K9Mail",
+  "issue_id": 11164,
+  "issue_url": "https://github.com/thunderbird/thunderbird-android/issues/11164",
+  "issue_title": "ugly display (wrong line wrapping?) of plain text edited e-mails with MozTb (Linux) using enumeration/list format",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\thunderbird_thunderbird_android",
+  "media_files": [
+    "5d546d79-f6dc-4c60-9982-71d9ff0ec21e",
+    "ca3d3815-0fe2-457a-a09a-4ee4bab5cb48"
+  ],
+  "started_at": "2026-06-21T17:04:32.937-05:00",
+  "finished_at": "2026-06-21T17:07:33.548-05:00",
+  "duration_seconds": 180.61,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

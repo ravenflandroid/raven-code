@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "WordPress",
+  "issue_id": 22878,
+  "issue_url": "https://github.com/wordpress-mobile/WordPress-Android/issues/22878",
+  "issue_title": "Editor exit hangs indefinitely when GutenbergView never finishes loading",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\wordpress_mobile_WordPress_Android",
+  "media_files": [],
+  "started_at": "2026-06-21T15:30:45.374-05:00",
+  "finished_at": "2026-06-21T15:33:43.535-05:00",
+  "duration_seconds": 178.17,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

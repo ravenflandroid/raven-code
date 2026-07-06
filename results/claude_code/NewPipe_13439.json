@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "NewPipe",
+  "issue_id": 13439,
+  "issue_url": "https://github.com/TeamNewPipe/NewPipe/issues/13439",
+  "issue_title": "History page title does not reflect current mode on first entry",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\TeamNewPipe_NewPipe",
+  "media_files": [
+    "0d1c0691-2c9f-483d-a4b9-c163acbead4c",
+    "6bf5cb59-ee97-4c9c-af3c-a0b95d6e2d1c"
+  ],
+  "started_at": "2026-06-22T15:27:13.296-05:00",
+  "finished_at": "2026-06-22T15:30:28.150-05:00",
+  "duration_seconds": 194.86,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "Amaze",
+  "issue_id": 4585,
+  "issue_url": "https://github.com/TeamAmaze/AmazeFileManager/issues/4585",
+  "issue_title": "Overwrite button disabled in paste conflict dialog",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\TeamAmaze_AmazeFileManager",
+  "media_files": [
+    "458df8a6-baed-4a45-94c1-c0b05d8f015b"
+  ],
+  "started_at": "2026-06-21T15:59:34.105-05:00",
+  "finished_at": "2026-06-21T16:02:31.882-05:00",
+  "duration_seconds": 177.78,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

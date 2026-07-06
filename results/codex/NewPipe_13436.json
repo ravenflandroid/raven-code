@@ -1,0 +1,225 @@
+{
+  "schema_version": "1.0",
+  "baseline": "codex",
+  "model": "",
+  "app": "NewPipe",
+  "issue_id": 13436,
+  "issue_url": "https://github.com/TeamNewPipe/NewPipe/issues/13436",
+  "issue_title": "Media notification shows [Unknown] for video title and channel name on first playback (0.28.4 / 0.28.5)",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\TeamNewPipe_NewPipe",
+  "media_files": [
+    "762884da-4dbd-40bd-9c54-4d1682d39d6a",
+    "17a0831a-db6c-459e-9a54-551afda738d7"
+  ],
+  "started_at": "2026-06-22T15:36:57.442-05:00",
+  "finished_at": "2026-06-22T15:41:35.932-05:00",
+  "duration_seconds": 278.48,
+  "raw_output": "{\n  \"reasoning_trace\": [\n    {\n      \"step\": 1,\n      \"action\": \"grep_pattern\",\n      \"target\": \"Unknown|\\\\[Unknown\\\\]|MediaSession|NotificationCompat|MediaMetadata|setMetadata|media notification\",\n      \"finding\": \"rg was unavailable, so PowerShell recursive search was used. The literal fallback [Unknown] is R.string.unknown_content and relevant hits are in Player.java, MediaSessionPlayerUi.java, NotificationUtil.java, PlayerService.java, and mediaitem classes.\"\n    },\n    {\n      \"step\": 2,\n      \"action\": \"grep_pattern\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player files matching Player|Notification|Media|Session|Service\",\n      \"finding\": \"Identified the likely entry-point and notification/media-session components: PlayerService, Player, NotificationPlayerUi, NotificationUtil, MediaSessionPlayerUi, PlayQueueNavigator, MediaItemTag, and MediaSourceManager.\"\n    },\n    {\n      \"step\": 3,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/Player.java:1900-1949\",\n      \"finding\": \"Player.getVideoTitle() and Player.getUploaderName() return R.string.unknown_content only when currentMetadata is null; otherwise they return currentMetadata.getTitle() and currentMetadata.getUploaderName().\"\n    },\n    {\n      \"step\": 4,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/mediasession/MediaSessionPlayerUi.java\",\n      \"finding\": \"MediaSessionPlayerUi installs a MediaSessionConnector metadata provider in initPlayer() and buildMediaMetadata() writes METADATA_KEY_TITLE from player.getVideoTitle() and METADATA_KEY_ARTIST from player.getUploaderName().\"\n    },\n    {\n      \"step\": 5,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/notification/NotificationUtil.java\",\n      \"finding\": \"NotificationUtil.updateNotification() directly sets notification content title/text/ticker from player.getVideoTitle() and player.getUploaderName(); on Android 13+ actions are controlled by MediaSessionPlayerUi and the MediaStyle is bound to the media session token.\"\n    },\n    {\n      \"step\": 6,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/mediaitem/MediaItemTag.java\",\n      \"finding\": \"MediaItemTag.asMediaItem() can encode title/uploader into ExoPlayer MediaMetadata, but the Android MediaSessionCompat metadata used by MediaSessionPlayerUi is built separately from Player getters.\"\n    },\n    {\n      \"step\": 7,\n      \"action\": \"grep_pattern\",\n      \"target\": \"currentMetadata|updateMetadataWith|onMetadataChanged|invalidateMediaSessionMetadata|createNotificationAndStartForeground\",\n      \"finding\": \"Only MediaSessionPlayerUi.onThumbnailLoaded() calls sessionConnector.invalidateMediaSessionMetadata(); MediaSessionPlayerUi.onMetadataChanged() does not. NotificationPlayerUi.onMetadataChanged() recreates the notification.\"\n    },\n    {\n      \"step\": 8,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/PlayerService.java:125-178\",\n      \"finding\": \"PlayerService.onStartCommand() creates a Player if needed, immediately calls NotificationPlayerUi.createNotificationAndStartForeground(), then calls player.handleIntent(). Therefore first foreground notification can be built before playback metadata exists.\"\n    },\n    {\n      \"step\": 9,\n      \"action\": \"trace_call\",\n      \"target\": \"PlayerService.onStartCommand -> NotificationPlayerUi.createNotificationAndStartForeground -> NotificationUtil.createNotificationAndStartForeground\",\n      \"finding\": \"The initial notification is built while currentMetadata may still be null. That explains the first [Unknown] values returned by Player.getVideoTitle() and getUploaderName().\"\n    },\n    {\n      \"step\": 10,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/notification/NotificationPlayerUi.java\",\n      \"finding\": \"NotificationPlayerUi updates/recreates the direct notification on metadata changes, but it does not control MediaSessionCompat metadata; that is MediaSessionPlayerUi's responsibility.\"\n    },\n    {\n      \"step\": 11,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/Player.java:1361-1404\",\n      \"finding\": \"Player.onEvents() extracts MediaItemTag from the current ExoPlayer MediaItem, assigns currentMetadata = tag, and if StreamInfo changed calls updateMetadataWith(info).\"\n    },\n    {\n      \"step\": 12,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/Player.java:1900-1916\",\n      \"finding\": \"Player.updateMetadataWith(info) loads the thumbnail, registers the stream, notifies listeners, and calls UIs.call(playerUi -> playerUi.onMetadataChanged(info)). This is the exact callback where media-session metadata should be invalidated.\"\n    },\n    {\n      \"step\": 13,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/mediasession/MediaSessionPlayerUi.java:151-179\",\n      \"finding\": \"buildMediaMetadata() would now return correct title and artist after currentMetadata is assigned, but only if MediaSessionConnector is told to rebuild metadata.\"\n    },\n    {\n      \"step\": 14,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/mediasession/MediaSessionPlayerUi.java:280-283\",\n      \"finding\": \"MediaSessionPlayerUi.onMetadataChanged() only calls updateMediaSessionActions(); it does not call sessionConnector.invalidateMediaSessionMetadata(), so the MediaSessionConnector may keep previously built metadata.\"\n    },\n    {\n      \"step\": 15,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Missing MediaSessionConnector metadata invalidation in MediaSessionPlayerUi.onMetadataChanged()\",\n      \"finding\": \"If the metadata provider is first evaluated while currentMetadata is null, the media session receives [Unknown]. When the real StreamInfo arrives, the callback updates Android 13 custom actions but not metadata, leaving the system media notification stale.\"\n    },\n    {\n      \"step\": 16,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/playback/MediaSourceManager.java\",\n      \"finding\": \"MediaSourceManager loads the current PlayQueueItem, receives a LoadedMediaSource, synchronizes playback, and eventually causes Player.onEvents() to see the resolved MediaItemTag. This confirms real metadata arrives asynchronously after notification startup.\"\n    },\n    {\n      \"step\": 17,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/mediasession/PlayQueueNavigator.java\",\n      \"finding\": \"PlayQueueNavigator publishes queue item descriptions using PlayQueueItem.getTitle() and getUploader(), so queue metadata has real title/uploader and is not the likely source of [Unknown].\"\n    },\n    {\n      \"step\": 18,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/ui/PlayerUi.java\",\n      \"finding\": \"PlayerUi.onMetadataChanged() is a no-op base callback; concrete UIs must perform their own metadata refresh behavior.\"\n    },\n    {\n      \"step\": 19,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/mediaitem/StreamInfoTag.java\",\n      \"finding\": \"StreamInfoTag.getTitle() returns streamInfo.getName() and getUploaderName() returns streamInfo.getUploaderName(); the resolved tag carries correct data.\"\n    },\n    {\n      \"step\": 20,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/mediaitem/PlaceholderTag.java\",\n      \"finding\": \"PlaceholderTag returns internal 'Placeholder' strings, not R.string.unknown_content, so it does not directly explain the displayed [Unknown] symptom.\"\n    },\n    {\n      \"step\": 21,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/mediaitem/ExceptionTag.java\",\n      \"finding\": \"ExceptionTag returns title/uploader from the PlayQueueItem. It is not responsible for first-playback [Unknown] when playback succeeds.\"\n    },\n    {\n      \"step\": 22,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/Player.java:602-650\",\n      \"finding\": \"initPlayback() creates ExoPlayer, calls UIs.initPlayer(), initializes the play queue, and reloads MediaSourceManager. MediaSessionPlayerUi.initPlayer() therefore installs the provider before resolved stream metadata is available.\"\n    },\n    {\n      \"step\": 23,\n      \"action\": \"read_file\",\n      \"target\": \"app/src/main/java/org/schabi/newpipe/player/resolver/PlaybackResolver.java:220-330,480-540\",\n      \"finding\": \"PlaybackResolver attaches MediaItemTag metadata to created MediaItems with setTag(metadata), confirming resolved media sources can provide real metadata to Player.onEvents().\"\n    },\n    {\n      \"step\": 24,\n      \"action\": \"grep_pattern\",\n      \"target\": \"sourceOf\\\\(|StreamInfoTag\\\\.of|PlaceholderMediaSource|onPlaybackSynchronize\",\n      \"finding\": \"PlaybackResolver creates StreamInfoTag instances and Player.sourceOf/onPlaybackSynchronize participate in resolving and syncing media sources; no evidence of wrong title/uploader creation was found.\"\n    },\n    {\n      \"step\": 25,\n      \"action\": \"inspect_manifest\",\n      \"target\": \"app/src/main/AndroidManifest.xml\",\n      \"finding\": \"PlayerService is declared as a mediaPlayback foreground service and media browser service, confirming it is the entry point for the Android media notification path.\"\n    },\n    {\n      \"step\": 26,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"NotificationUtil.updateNotification() direct content title/text\",\n      \"finding\": \"Although initial direct notification fields can be [Unknown], NotificationPlayerUi.onMetadataChanged() recreates/updates them when StreamInfo arrives. This does not explain Android 13 media notification remaining stale or showing previous video info.\"\n    },\n    {\n      \"step\": 27,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"Player.getVideoTitle() and Player.getUploaderName() fallback statements\",\n      \"finding\": \"The fallback is expected when currentMetadata is null. The bug is not that these methods have a fallback, but that MediaSession metadata is built from the fallback before metadata arrives and is not invalidated afterward.\"\n    },\n    {\n      \"step\": 28,\n      \"action\": \"eliminate_candidate\",\n      \"target\": \"StreamInfoTag / PlayQueueItem metadata contents\",\n      \"finding\": \"Resolved metadata sources return the correct stream title and uploader. The symptom of previous-video info is more consistent with stale MediaSessionConnector metadata than corrupted source metadata.\"\n    },\n    {\n      \"step\": 29,\n      \"action\": \"trace_call\",\n      \"target\": \"Player.onEvents -> Player.updateMetadataWith -> MediaSessionPlayerUi.onMetadataChanged\",\n      \"finding\": \"After currentMetadata changes to the new video, MediaSessionPlayerUi receives onMetadataChanged but only updates media session actions. The cached MediaSessionCompat metadata remains [Unknown] or the previous video until another invalidation path happens.\"\n    },\n    {\n      \"step\": 30,\n      \"action\": \"form_hypothesis\",\n      \"target\": \"Fault statement is MediaSessionPlayerUi.onMetadataChanged() line 282 updateMediaSessionActions();\",\n      \"finding\": \"This statement is the only real work in the metadata-change callback for the media session, but it refreshes actions instead of metadata. It should be accompanied or replaced by sessionConnector.invalidateMediaSessionMetadata() so buildMediaMetadata() runs with the new currentMetadata.\"\n    }\n  ],\n  \"fault_candidates\": [\n    {\n      \"rank\": 1,\n      \"file\": \"app/src/main/java/org/schabi/newpipe/player/mediasession/MediaSessionPlayerUi.java\",\n      \"class\": \"MediaSessionPlayerUi\",\n      \"method\": \"onMetadataChanged(StreamInfo info)\",\n      \"line\": 282,\n      \"statement\": \"        updateMediaSessionActions();\",\n      \"suspicion_score\": 0.95,\n      \"reasoning\": \"This is the media-session callback invoked after Player.currentMetadata is updated to the current stream. On Android 13 the system media notification derives display metadata from MediaSessionCompat/MediaSessionConnector, but this method only updates custom actions and never invalidates the MediaSessionConnector metadata provider. Because the initial foreground notification/media session can be created before currentMetadata exists, buildMediaMetadata() can publish [Unknown]; subsequent stream changes then leave the session metadata one update behind or still unknown.\"\n    }\n  ],\n  \"final_answer\": {\n    \"file\": \"app/src/main/java/org/schabi/newpipe/player/mediasession/MediaSessionPlayerUi.java\",\n    \"class\": \"MediaSessionPlayerUi\",\n    \"method\": \"onMetadataChanged(StreamInfo info)\",\n    \"line\": 282,\n    \"statement\": \"        updateMediaSessionActions();\",\n    \"confidence\": 0.95,\n    \"causal_chain\": \"PlayerService.onStartCommand() creates and starts the foreground media notification before player.handleIntent() resolves the first stream, so Player.currentMetadata is initially null and Player.getVideoTitle()/getUploaderName() return R.string.unknown_content. MediaSessionPlayerUi.initPlayer() registers a MediaSessionConnector metadata provider that builds MediaSessionCompat metadata from those getters. When ExoPlayer later receives the resolved MediaItemTag, Player.onEvents() assigns currentMetadata to the real stream tag and calls updateMetadataWith(info). updateMetadataWith(info) dispatches MediaSessionPlayerUi.onMetadataChanged(info), but that callback only executes updateMediaSessionActions() and does not call sessionConnector.invalidateMediaSessionMetadata(). Therefore the Android 13 media notification keeps the stale MediaSession metadata: [Unknown] on first playback, or the previous video's metadata after switching videos.\",\n    \"fix_hint\": \"Invalidate media-session metadata in MediaSessionPlayerUi.onMetadataChanged(), e.g. call sessionConnector.invalidateMediaSessionMetadata() after current stream metadata changes, while keeping action updates as needed.\"\n  }\n}",
+  "parsed_answer": {
+    "reasoning_trace": [
+      {
+        "step": 1,
+        "action": "grep_pattern",
+        "target": "Unknown|\\[Unknown\\]|MediaSession|NotificationCompat|MediaMetadata|setMetadata|media notification",
+        "finding": "rg was unavailable, so PowerShell recursive search was used. The literal fallback [Unknown] is R.string.unknown_content and relevant hits are in Player.java, MediaSessionPlayerUi.java, NotificationUtil.java, PlayerService.java, and mediaitem classes."
+      },
+      {
+        "step": 2,
+        "action": "grep_pattern",
+        "target": "app/src/main/java/org/schabi/newpipe/player files matching Player|Notification|Media|Session|Service",
+        "finding": "Identified the likely entry-point and notification/media-session components: PlayerService, Player, NotificationPlayerUi, NotificationUtil, MediaSessionPlayerUi, PlayQueueNavigator, MediaItemTag, and MediaSourceManager."
+      },
+      {
+        "step": 3,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/Player.java:1900-1949",
+        "finding": "Player.getVideoTitle() and Player.getUploaderName() return R.string.unknown_content only when currentMetadata is null; otherwise they return currentMetadata.getTitle() and currentMetadata.getUploaderName()."
+      },
+      {
+        "step": 4,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/mediasession/MediaSessionPlayerUi.java",
+        "finding": "MediaSessionPlayerUi installs a MediaSessionConnector metadata provider in initPlayer() and buildMediaMetadata() writes METADATA_KEY_TITLE from player.getVideoTitle() and METADATA_KEY_ARTIST from player.getUploaderName()."
+      },
+      {
+        "step": 5,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/notification/NotificationUtil.java",
+        "finding": "NotificationUtil.updateNotification() directly sets notification content title/text/ticker from player.getVideoTitle() and player.getUploaderName(); on Android 13+ actions are controlled by MediaSessionPlayerUi and the MediaStyle is bound to the media session token."
+      },
+      {
+        "step": 6,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/mediaitem/MediaItemTag.java",
+        "finding": "MediaItemTag.asMediaItem() can encode title/uploader into ExoPlayer MediaMetadata, but the Android MediaSessionCompat metadata used by MediaSessionPlayerUi is built separately from Player getters."
+      },
+      {
+        "step": 7,
+        "action": "grep_pattern",
+        "target": "currentMetadata|updateMetadataWith|onMetadataChanged|invalidateMediaSessionMetadata|createNotificationAndStartForeground",
+        "finding": "Only MediaSessionPlayerUi.onThumbnailLoaded() calls sessionConnector.invalidateMediaSessionMetadata(); MediaSessionPlayerUi.onMetadataChanged() does not. NotificationPlayerUi.onMetadataChanged() recreates the notification."
+      },
+      {
+        "step": 8,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/PlayerService.java:125-178",
+        "finding": "PlayerService.onStartCommand() creates a Player if needed, immediately calls NotificationPlayerUi.createNotificationAndStartForeground(), then calls player.handleIntent(). Therefore first foreground notification can be built before playback metadata exists."
+      },
+      {
+        "step": 9,
+        "action": "trace_call",
+        "target": "PlayerService.onStartCommand -> NotificationPlayerUi.createNotificationAndStartForeground -> NotificationUtil.createNotificationAndStartForeground",
+        "finding": "The initial notification is built while currentMetadata may still be null. That explains the first [Unknown] values returned by Player.getVideoTitle() and getUploaderName()."
+      },
+      {
+        "step": 10,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/notification/NotificationPlayerUi.java",
+        "finding": "NotificationPlayerUi updates/recreates the direct notification on metadata changes, but it does not control MediaSessionCompat metadata; that is MediaSessionPlayerUi's responsibility."
+      },
+      {
+        "step": 11,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/Player.java:1361-1404",
+        "finding": "Player.onEvents() extracts MediaItemTag from the current ExoPlayer MediaItem, assigns currentMetadata = tag, and if StreamInfo changed calls updateMetadataWith(info)."
+      },
+      {
+        "step": 12,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/Player.java:1900-1916",
+        "finding": "Player.updateMetadataWith(info) loads the thumbnail, registers the stream, notifies listeners, and calls UIs.call(playerUi -> playerUi.onMetadataChanged(info)). This is the exact callback where media-session metadata should be invalidated."
+      },
+      {
+        "step": 13,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/mediasession/MediaSessionPlayerUi.java:151-179",
+        "finding": "buildMediaMetadata() would now return correct title and artist after currentMetadata is assigned, but only if MediaSessionConnector is told to rebuild metadata."
+      },
+      {
+        "step": 14,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/mediasession/MediaSessionPlayerUi.java:280-283",
+        "finding": "MediaSessionPlayerUi.onMetadataChanged() only calls updateMediaSessionActions(); it does not call sessionConnector.invalidateMediaSessionMetadata(), so the MediaSessionConnector may keep previously built metadata."
+      },
+      {
+        "step": 15,
+        "action": "form_hypothesis",
+        "target": "Missing MediaSessionConnector metadata invalidation in MediaSessionPlayerUi.onMetadataChanged()",
+        "finding": "If the metadata provider is first evaluated while currentMetadata is null, the media session receives [Unknown]. When the real StreamInfo arrives, the callback updates Android 13 custom actions but not metadata, leaving the system media notification stale."
+      },
+      {
+        "step": 16,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/playback/MediaSourceManager.java",
+        "finding": "MediaSourceManager loads the current PlayQueueItem, receives a LoadedMediaSource, synchronizes playback, and eventually causes Player.onEvents() to see the resolved MediaItemTag. This confirms real metadata arrives asynchronously after notification startup."
+      },
+      {
+        "step": 17,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/mediasession/PlayQueueNavigator.java",
+        "finding": "PlayQueueNavigator publishes queue item descriptions using PlayQueueItem.getTitle() and getUploader(), so queue metadata has real title/uploader and is not the likely source of [Unknown]."
+      },
+      {
+        "step": 18,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/ui/PlayerUi.java",
+        "finding": "PlayerUi.onMetadataChanged() is a no-op base callback; concrete UIs must perform their own metadata refresh behavior."
+      },
+      {
+        "step": 19,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/mediaitem/StreamInfoTag.java",
+        "finding": "StreamInfoTag.getTitle() returns streamInfo.getName() and getUploaderName() returns streamInfo.getUploaderName(); the resolved tag carries correct data."
+      },
+      {
+        "step": 20,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/mediaitem/PlaceholderTag.java",
+        "finding": "PlaceholderTag returns internal 'Placeholder' strings, not R.string.unknown_content, so it does not directly explain the displayed [Unknown] symptom."
+      },
+      {
+        "step": 21,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/mediaitem/ExceptionTag.java",
+        "finding": "ExceptionTag returns title/uploader from the PlayQueueItem. It is not responsible for first-playback [Unknown] when playback succeeds."
+      },
+      {
+        "step": 22,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/Player.java:602-650",
+        "finding": "initPlayback() creates ExoPlayer, calls UIs.initPlayer(), initializes the play queue, and reloads MediaSourceManager. MediaSessionPlayerUi.initPlayer() therefore installs the provider before resolved stream metadata is available."
+      },
+      {
+        "step": 23,
+        "action": "read_file",
+        "target": "app/src/main/java/org/schabi/newpipe/player/resolver/PlaybackResolver.java:220-330,480-540",
+        "finding": "PlaybackResolver attaches MediaItemTag metadata to created MediaItems with setTag(metadata), confirming resolved media sources can provide real metadata to Player.onEvents()."
+      },
+      {
+        "step": 24,
+        "action": "grep_pattern",
+        "target": "sourceOf\\(|StreamInfoTag\\.of|PlaceholderMediaSource|onPlaybackSynchronize",
+        "finding": "PlaybackResolver creates StreamInfoTag instances and Player.sourceOf/onPlaybackSynchronize participate in resolving and syncing media sources; no evidence of wrong title/uploader creation was found."
+      },
+      {
+        "step": 25,
+        "action": "inspect_manifest",
+        "target": "app/src/main/AndroidManifest.xml",
+        "finding": "PlayerService is declared as a mediaPlayback foreground service and media browser service, confirming it is the entry point for the Android media notification path."
+      },
+      {
+        "step": 26,
+        "action": "eliminate_candidate",
+        "target": "NotificationUtil.updateNotification() direct content title/text",
+        "finding": "Although initial direct notification fields can be [Unknown], NotificationPlayerUi.onMetadataChanged() recreates/updates them when StreamInfo arrives. This does not explain Android 13 media notification remaining stale or showing previous video info."
+      },
+      {
+        "step": 27,
+        "action": "eliminate_candidate",
+        "target": "Player.getVideoTitle() and Player.getUploaderName() fallback statements",
+        "finding": "The fallback is expected when currentMetadata is null. The bug is not that these methods have a fallback, but that MediaSession metadata is built from the fallback before metadata arrives and is not invalidated afterward."
+      },
+      {
+        "step": 28,
+        "action": "eliminate_candidate",
+        "target": "StreamInfoTag / PlayQueueItem metadata contents",
+        "finding": "Resolved metadata sources return the correct stream title and uploader. The symptom of previous-video info is more consistent with stale MediaSessionConnector metadata than corrupted source metadata."
+      },
+      {
+        "step": 29,
+        "action": "trace_call",
+        "target": "Player.onEvents -> Player.updateMetadataWith -> MediaSessionPlayerUi.onMetadataChanged",
+        "finding": "After currentMetadata changes to the new video, MediaSessionPlayerUi receives onMetadataChanged but only updates media session actions. The cached MediaSessionCompat metadata remains [Unknown] or the previous video until another invalidation path happens."
+      },
+      {
+        "step": 30,
+        "action": "form_hypothesis",
+        "target": "Fault statement is MediaSessionPlayerUi.onMetadataChanged() line 282 updateMediaSessionActions();",
+        "finding": "This statement is the only real work in the metadata-change callback for the media session, but it refreshes actions instead of metadata. It should be accompanied or replaced by sessionConnector.invalidateMediaSessionMetadata() so buildMediaMetadata() runs with the new currentMetadata."
+      }
+    ],
+    "fault_candidates": [
+      {
+        "rank": 1,
+        "file": "app/src/main/java/org/schabi/newpipe/player/mediasession/MediaSessionPlayerUi.java",
+        "class": "MediaSessionPlayerUi",
+        "method": "onMetadataChanged(StreamInfo info)",
+        "line": 282,
+        "statement": "        updateMediaSessionActions();",
+        "suspicion_score": 0.95,
+        "reasoning": "This is the media-session callback invoked after Player.currentMetadata is updated to the current stream. On Android 13 the system media notification derives display metadata from MediaSessionCompat/MediaSessionConnector, but this method only updates custom actions and never invalidates the MediaSessionConnector metadata provider. Because the initial foreground notification/media session can be created before currentMetadata exists, buildMediaMetadata() can publish [Unknown]; subsequent stream changes then leave the session metadata one update behind or still unknown."
+      }
+    ],
+    "final_answer": {
+      "file": "app/src/main/java/org/schabi/newpipe/player/mediasession/MediaSessionPlayerUi.java",
+      "class": "MediaSessionPlayerUi",
+      "method": "onMetadataChanged(StreamInfo info)",
+      "line": 282,
+      "statement": "        updateMediaSessionActions();",
+      "confidence": 0.95,
+      "causal_chain": "PlayerService.onStartCommand() creates and starts the foreground media notification before player.handleIntent() resolves the first stream, so Player.currentMetadata is initially null and Player.getVideoTitle()/getUploaderName() return R.string.unknown_content. MediaSessionPlayerUi.initPlayer() registers a MediaSessionConnector metadata provider that builds MediaSessionCompat metadata from those getters. When ExoPlayer later receives the resolved MediaItemTag, Player.onEvents() assigns currentMetadata to the real stream tag and calls updateMetadataWith(info). updateMetadataWith(info) dispatches MediaSessionPlayerUi.onMetadataChanged(info), but that callback only executes updateMediaSessionActions() and does not call sessionConnector.invalidateMediaSessionMetadata(). Therefore the Android 13 media notification keeps the stale MediaSession metadata: [Unknown] on first playback, or the previous video's metadata after switching videos.",
+      "fix_hint": "Invalidate media-session metadata in MediaSessionPlayerUi.onMetadataChanged(), e.g. call sessionConnector.invalidateMediaSessionMetadata() after current stream metadata changes, while keeping action updates as needed."
+    }
+  },
+  "error": null
+}

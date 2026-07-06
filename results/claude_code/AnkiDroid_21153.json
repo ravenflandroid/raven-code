@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "AnkiDroid",
+  "issue_id": 21153,
+  "issue_url": "https://github.com/ankidroid/Anki-Android/issues/21153",
+  "issue_title": "Card browser column headers are not updated after changing them from the \"Card Browser\" context menu",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\ankidroid_Anki_Android",
+  "media_files": [
+    "5639bf6b-76e2-4ac5-83f9-c4be2e8c0fc5",
+    "2c5ee98b-0732-4838-b13d-ebd6d795d984"
+  ],
+  "started_at": "2026-06-21T15:05:50.697-05:00",
+  "finished_at": "2026-06-21T15:08:54.728-05:00",
+  "duration_seconds": 184.03,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

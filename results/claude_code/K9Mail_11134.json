@@ -1,0 +1,19 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "K9Mail",
+  "issue_id": 11134,
+  "issue_url": "https://github.com/thunderbird/thunderbird-android/issues/11134",
+  "issue_title": "Swipe malfunction in mail view",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\thunderbird_thunderbird_android",
+  "media_files": [
+    "k9mail-logs.txt"
+  ],
+  "started_at": "2026-06-21T18:22:22.215-05:00",
+  "finished_at": "2026-06-21T18:25:28.645-05:00",
+  "duration_seconds": 186.42,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

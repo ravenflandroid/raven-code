@@ -1,0 +1,20 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "NewPipe",
+  "issue_id": 13436,
+  "issue_url": "https://github.com/TeamNewPipe/NewPipe/issues/13436",
+  "issue_title": "Media notification shows [Unknown] for video title and channel name on first playback (0.28.4 / 0.28.5)",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\TeamNewPipe_NewPipe",
+  "media_files": [
+    "762884da-4dbd-40bd-9c54-4d1682d39d6a",
+    "17a0831a-db6c-459e-9a54-551afda738d7"
+  ],
+  "started_at": "2026-06-22T15:33:54.320-05:00",
+  "finished_at": "2026-06-22T15:36:57.439-05:00",
+  "duration_seconds": 183.12,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "Amaze",
+  "issue_id": 4564,
+  "issue_url": "https://github.com/TeamAmaze/AmazeFileManager/issues/4564",
+  "issue_title": "Chinese file names in zip file are garbled",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\TeamAmaze_AmazeFileManager",
+  "media_files": [
+    "chinese-example.zip",
+    "5d3c071c-e58b-4b29-a1ea-28bcb415b3e0",
+    "3ed74cb1-de8d-456d-83de-7937f68b9553"
+  ],
+  "started_at": "2026-06-21T16:18:43.321-05:00",
+  "finished_at": "2026-06-21T16:21:43.319-05:00",
+  "duration_seconds": 180.0,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}

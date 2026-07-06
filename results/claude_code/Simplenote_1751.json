@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "baseline": "claude_code",
+  "model": "azure/gpt-4o (via litellm proxy)",
+  "app": "Simplenote",
+  "issue_id": 1751,
+  "issue_url": "https://github.com/Automattic/simplenote-android/issues/1751",
+  "issue_title": "Login Back Button Restarts Authentication Flow",
+  "repo_path": "C:\\Users\\hridy\\Documents\\PhD_Research\\2026\\Raven\\model\\.raven_runs\\repos\\Automattic_simplenote_android",
+  "media_files": [],
+  "started_at": "2026-06-21T14:00:45.521-05:00",
+  "finished_at": "2026-06-21T14:03:44.962-05:00",
+  "duration_seconds": 179.45,
+  "raw_output": "API Error: Unable to connect to API (ConnectionRefused)\n",
+  "parsed_answer": null,
+  "error": null
+}
