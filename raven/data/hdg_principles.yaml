@@ -1,0 +1,46 @@
+graph_definition:
+  name: "G_tau=(V,E,phi,psi,omega)"
+  principle: "Combine static completeness with dynamic relevance for a reproduced Android failure trace."
+  filtering: "Build conservative G_cand, identify V_obs from replay, then retain G_cand[V_tau+] where V_tau+ is reached over safe dependency edges within small bound d."
+node_types:
+  UIACTION: "Executed user or device action such as TAP, TYPE, SWIPE, ROTATE, KEYEVENT, or WAIT."
+  WIDGET: "Runtime UI element observed in emulator UI hierarchy."
+  UISTATE: "Observed widget property such as enabled, text, visibility, checked, selected, or focused."
+  XMLNODE: "Android XML layout element or value declaration."
+  RESOURCE: "Android resource identifier, style, string, drawable, id, layout, menu, or generated R reference."
+  KOTLINSTMT: "Kotlin source-level statement."
+  KOTLINMETHOD: "Kotlin method/function."
+  JAVASTMT: "Java source-level statement."
+  JAVAMETHOD: "Java method."
+  FRAMEWORKCALLBACK: "Android framework lifecycle, listener, or configuration callback."
+edge_types:
+  intra:
+    CALLS: "Method or statement calls another method."
+    CONTROLS: "Method/callback controls a statement or branch."
+    DEFINES: "Artifact defines a state or declaration."
+    USES: "Statement/method uses a variable, resource, widget, or method."
+  cross:
+    ACTSON: "UIACTION manipulates a runtime WIDGET."
+    DECLAREDIN: "Runtime WIDGET is declared in XMLNODE."
+    RESOLVESTO: "XML attribute or resource reference resolves to RESOURCE/XMLNODE."
+    BINDSTO: "RESOURCE binds to generated binding field or XML declaration."
+    TRIGGERS: "UI/device/framework event invokes callback or callback implementation."
+    UPDATES: "Statement updates UISTATE."
+    OVERWRITES: "Later statement/callback overwrites a UISTATE set earlier."
+safe_expansion_edges:
+  - CALLS
+  - CONTROLS
+  - DEFINES
+  - USES
+  - DECLAREDIN
+  - RESOLVESTO
+  - BINDSTO
+  - TRIGGERS
+  - UPDATES
+evidence_sources:
+  - source-code parsing
+  - Android resource resolution
+  - UI hierarchy snapshots
+  - emulator logs
+  - callback traces
+  - dynamic coverage

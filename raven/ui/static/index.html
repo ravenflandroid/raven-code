@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RAVEN Control Room</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="topbar">
+        <div>
+          <h1>RAVEN</h1>
+          <p>Android issue reproduction, HDG generation, and root-cause localization.</p>
+        </div>
+        <div class="run-chip" id="runChip">No active run</div>
+      </section>
+
+      <section class="workspace">
+        <form id="runForm" class="panel inputs">
+          <div class="panel-head">
+            <h2>Run Inputs</h2>
+            <div class="run-buttons">
+              <button type="submit" id="startButton">Start Run</button>
+              <button type="button" id="stopButton" class="stop-btn" disabled>Stop</button>
+            </div>
+          </div>
+
+          <label>
+            Config YAML
+            <input name="config_path" value="config.yaml" required />
+          </label>
+          <label>
+            GitHub Repository
+            <input name="repo_url" value="https://github.com/Automattic/simplenote-android.git" required />
+          </label>
+          <label>
+            GitHub Issue
+            <input name="issue_url" value="https://github.com/Automattic/simplenote-android/issues/1483" required />
+          </label>
+          <label>
+            APK Path
+            <input name="apk_path" placeholder="C:\path\to\app.apk" required />
+          </label>
+          <label>
+            Video / Screenshot Path
+            <input name="media_path" placeholder="Optional local .mp4, .png, or .jpg" />
+          </label>
+
+          <div class="grid2">
+            <label>
+              Emulator Serial
+              <input name="emulator_serial" value="emulator-3554" />
+            </label>
+            <label>
+              Package Name
+              <input name="package_name" placeholder="Optional" />
+            </label>
+          </div>
+
+          <label>
+            Launch Activity
+            <input name="launch_activity" placeholder="com.example/.MainActivity" />
+          </label>
+        </form>
+
+        <section class="agents" aria-label="Agent progress">
+          <article class="agent" data-agent="intake">
+            <span class="agent-index">0</span>
+            <h3>Issue Intake</h3>
+            <p>Waiting for run.</p>
+          </article>
+          <article class="agent" data-agent="agent1">
+            <span class="agent-index">1</span>
+            <h3>Action Sequence</h3>
+            <p>Waiting for frames and issue context.</p>
+          </article>
+          <article class="agent" data-agent="agent2">
+            <span class="agent-index">2</span>
+            <h3>Emulator Replay</h3>
+            <p>Waiting for generated actions.</p>
+          </article>
+          <article class="agent" data-agent="agent3">
+            <span class="agent-index">3</span>
+            <h3>HDG Generation</h3>
+            <p>Waiting for covered files.</p>
+          </article>
+          <article class="agent" data-agent="agent4">
+            <span class="agent-index">4</span>
+            <h3>Localization</h3>
+            <p>Waiting for HDG and logs.</p>
+          </article>
+        </section>
+      </section>
+
+      <section class="lower">
+        <section class="panel terminal-panel">
+          <div class="panel-head">
+            <h2>Developer Terminal</h2>
+            <form id="terminalForm" class="terminal-command">
+              <input id="terminalInput" placeholder="Run command in server working directory" />
+              <button type="submit">Run</button>
+            </form>
+          </div>
+          <pre id="terminal" class="terminal"></pre>
+        </section>
+
+        <section class="panel output-panel">
+          <div class="panel-head">
+            <h2>Artifacts</h2>
+          </div>
+          <div id="artifacts" class="artifacts">
+            <p>Report, HDG, and localization paths appear here when the run completes.</p>
+          </div>
+        </section>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

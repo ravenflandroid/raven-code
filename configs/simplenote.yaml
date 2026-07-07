@@ -1,0 +1,40 @@
+# RAVEN config — Simplenote
+# Emulator: Pixel29 (API 29, x86, Google Play), serial emulator-5554
+#
+# CLI usage (run from the raven_reproduction/ directory):
+#   raven run --config configs/simplenote.yaml --issue-url <url> --skip-install
+#
+# Fill in your Azure OpenAI credentials below.
+
+azure_openai:
+  endpoint:    "https://<your-resource>.openai.azure.com/"
+  api_key:     "<your-api-key>"
+  api_version: "2025-04-01-preview"
+  deployment:  "gpt-4o"
+
+github:
+  token: ""
+
+android:
+  adb_path:               "adb"   # or full path: C:/Users/.../platform-tools/adb.exe
+  emulator_serial:        "emulator-5554"
+  package_name:           "com.automattic.simplenote"
+  launch_activity:        "com.automattic.simplenote/.Simplenote"
+  apk_path:               "apks/simplenote/simplenote-2.14-rc-1.apk"
+  install_timeout_seconds: 180
+
+tools:
+  ffmpeg_path:  "ffmpeg"
+  joern_parse:  "joern-parse"   # or: C:/Tools/joern/joern-cli/joern-parse.bat
+  joern_export: "joern-export"  # or: C:/Tools/joern/joern-cli/joern-export.bat
+
+runtime:
+  workspace_dir:              ".raven_runs"
+  max_replay_attempts:        3
+  frame_sample_count:         12
+  static_top_k:               30
+  max_logcat_bytes:           2000000
+  max_ui_hierarchy_snapshots: 8
+  max_hdg_files:              120
+  hdg_expansion_bound:        2
+  compact_json:               true

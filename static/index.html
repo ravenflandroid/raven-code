@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RAVEN — Android Bug Root-Cause Localization</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+<!-- ═══════════════════════════════════ HEADER ═══════════════════════════════ -->
+<header class="topbar">
+  <div class="topbar-brand">
+    <span class="brand-icon">&#9670;</span>
+    <span class="brand-name">RAVEN</span>
+    <span class="brand-sub">Android Bug Root-Cause Localization</span>
+  </div>
+  <div class="topbar-status" id="emulator-badge">
+    <span class="dot dot-unknown"></span>
+    <span id="emulator-label">Emulator unknown</span>
+  </div>
+</header>
+
+<!-- ═══════════════════════════════════ LAYOUT ═══════════════════════════════ -->
+<div class="layout">
+
+  <!-- ─────────────────────── LEFT PANEL ─────────────────────────────────── -->
+  <aside class="sidebar">
+    <h2 class="sidebar-title">New Run</h2>
+
+    <form id="run-form" autocomplete="off">
+      <!-- App preset -->
+      <div class="field">
+        <label for="app-preset">App preset</label>
+        <select id="app-preset">
+          <option value="">— custom —</option>
+        </select>
+      </div>
+
+      <!-- Issue URL -->
+      <div class="field">
+        <label for="issue-url">GitHub issue URL <span class="req">*</span></label>
+        <input id="issue-url" type="url" placeholder="https://github.com/owner/repo/issues/123" required />
+      </div>
+
+      <!-- Repo URL -->
+      <div class="field">
+        <label for="repo-url">Repo URL <span class="hint">(auto-filled by preset)</span></label>
+        <input id="repo-url" type="url" placeholder="https://github.com/owner/repo.git" />
+      </div>
+
+      <!-- APK path -->
+      <div class="field">
+        <label for="apk-path">APK path <span class="hint">(leave blank = skip install)</span></label>
+        <input id="apk-path" type="text" placeholder="/path/to/app.apk" />
+        <div id="apk-status" class="apk-status"></div>
+      </div>
+
+      <!-- Skip install -->
+      <div class="field field-inline">
+        <input id="skip-install" type="checkbox" />
+        <label for="skip-install">Skip install (app already on emulator)</label>
+      </div>
+
+      <!-- Config path -->
+      <div class="field">
+        <label for="config-path">Config YAML <span class="hint">(default: model/config.yaml)</span></label>
+        <input id="config-path" type="text" placeholder="Leave blank for default" />
+      </div>
+
+      <!-- Media -->
+      <div class="field">
+        <label for="media-path">Video / screenshot <span class="hint">(optional)</span></label>
+        <input id="media-path" type="text" placeholder="/path/to/bug_video.mp4" />
+      </div>
+
+      <!-- Emulator serial -->
+      <div class="field">
+        <label for="emulator-serial">Emulator serial <span class="hint">(default: emulator-5554)</span></label>
+        <input id="emulator-serial" type="text" placeholder="emulator-5554" />
+      </div>
+
+      <div class="btn-row">
+        <button type="submit" class="btn btn-primary" id="run-btn">
+          <span class="btn-icon">&#9654;</span> Run RAVEN
+        </button>
+        <button type="button" class="btn btn-danger hidden" id="stop-btn">
+          &#9632; Stop
+        </button>
+      </div>
+    </form>
+
+    <!-- ─── Quick-pick recent issues ──────────────────────────────────────── -->
+    <div class="quick-pick" id="quick-pick" style="display:none">
+      <h3 class="quick-title">Recent issues</h3>
+      <ul class="quick-list" id="quick-list"></ul>
+    </div>
+  </aside>
+
+  <!-- ─────────────────────── MAIN PANEL ─────────────────────────────────── -->
+  <main class="main-panel">
+
+    <!-- Tab bar -->
+    <nav class="tabs">
+      <button class="tab active" data-tab="pipeline">Pipeline</button>
+      <button class="tab" data-tab="results">Results</button>
+      <button class="tab" data-tab="history">History</button>
+    </nav>
+
+    <!-- ── Pipeline tab ────────────────────────────────────────────────── -->
+    <section class="tab-content active" id="tab-pipeline">
+      <!-- Stage timeline -->
+      <div class="stage-grid" id="stage-grid">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- Event log -->
+      <div class="log-header">
+        <span class="log-title">Event log</span>
+        <button class="btn-sm" id="clear-log-btn">Clear</button>
+      </div>
+      <div class="log-scroll" id="log-scroll">
+        <pre class="log-pre" id="log-pre">Waiting for run ...</pre>
+      </div>
+    </section>
+
+    <!-- ── Results tab ─────────────────────────────────────────────────── -->
+    <section class="tab-content" id="tab-results">
+      <div id="results-empty" class="empty-state">
+        <p>No results yet — start a run from the left panel.</p>
+      </div>
+      <div id="results-content" style="display:none">
+        <div class="results-meta" id="results-meta"></div>
+        <div class="results-body">
+          <div class="results-left">
+            <h3 class="section-title">Fault Candidates</h3>
+            <ol class="candidates-list" id="candidates-list"></ol>
+          </div>
+          <div class="results-right">
+            <h3 class="section-title">Covered Files</h3>
+            <div class="badge-row" id="coverage-mode"></div>
+            <ul class="files-list" id="files-list"></ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── History tab ─────────────────────────────────────────────────── -->
+    <section class="tab-content" id="tab-history">
+      <div class="history-header">
+        <h3 class="section-title">Workspace runs</h3>
+        <button class="btn-sm" id="refresh-history-btn">Refresh</button>
+      </div>
+      <div id="history-loading" class="empty-state">Loading ...</div>
+      <table class="history-table hidden" id="history-table">
+        <thead>
+          <tr>
+            <th>Slug</th>
+            <th>Issue</th>
+            <th>Mode</th>
+            <th>Top candidate</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody id="history-tbody"></tbody>
+      </table>
+    </section>
+
+  </main>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>
