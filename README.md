@@ -7,7 +7,7 @@ bindings, and lifecycle callbacks. Finally, RAVEN applies graph-grounded LLM rea
 
 **RAVEN** is a four-agent LLM pipeline that automatically locates the root cause of an Android bug given only a GitHub issue URL. It combines dynamic emulator-based bug reproduction, ADB logcat tracing, static program analysis (HDG), and chain-of-thought LLM reasoning to rank the exact source file and code statement responsible for a reported defect.
 
-This package contains everything needed to run RAVEN on the 50-bug evaluation dataset or on any new GitHub issue.
+This package is **self-contained**: all pipeline source code is bundled in the `raven/` subdirectory. No external checkout of the main Raven repository is required.
 
 ---
 
@@ -34,7 +34,7 @@ All requirements below must be satisfied on the machine running RAVEN. The exact
 | Requirement | Version / Notes | Where to install |
 |---|---|---|
 | **Windows 11** | or Linux/macOS | — |
-| **Python 3.11+** | Virtual env at `model/.venv/` | Already installed |
+| **Python 3.11+** | Standard Python install | python.org or `winget install Python.Python.3.11` |
 | **Android SDK** | API 29 system image, `platform-tools` | Android Studio SDK Manager |
 | **ADB** | `platform-tools/adb.exe` | Bundled with Android SDK |
 | **Android Emulator** | Pixel29 AVD (API 29, x86, Google Play) | Android Studio AVD Manager |
@@ -44,53 +44,72 @@ All requirements below must be satisfied on the machine running RAVEN. The exact
 | **Azure OpenAI GPT-4o** | Endpoint + API key | Azure Portal |
 | **Git** | For repo cloning | `winget install Git.Git` |
 
-Paths used on this machine:
+All paths in this package are **relative to the `raven_reproduction/` folder**:
 
 ```
-ADB:           C:\Users\hridy\AppData\Local\Android\Sdk\platform-tools\adb.exe
-Emulator:      C:\Users\hridy\AppData\Local\Android\Sdk\emulator\emulator.exe
-Joern:         C:\Tools\joern\joern-cli\joern-parse.bat
-Python venv:   C:\Users\hridy\Documents\PhD_Research\2026\Raven\model\.venv\
-Config:        C:\Users\hridy\Documents\PhD_Research\2026\Raven\model\config.yaml
-Workspace:     C:\Users\hridy\Documents\PhD_Research\2026\Raven\model\.raven_runs\
-APKs:          C:\Users\hridy\Documents\PhD_Research\2026\Raven\dataset\apks\
+raven_reproduction/
+├── raven/               pipeline source code (bundled — no separate install)
+├── apks/                APK files for all 7 apps (bundled)
+├── configs/             per-app YAML configs
+├── static/              web UI (HTML/CSS/JS)
+├── config.yaml          Azure OpenAI credentials + runtime settings
+├── server.py            web UI server
+├── run_ui.py            launcher
+├── pyproject.toml       installable package definition
+├── requirements.txt     Python dependencies
+└── .raven_runs/         created at runtime — workspace for results
 ```
 
 ---
 
 ## 2. One-Time Installation
 
-### 2a. Install the `raven` Python package
+All commands in this section are run from inside the `raven_reproduction/` directory.
 
-Open PowerShell, navigate to the project root, and install the package into the venv:
+### 2a. Install Python dependencies
 
 ```powershell
-cd C:\Users\hridy\Documents\PhD_Research\2026\Raven\model
-.venv\Scripts\pip install -e .
+cd raven_reproduction
+pip install -e .
 ```
 
-Verify the install:
+This installs the bundled `raven/` package and all Python dependencies, and registers the `raven` CLI command. Verify:
 
 ```powershell
-.venv\Scripts\raven --help
+raven --help
 # Expected output:
 # usage: raven [-h] {run,ui,doctor,install-tools} ...
 ```
 
-### 2b. Install Joern (if not already installed)
-
-Joern generates Code Property Graphs for the HDG. If it is not already at `C:\Tools\joern`:
+If you prefer a virtual environment (recommended for isolation):
 
 ```powershell
-cd C:\Users\hridy\Documents\PhD_Research\2026\Raven\model
-.venv\Scripts\raven install-tools joern --target C:/Tools/joern
+python -m venv .venv
+.venv\Scripts\pip install -e .
+.venv\Scripts\raven --help
 ```
 
-This downloads and extracts the Joern CLI. After installation, confirm:
+### 2b. Install Joern (if not already installed)
+
+Joern generates Code Property Graphs for the HDG. Install it via the bundled CLI tool:
+
+```powershell
+raven install-tools joern --target C:/Tools/joern
+```
+
+After installation, confirm:
 
 ```
 C:\Tools\joern\joern-cli\joern-parse.bat --help
 C:\Tools\joern\joern-cli\joern-export.bat --help
+```
+
+Then update `config.yaml` (or `configs/*.yaml`) to point to the installed paths:
+
+```yaml
+tools:
+  joern_parse:  "C:/Tools/joern/joern-cli/joern-parse.bat"
+  joern_export: "C:/Tools/joern/joern-cli/joern-export.bat"
 ```
 
 ### 2c. Install ffmpeg (if not already on PATH)
@@ -100,13 +119,25 @@ winget install Gyan.FFmpeg
 # OR add the existing ffmpeg binary to PATH
 ```
 
-### 2d. Run the doctor check
+### 2d. Set your Azure OpenAI credentials
+
+Edit `config.yaml`:
+
+```yaml
+azure_openai:
+  endpoint: "https://<your-resource>.openai.azure.com/"
+  api_key:  "<your-api-key>"
+```
+
+The `config.yaml` shipped with this package contains the author's credentials for reviewer convenience.
+
+### 2e. Run the doctor check
 
 This checks that all external tools resolve correctly and that the Azure OpenAI credentials are set:
 
 ```powershell
-cd C:\Users\hridy\Documents\PhD_Research\2026\Raven\model
-.venv\Scripts\raven doctor --config config.yaml
+cd raven_reproduction
+raven doctor --config config.yaml
 ```
 
 Expected output (all OK):
@@ -127,7 +158,7 @@ Fix any FAIL lines before proceeding.
 
 ## 3. Emulator Setup
 
-RAVEN uses the emulator to replay the bug's UI actions and capture logcat output. All APKs for the 7 evaluation apps are already downloaded in `dataset/apks/`.
+RAVEN uses the emulator to replay the bug's UI actions and capture logcat output. All APKs for the 7 evaluation apps are bundled in `apks/`.
 
 ### 3a. Create the Pixel29 AVD (one time, already done on this machine)
 
@@ -170,77 +201,56 @@ Do not proceed until `device` (not `offline`) appears.
 
 ### 3c. Install all APKs on the emulator (first session only)
 
-This installs all 7 app APKs and grants runtime permissions in one step:
+With the emulator running, install all 7 APKs via ADB:
 
 ```powershell
-cd C:\Users\hridy\Documents\PhD_Research\2026\Raven\automation_new_bugs
-..\model\.venv\Scripts\python.exe run_eval_new_bugs.py --setup-emulator --skip-raven --skip-baselines
+# Run from raven_reproduction/
+adb install -g apks\simplenote\simplenote-2.14.apk
+adb install -g apks\ankidroid\variant-abi-AnkiDroid-2.24.0-x86.apk
+adb install -g apks\wordpress\wpandroid-26.8.apk
+adb install -g apks\amaze\app-fdroid-release.apk
+adb install -g apks\k9mail\k9mail-20.0.apk
+adb install -g apks\newpipe\NewPipe_v0.28.8.apk
+adb install -g apks\antennapod\de.danoeh.antennapod-3.11.4.apk
 ```
 
-Expected output:
+The `-g` flag grants all runtime permissions automatically. Each `adb install` prints `Success` when done.
 
-```
-[emulator] Emulator ready
-[emulator] Installing APKs ...
-  Simplenote   — installing simplenote-2.14.apk (5MB)    — installed OK
-  AnkiDroid    — installing variant-abi-AnkiDroid-2.24.0-x86.apk (38MB) — installed OK
-  WordPress    — installing wpandroid-26.8.apk (321MB)   — installed OK
-  Amaze        — installing app-fdroid-release.apk (11MB) — installed OK
-  K9Mail       — installing k9mail-20.0.apk (10MB)       — installed OK
-  NewPipe      — installing NewPipe_v0.28.8.apk (10MB)   — installed OK
-  AntennaPod   — installing de.danoeh.antennapod-3.11.4.apk (11MB) — installed OK
-[emulator] Granting permissions ...
-[emulator] Setup complete.
-```
-
-Once installed, subsequent runs use `--skip-install` so this step does not repeat.
+Once installed, subsequent runs pass `--skip-install` to avoid reinstalling on every run.
 
 ---
 
 ## 4. Configuration File
 
-The master config is `model/config.yaml`. It is pre-filled for this machine. If you need to adapt it for a new machine, copy the template:
-
-```powershell
-cp raven_reproduction\config.template.yaml model\config.yaml
-```
-
-Then edit `model/config.yaml`:
+The config file is `raven_reproduction/config.yaml`. It is pre-filled with working Azure credentials for reviewer convenience. To adapt for a new Azure deployment, edit these fields:
 
 ```yaml
 azure_openai:
-  endpoint:    "https://fuzzwise.openai.azure.com/"  # your Azure endpoint
-  api_key:     "97ca4d3e..."                          # your Azure key
+  endpoint: "https://<your-resource>.openai.azure.com/"
+  api_key:  "<your-api-key>"
   api_version: "2025-04-01-preview"
   deployment:  "gpt-4o"
 
 github:
-  token: ""   # optional — add a PAT to avoid 60 req/hr rate limiting
+  token: ""   # optional — add a PAT to avoid 60 req/hr rate limiting on public repos
 
 android:
-  adb_path:               "C:/Users/hridy/AppData/Local/Android/Sdk/platform-tools/adb.exe"
-  emulator_serial:        "emulator-5554"
-  package_name:           "com.automattic.simplenote"   # overridden per run
-  launch_activity:        "com.automattic.simplenote/.Simplenote"
-  apk_path:               "C:/Users/.../simplenote-2.14.apk"
-  install_timeout_seconds: 180
+  adb_path:        "adb"            # full path if adb is not on PATH
+  emulator_serial: "emulator-5554"
+  # package_name and launch_activity are overridden per-run by the UI/CLI preset
 
 tools:
   ffmpeg_path:  "ffmpeg"
-  joern_parse:  "C:/Tools/joern/joern-cli/joern-parse.bat"
-  joern_export: "C:/Tools/joern/joern-cli/joern-export.bat"
+  joern_parse:  "joern-parse"       # or full path: C:/Tools/joern/joern-cli/joern-parse.bat
+  joern_export: "joern-export"
 
 runtime:
-  workspace_dir:              ".raven_runs"
-  max_replay_attempts:        3
-  frame_sample_count:         12
-  static_top_k:               30
-  max_logcat_bytes:           2000000
-  max_ui_hierarchy_snapshots: 8
-  max_hdg_files:              120
-  hdg_expansion_bound:        2
-  compact_json:               true
+  workspace_dir: ".raven_runs"      # relative to config.yaml → raven_reproduction/.raven_runs/
+  max_replay_attempts: 3
+  static_top_k: 30
 ```
+
+Per-app configs (pre-filled package_name, launch_activity, apk_path) are in `configs/`.
 
 Per-app configs with APK paths already filled in are in `raven_reproduction/configs/`:
 
@@ -258,45 +268,47 @@ configs/antennapod.yaml
 
 ## 5. Running RAVEN — Single Bug (CLI)
 
+All CLI commands below are run from inside the `raven_reproduction/` directory.
+
 ### Step 1: Ensure the emulator is running
 
 ```powershell
-& "$env:LOCALAPPDATA\Android\Sdk\platform-tools\adb.exe" devices
+adb devices
 # emulator-5554   device
 ```
 
 ### Step 2: Run RAVEN on a GitHub issue
 
-**Full syntax:**
+**Using a per-app config (recommended — package/activity/APK pre-filled):**
 
 ```powershell
-cd C:\Users\hridy\Documents\PhD_Research\2026\Raven\model
+cd raven_reproduction
 
-.venv\Scripts\raven run `
-  --config   config.yaml `
-  --repo-url https://github.com/Automattic/simplenote-android `
+raven run `
+  --config    configs\simplenote.yaml `
   --issue-url https://github.com/Automattic/simplenote-android/issues/1765 `
-  --package-name    com.automattic.simplenote `
-  --launch-activity com.automattic.simplenote/.Simplenote `
   --skip-install
 ```
 
-**Using a per-app config (recommended — package/activity pre-filled):**
+**Full syntax (custom app, all flags explicit):**
 
 ```powershell
-.venv\Scripts\raven run `
-  --config   ..\raven_reproduction\configs\simplenote.yaml `
-  --issue-url https://github.com/Automattic/simplenote-android/issues/1765 `
+raven run `
+  --config          config.yaml `
+  --repo-url        https://github.com/Automattic/simplenote-android `
+  --issue-url       https://github.com/Automattic/simplenote-android/issues/1765 `
+  --package-name    com.automattic.simplenote `
+  --launch-activity com.automattic.simplenote/.Simplenote `
   --skip-install
 ```
 
 **With a bug video (improves Agent 1 accuracy):**
 
 ```powershell
-.venv\Scripts\raven run `
-  --config   ..\raven_reproduction\configs\simplenote.yaml `
+raven run `
+  --config    configs\simplenote.yaml `
   --issue-url https://github.com/Automattic/simplenote-android/issues/1765 `
-  --media    C:\path\to\bug_video.mp4 `
+  --media     C:\path\to\bug_video.mp4 `
   --skip-install
 ```
 
@@ -347,14 +359,14 @@ The web UI provides a browser-based interface for submitting single-bug runs, wa
 ### Step 2: Launch the UI server
 
 ```powershell
-cd C:\Users\hridy\Documents\PhD_Research\2026\Raven\raven_reproduction
-..\model\.venv\Scripts\python.exe run_ui.py --open
+cd raven_reproduction
+python run_ui.py --open
 ```
 
 `--open` automatically opens your browser to `http://127.0.0.1:8765`. To use a different port:
 
 ```powershell
-..\model\.venv\Scripts\python.exe run_ui.py --port 9000 --open
+python run_ui.py --port 9000 --open
 ```
 
 ### Step 3: Submit a run
@@ -398,52 +410,26 @@ The event log below the cards streams every pipeline message as it occurs.
 
 ## 7. Running the Full 50-Bug Evaluation
 
-The batch evaluation script `automation_new_bugs/run_eval_new_bugs.py` runs all 50 bugs sequentially, generating results for RAVEN and optionally the two baselines (Claude Code + Codex).
+The batch evaluation covers all 50 bugs across 7 apps. Each bug is run via the same `raven run` CLI path used in §5.
 
 ### Prerequisites
 
 - Emulator running with all 7 apps installed (§3b–§3c).
-- Azure OpenAI key in `model/config.yaml`.
-- For baselines: `claude.exe` (Claude Code CLI) and `codex.exe` installed.
+- Azure OpenAI credentials in `config.yaml`.
 
-### Run RAVEN only (recommended — ~6–8 hours)
-
-```powershell
-cd C:\Users\hridy\Documents\PhD_Research\2026\Raven\automation_new_bugs
-
-..\model\.venv\Scripts\python.exe run_eval_new_bugs.py `
-    --skip-baselines `
-    --force-raven
-```
-
-`--force-raven` re-runs bugs that already have a `localization.json` (use this to overwrite static-fallback-only results from a previous run where the emulator was not running).
-
-### Run all three systems (full paper evaluation — ~18–24 hours)
+### Run all 50 bugs with a shell loop
 
 ```powershell
-..\model\.venv\Scripts\python.exe run_eval_new_bugs.py
+# Run from raven_reproduction/
+# Example: iterate a list of issue URLs and configs
+# (see the dataset table in §10 for the full bug list)
+
+raven run --config configs\simplenote.yaml --issue-url https://github.com/Automattic/simplenote-android/issues/1727 --skip-install
+raven run --config configs\simplenote.yaml --issue-url https://github.com/Automattic/simplenote-android/issues/1736 --skip-install
+# ... repeat for all 50 bugs
 ```
 
-### Useful flags
-
-| Flag | Description |
-|---|---|
-| `--skip-raven` | Skip RAVEN; run baselines only |
-| `--skip-baselines` | Skip Claude Code + Codex; run RAVEN only |
-| `--force-raven` | Re-run RAVEN even if `localization.json` already exists |
-| `--setup-emulator` | Before running: check emulator, install APKs, grant permissions |
-| `--bug-id 8528` | Run a single bug by GitHub issue ID |
-| `--start-no 20` | Resume batch from bug #20 |
-| `--auto-resume` | Resume from the last incomplete bug |
-| `--dry-run` | Print what would run without calling the LLM or emulator |
-
-### Resume after interruption
-
-```powershell
-..\model\.venv\Scripts\python.exe run_eval_new_bugs.py --auto-resume --skip-baselines
-```
-
-Already-completed bugs (those with both `localization.json` and baseline results) are automatically skipped.
+RAVEN skips a bug automatically if `localization.json` already exists in `.raven_runs/`. Re-run with a fresh workspace to force re-evaluation.
 
 ### Expected per-bug duration
 
@@ -459,31 +445,20 @@ Already-completed bugs (those with both `localization.json` and baseline results
 ### Where results are written
 
 ```
-model/.raven_runs/
-├── Automattic_simplenote_android_1765/
-│   ├── issue.json              GitHub issue details
-│   ├── actions.json            LLM-generated action sequence
-│   ├── replay/attempt_1/
-│   │   ├── logcat.txt          ADB logcat from replay
-│   │   ├── final.png           Emulator screenshot at end of replay
-│   │   └── ui_001.xml          UI hierarchy snapshots
-│   ├── static_fallback_files.json  (only if all 3 replays failed)
-│   ├── hdg.json                Heterogeneous Data-flow Graph
-│   ├── hdg.sqlite              HDG in queryable SQLite form
-│   ├── localization.json       Ranked fault candidates
-│   └── report.md               Human-readable summary
-automation_new_bugs/results/
-├── claude_code/
-│   └── Simplenote_1765.json    Baseline 1 results
-└── codex/
-    └── Simplenote_1765.json    Baseline 2 results
-```
-
-### Analysing results
-
-```powershell
-cd C:\Users\hridy\Documents\PhD_Research\2026\Raven\automation_new_bugs
-..\model\.venv\Scripts\python.exe analyze_results.py
+raven_reproduction/.raven_runs/
+└── Automattic_simplenote_android_1765/
+    ├── issue.json                  GitHub issue details
+    ├── actions.json                LLM-generated action sequence
+    ├── replay/
+    │   └── attempt_1/
+    │       ├── logcat.txt          ADB logcat from replay
+    │       ├── final.png           Emulator screenshot at replay end
+    │       └── ui_001.xml          UI hierarchy snapshots
+    ├── static_fallback_files.json  (only if all 3 replays failed)
+    ├── hdg.json                    Heterogeneous Data-flow Graph
+    ├── hdg.sqlite                  HDG in queryable SQLite form
+    ├── localization.json           Ranked fault candidates
+    └── report.md                   Human-readable summary
 ```
 
 ---
@@ -649,11 +624,7 @@ The full research dataset at [Android-Functional-bugs-study/home](https://github
 WARNING: emulator-5554 is not running — RAVEN will use static fallback for all bugs.
 ```
 
-**Fix:** Start the emulator first and wait for full boot (§3b). Then re-run with `--force-raven` to overwrite static-only results:
-
-```powershell
-..\model\.venv\Scripts\python.exe run_eval_new_bugs.py --force-raven --skip-baselines
-```
+**Fix:** Start the emulator first and wait for full boot (§3b). Then re-run the affected bugs — RAVEN will overwrite the static-only results because the emulator is now reachable.
 
 ### APK install fails — `INSTALL_FAILED_NO_MATCHING_ABIS`
 
@@ -662,15 +633,11 @@ The wrong APK architecture is installed on an x86 emulator.
 **Fix for AnkiDroid:** Ensure `variant-abi-AnkiDroid-X.X-x86.apk` is used, not `x86_64`.
 
 ```powershell
-ls dataset\apks\ankidroid\
+ls apks\ankidroid\
 # Must show: variant-abi-AnkiDroid-2.24.0-x86.apk  (NOT x86_64)
 ```
 
-Re-download if needed:
-
-```powershell
-..\model\.venv\Scripts\python.exe dataset\apks\download_apks.py --app ankidroid
-```
+The correct x86 APK is already bundled in `apks/ankidroid/`.
 
 ### APK install fails — `INSTALL_FAILED_OLDER_SDK`
 
@@ -688,21 +655,6 @@ The emulator API level is too low for the APK.
 Usually a sign the emulator is still booting or is in a bad state.
 
 **Fix:** Wait for the emulator to fully boot (check `adb shell getprop sys.boot_completed` returns `1`), then retry. If it persists, cold-boot the emulator with `-no-snapshot-load`.
-
-### LiteLLM proxy fails to start (baselines only)
-
-```
-[litellm] ERROR: proxy exited early (rc=1)
-```
-
-**Fix:**
-
-```powershell
-cd model
-.venv\Scripts\pip install "litellm[proxy]"
-```
-
-Then check `automation_new_bugs/litellm_config.yaml` has the correct Azure endpoint and key.
 
 ### `UnicodeEncodeError` on Windows terminal
 
@@ -736,26 +688,22 @@ java -version
 # Must show Java 11 or higher
 ```
 
-### All 50 bugs show `static_fallback_files.json` (no emulator coverage)
+### All bugs show `static_fallback_files.json` (no emulator coverage)
 
-This means the emulator was not running when the batch evaluation executed. Every run used TF-IDF fallback.
+This means the emulator was not running when RAVEN executed. Every run used TF-IDF fallback.
 
-**Fix:** Start the emulator, then re-run the batch with `--force-raven` to overwrite the static-only results:
+**Fix:** Start the emulator (§3b), then re-run the affected bugs from scratch — delete their subdirectory from `.raven_runs/` first so RAVEN doesn't skip them:
 
 ```powershell
-# 1. Start emulator
+# Start emulator
 & "$env:LOCALAPPDATA\Android\Sdk\emulator\emulator.exe" -avd Pixel29 -no-snapshot-load -port 5554
-
-# 2. Wait ~60s for boot, then:
-cd C:\Users\hridy\Documents\PhD_Research\2026\Raven\automation_new_bugs
-..\model\.venv\Scripts\python.exe run_eval_new_bugs.py --force-raven --skip-baselines
+# Wait ~60s, then re-run each bug
 ```
 
 ### Checking whether a specific run used emulator replay or fallback
 
 ```powershell
-$dir = "C:\Users\hridy\Documents\PhD_Research\2026\Raven\model\.raven_runs"
-Get-ChildItem $dir -Recurse -Filter "static_fallback_files.json" |
+Get-ChildItem ".raven_runs" -Recurse -Filter "static_fallback_files.json" |
     ForEach-Object { $_.DirectoryName.Split('\')[-1] }
 # Each line printed = a run that used TF-IDF fallback (no emulator coverage)
 ```
@@ -763,3 +711,4 @@ Get-ChildItem $dir -Recurse -Filter "static_fallback_files.json" |
 ---
 
 *RAVEN — ICSE 2027 Submission*
+
