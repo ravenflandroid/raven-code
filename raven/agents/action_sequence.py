@@ -8,8 +8,7 @@ from raven.llm.azure_client import AzureGPT4OClient
 from raven.models import ActionSequence
 
 
-ACTION_SYSTEM = """You are Agent #1 in RAVEN.
-Infer a deterministic Android emulator action sequence from a GitHub issue and visual evidence.
+ACTION_SYSTEM = """You are Agent #1 in RAVEN. Infer a deterministic Android emulator action sequence from a GitHub issue and visual evidence.
 Return only JSON with keys: actions, assumptions, target_final_state.
 Each action must use one of: tap, long_press, swipe, input_text, keyevent, wait, launch_activity, shell.
 Use emulator-compatible coordinates when visible. Prefer wait/keyevent/input/tap/swipe actions."""
