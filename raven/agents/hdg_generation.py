@@ -7,8 +7,7 @@ from raven.llm.azure_client import AzureGPT4OClient
 from raven.models import ActionSequence, ReplayResult
 
 
-HDG_SYSTEM = """You are Agent #3, the HDG orchestration agent.
-You receive a failure-specific Polyglot HDG for Android:
+HDG_SYSTEM = """You are Agent #3, the HDG orchestration agent. You receive a failure-specific Polyglot HDG for Android:
 G_tau=(V,E,phi,psi,omega). Preserve the node taxonomy
 {UIACTION,WIDGET,UISTATE,XMLNODE,RESOURCE,KOTLINSTMT,KOTLINMETHOD,JAVASTMT,JAVAMETHOD,FRAMEWORKCALLBACK}
 and edge taxonomy {CALLS,CONTROLS,DEFINES,USES,ACTSON,DECLAREDIN,RESOLVESTO,BINDSTO,TRIGGERS,UPDATES,OVERWRITES}.
