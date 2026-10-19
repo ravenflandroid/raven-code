@@ -32,4 +32,4 @@ runtime:
   max_ui_hierarchy_snapshots: 8
   max_hdg_files:             120
   hdg_expansion_bound:       2
-  compact_json:              true
+  compact_json:              true 

@@ -481,4 +481,4 @@ function inferAppPreset(url) {
   buildQuickPick();
   pollEmulator();
   setInterval(pollEmulator, 30_000);
-})();
+})(); 
