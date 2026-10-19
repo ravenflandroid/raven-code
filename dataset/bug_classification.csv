@@ -1,5 +1,5 @@
 BUG_ID,ISSUE_ID,APP,BUG_TYPE,R,S,F,REASON
-1,1429,Simplenote,PROG_ERROR,R2,S2,F3,Widget launch missing back stack setup; back skips note list
+1,1429,Simplenote,PROG_ERROR,R2,S2,F3,Widget launch missing back stack setup; back skips note list.
 2,1413,Simplenote,PROG_ERROR,R3,S2,F2,Search filter state not restored on app resume in tag screen
 3,1296,Simplenote,PROG_ERROR,R2,S3,F3,Logout does not clear local note cache before next login
 4,1307,Simplenote,PROG_ERROR,R2,S2,F3,Phone number link action fails to launch dialer intent correctly
