@@ -2,7 +2,7 @@
 # Emulator: Pixel29 (API 29, x86, Google Play), serial emulator-5554
 #
 # CLI usage (run from the raven_reproduction/ directory):
-#   raven run --config configs/simplenote.yaml --issue-url <url> --skip-install
+# raven run --config configs/simplenote.yaml --issue-url <url> --skip-install
 #
 # Fill in your Azure OpenAI credentials below.
 
