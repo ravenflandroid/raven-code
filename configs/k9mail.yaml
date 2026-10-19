@@ -4,7 +4,7 @@
 # to TF-IDF static analysis without dynamic replay.
 #
 # CLI usage (run from the raven_reproduction/ directory):
-#   raven run --config configs/k9mail.yaml --issue-url <url> --skip-install
+# raven run --config configs/k9mail.yaml --issue-url <url> --skip-install
 
 azure_openai:
   endpoint:    "https://<your-resource>.openai.azure.com/"
