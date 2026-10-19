@@ -9,7 +9,7 @@ bindings, and lifecycle callbacks. Finally, RAVEN applies graph-grounded LLM rea
 
 This package is **self-contained**: all pipeline source code is bundled in the `raven/` subdirectory. No external checkout of the main Raven repository is required.
 
----
+--- 
 
 ## Table of Contents
 
