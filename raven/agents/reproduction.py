@@ -11,8 +11,7 @@ from raven.models import ActionSequence, ReplayResult
 
 
 VERIFY_SYSTEM = """You are Agent #2 verifier in RAVEN.
-Compare the emulator final screenshot with the target issue/video final state.
-Return JSON: {"verified": boolean, "reason": string}."""
+Compare the emulator final screenshot with the target issue/video final state. Return JSON: {"verified": boolean, "reason": string}."""
 
 
 class BugReproductionAgent:
