@@ -1,5 +1,5 @@
 "BUG_ID","ISSUE_ID","APP","SUBCATEGORY","SUBCATEGORY_NAME","R","S","F","CROSS_LANG","REASON"
-"3","1296","Simplenote","A4","Lack of data sync","R2","S3","F3","","App fails to clear local note cache on logout so next user sees stale data"
+"3","1296","Simplenote","A4","Lack of data sync","R2","S3","F3","","App fails to clear local note cache on logout so next user sees stale data."
 "6","1294","Simplenote","A7","Incorrect variable assignment","R2","S2","F2","","Sort-order preference value never written to persistent storage so it is lost on navigation"
 "7","1293","Simplenote","A7","Incorrect variable assignment","R2","S1","F2","","Sort-order selection not committed to SharedPreferences so reverts to default on every load"
 "8","907","Simplenote","A7","Incorrect variable assignment","R3","S2","F2","","Search sort and note-list sort share same preference key so one overwrites the other on force-close"
