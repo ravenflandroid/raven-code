@@ -8,8 +8,7 @@ from raven.llm.azure_client import AzureGPT4OClient
 from raven.models import IssueReport, LocalizationCandidate
 
 
-LOCALIZE_SYSTEM = """You are Agent #4 in RAVEN.
-Perform root-cause localization using ReAct-style step-by-step reasoning over a failure-specific
+LOCALIZE_SYSTEM = """You are Agent #4 in RAVEN. Perform root-cause localization using ReAct-style step-by-step reasoning over a failure-specific
 Polyglot HDG G_tau=(V,E,phi,psi,omega). Start from observed UIACTION/WIDGET/UISTATE nodes,
 follow ACTSON, DECLAREDIN, RESOLVESTO, BINDSTO, TRIGGERS, CONTROLS, USES, UPDATES, and
 OVERWRITES evidence, and trace back to exact KOTLINSTMT/JAVASTMT or method nodes.
