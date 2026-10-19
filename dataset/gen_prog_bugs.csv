@@ -1,5 +1,5 @@
 BUG_ID,ISSUE_ID,APP,SUBCATEGORY,SUBCATEGORY_NAME,REASON
-3,1296,Simplenote,A4,Lack of data sync,App fails to clear local note cache on logout so next user sees stale data
+3,1296,Simplenote,A4,Lack of data sync,App fails to clear local note cache on logout so next user sees stale data.
 6,1294,Simplenote,A7,Incorrect variable assignment,Sort-order preference value never written to persistent storage so it is lost on navigation
 7,1293,Simplenote,A7,Incorrect variable assignment,Sort-order selection not committed to SharedPreferences so reverts to default on every load
 8,907,Simplenote,A7,Incorrect variable assignment,Search sort and note-list sort share same preference key so one overwrites the other on force-close
